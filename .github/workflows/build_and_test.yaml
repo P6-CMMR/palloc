@@ -20,7 +20,7 @@ jobs:
             cpp_compiler: msvc
           - os: ubuntu-latest
             cpp_compiler: g++
-        - os: macos-latest
+          - os: macos-latest
             cpp_compiler: g++
 
     steps:
