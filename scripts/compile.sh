@@ -12,6 +12,15 @@ if ! command -v make &> /dev/null; then
     sudo apt install make -y
 fi
 
+# Get the script location and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Change to project root if not already there
+if [[ "$(pwd)" != "$PROJECT_ROOT" ]]; then
+    cd "$PROJECT_ROOT"
+fi
+
 # If ./compile.sh clean
 if [ "$1" == "clean" ]; then
     rm -rf build
