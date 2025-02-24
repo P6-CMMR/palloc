@@ -1,0 +1,98 @@
+name: Build and Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set to false to test all configurations
+      fail-fast: false
+
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        build_type: [Release]
+        cpp_compiler: [clang++, g++]
+        exclude:
+          - os: windows-latest
+            cpp_compiler: clang++
+          - os: ubuntu-latest
+            cpp_compiler: g++
+          - os: macos-latest
+            cpp_compiler: g++
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Cache build outputs
+      uses: actions/cache@v4
+      with:
+        path: |
+          build
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-
+
+    - name: Set Build Output Directory
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Setup JDK
+      if: matrix.os != 'ubuntu-latest'
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+      
+    - name: Configure CMake (Unix)
+      if: matrix.os != 'windows-latest'
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+
+    - name: Configure CMake (Windows)
+      if: matrix.os == 'windows-latest'
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -G "MinGW Makefiles"
+        -S ${{ github.workspace }}  
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Test
+      run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+
+    - name: Upload Linux
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: palloc-linux
+        path: build/palloc
+        if-no-files-found: error
+
+    - name: Upload Windows
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: palloc-win
+        path: build/palloc.exe
+        if-no-files-found: error
+    
+    - name: Upload macOS
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: palloc-macos
+        path: build/palloc
+        if-no-files-found: error
