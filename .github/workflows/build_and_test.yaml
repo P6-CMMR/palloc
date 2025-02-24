@@ -14,18 +14,23 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         build_type: [Release]
-        cpp_compiler: [msvc, g++]
-        exclude:
+        include:
           - os: windows-latest
-            cpp_compiler: msvc
+            build_type: Release
           - os: ubuntu-latest
-            cpp_compiler: g++
+            build_type: Release
+            cpp_compiler: clang++
           - os: macos-latest
-            cpp_compiler: g++
+            build_type: Release
+            cpp_compiler: clang++
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      if: matrix.os == 'windows-latest'
+      uses: ilammy/msvc-dev-cmd@v1.4.1
 
     - name: Set Build Output Directory
       id: strings
