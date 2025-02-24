@@ -33,8 +33,8 @@ jobs:
       with:
         path: |
           build
-          key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
+        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
             ${{ runner.os }}-build-
 
     - name: Setup MSVC
