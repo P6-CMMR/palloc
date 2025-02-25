@@ -1,5 +1,5 @@
-[![Build and Test](https://github.com/P6-CMMR/palloc/actions/workflows/build_and_test.yaml/badge.svg?branch=main)](https://github.com/P6-CMMR/palloc/actions/workflows/build_and_test.yaml)
-[![Linting](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yaml/badge.svg?branch=main)](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yaml)
+[![Build and Test](https://github.com/P6-CMMR/palloc/actions/workflows/build_and_test.yml/badge.svg?branch=main)](https://github.com/P6-CMMR/palloc/actions/workflows/build_and_test.yml)
+[![Linting](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yml/badge.svg?branch=main)](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yml)
 
 # Palloc
 ## How to Compile
