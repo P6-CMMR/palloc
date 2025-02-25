@@ -24,7 +24,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 
 # Argz
-set(ARGZ_HEADER_URL "https://raw.githubusercontent.com/stephenberry/argz/main/include/argz/argz.hpp")
+set(ARGZ_HEADER_URL "https://raw.githubusercontent.com/mtygesen/argz/main/include/argz/argz.hpp")
 set(ARGZ_HEADER_PATH "${CMAKE_CURRENT_BINARY_DIR}/include/argz/argz.hpp")
 
 if(NOT EXISTS "${ARGZ_HEADER_PATH}")
