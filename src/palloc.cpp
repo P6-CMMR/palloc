@@ -19,8 +19,13 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    if (!environmentPathOpt.has_value()) { return EXIT_SUCCESS; }
+    if (!environmentPathOpt.has_value() && !about.printed_help) {
+        std::cout << "Usage: -e <environment file>\n";
+        return EXIT_FAILURE;
+    }
 
     Environment env(environmentPathOpt.value());
     Simulator::simulate(env, timesteps);
+
+    return EXIT_SUCCESS;
 }
