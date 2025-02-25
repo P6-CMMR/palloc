@@ -8,4 +8,7 @@
 #include <string>
 #include <string_view>
 
+#include "environment.hpp"
+#include "simulator.hpp"
+
 #endif
