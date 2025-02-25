@@ -1,3 +1,26 @@
 #include "palloc.hpp"
 
-int main(int argc, char **argv) { std::cout << "Hello world" << '\n'; }
+using namespace palloc;
+
+int main(int argc, char **argv) {
+    constexpr std::string_view version = "0.0.1";
+    argz::about about{"Palloc", version};
+
+    std::optional<std::string> environmentPathOpt;
+    uint64_t timesteps = 1000;
+    argz::options opts{
+        {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
+        {{"timesteps", 't'}, timesteps, "timesteps to simulate"}};
+
+    try {
+        argz::parse(about, opts, argc, argv);
+    } catch (std::exception &e) {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+
+    if (!environmentPathOpt.has_value()) { return EXIT_SUCCESS; }
+
+    Environment env(environmentPathOpt.value());
+    Simulator::simulate(env, timesteps);
+}
