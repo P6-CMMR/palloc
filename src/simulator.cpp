@@ -21,7 +21,8 @@ void Simulator::simulate(const Environment &env, size_t timesteps, size_t maxDur
 
     std::println("Simulating {} timesteps...", timesteps);
     RequestGenerator generator(dropoffNodes, maxDuration, maxRequestsPerStep, seed);
-    for (uint64_t i = 0; i < timesteps; ++i) {
+    for (size_t i = 0; i < timesteps; ++i) {
+        std::println("Timestep: {}", i);
         for (const auto &[from, duration] : generator.generate()) {
             std::println("Request from {} with duration {}", from, duration);
         }
