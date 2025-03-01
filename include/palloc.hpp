@@ -3,9 +3,9 @@
 
 #include <argz/argz.hpp>
 #include <optional>
+#include <print>
 #include <stdexcept>
 #include <string>
-#include <print>
 
 #include "environment.hpp"
 #include "simulator.hpp"

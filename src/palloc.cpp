@@ -19,15 +19,12 @@ int main(int argc, char **argv) {
             std::println("Error: Expected environment file");
             return EXIT_FAILURE;
         }
-        
-        if (!environmentPathOpt.has_value()) {
-            return EXIT_SUCCESS;
-        }
-    
+
+        if (!environmentPathOpt.has_value()) { return EXIT_SUCCESS; }
+
         Environment env(environmentPathOpt.value());
         Simulator::simulate(env, timesteps);
     } catch (std::exception &e) {
-        std::cerr << e.what() << '\n';
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;
     }

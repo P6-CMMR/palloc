@@ -1,10 +1,10 @@
 #ifndef ENVIRONMENT_HPP
 #define ENVIRONMENT_HPP
 
-#include <filesystem>
-#include <vector>
 #include <cstdint>
+#include <filesystem>
 #include <glaze/glaze.hpp>
+#include <vector>
 
 namespace palloc {
 class Environment {
@@ -26,7 +26,7 @@ class Environment {
         IntVector parkingCapacities;
     };
 
-   private:   
+   private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
 
     DurationMatrix dropoffToParking;
@@ -38,11 +38,9 @@ class Environment {
 template <>
 struct glz::meta<palloc::Environment::EnvironmentData> {
     using T = palloc::Environment::EnvironmentData;
-    static constexpr auto value = glz::object(
-        "dropoff_to_parking", &T::dropoffToParking,
-        "parking_to_dropoff", &T::parkingToDropoff,
-        "parking_capacities", &T::parkingCapacities
-    );
+    static constexpr auto value =
+        glz::object("dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff",
+                    &T::parkingToDropoff, "parking_capacities", &T::parkingCapacities);
 };
 
 #endif
