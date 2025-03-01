@@ -101,22 +101,4 @@ endif()
 list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
 find_package(ortools REQUIRED)
 
-# TBB
-find_package(TBB QUIET)
-
-if(NOT TBB_FOUND)
-    message(STATUS "System TBB not found. Installing from source...")
-    
-    FetchContent_Declare(
-        tbb
-        GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
-        GIT_TAG v2022.0.0
-    )
-    
-    set(TBB_TEST OFF CACHE BOOL "" FORCE)
-    set(TBB_EXAMPLES OFF CACHE BOOL "" FORCE)
-    
-    FetchContent_MakeAvailable(tbb)
-endif()
-
 add_subdirectory(src)
