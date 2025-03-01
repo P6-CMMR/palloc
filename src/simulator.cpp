@@ -12,7 +12,7 @@ void Simulator::simulate(const Environment &env, uint64_t timesteps) {
 
     const auto &pCap = env.getParkingCapacities();
     std::println("Total parking capacity: {}",
-                 std::reduce(std::execution::par, pCap.begin(), pCap.end()));
+                 std::reduce(std::execution::par_unseq, pCap.begin(), pCap.end()));
 
     std::println("Simulating {} timesteps...", timesteps);
     for (uint64_t i = 0; i < timesteps; ++i) { /*sim loop*/
