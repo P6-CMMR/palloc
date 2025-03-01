@@ -12,6 +12,12 @@ if ! command -v make &> /dev/null; then
     sudo apt install make -y
 fi
 
+# Check if g++-14 is installed and install if not
+if ! command -v g++-14 &> /dev/null; then
+    echo "g++-14 could not be found. Installing g++-14..."
+    sudo apt install g++-14 -y
+fi
+
 # Get the script location and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"

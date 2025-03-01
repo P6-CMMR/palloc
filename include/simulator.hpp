@@ -2,7 +2,6 @@
 #define SIMULATOR_HPP
 
 #include <cstdint>
-#include <iostream>
 
 #include "environment.hpp"
 
