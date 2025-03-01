@@ -15,8 +15,8 @@ class RequestGenerator {
     explicit RequestGenerator(size_t dropoffNodes, size_t maxDuration, size_t maxRequestsPerStep,
                               Seed seed)
         : dropoffDist(0, dropoffNodes - 1),
-          durationDist(1, maxDuration - 1),
-          requestCountDist(0, maxRequestsPerStep - 1),
+          durationDist(1, maxDuration),
+          requestCountDist(0, maxRequestsPerStep),
           rng(seed) {}
 
     std::generator<Request> generate();

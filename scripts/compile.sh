@@ -39,7 +39,7 @@ fi
 
 cd build
 
-# If ./build.sh release enable release mode
+# If ./compile.sh release enable release mode
 if [ "$1" == "release" ]; then
     cmake .. -DCMAKE_BUILD_TYPE=Release
     echo "Release mode enabled"
