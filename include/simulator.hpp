@@ -1,11 +1,6 @@
 #ifndef SIMULATOR_HPP
 #define SIMULATOR_HPP
 
-<<<<<<< Updated upstream
-#include <cstdint>
-
-=======
->>>>>>> Stashed changes
 #include "environment.hpp"
 
 namespace palloc {
