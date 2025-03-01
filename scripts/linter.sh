@@ -42,7 +42,9 @@ for file in $(find . -name '*.cpp' -o -name '*.hpp' | grep -v -e '^./build/' -e 
     clang-tidy -p build \
         -checks='boost-*,bugprone-*,performance-*,readability-*,portability-*,clang-analyzer-*,cppcoreguidelines-*' \
         -fix \
-        -extra-arg=-std=c++20 \
+        -extra-arg=-std=c++23 \
+        -extra-arg=-fcoroutines \
+        -extra-arg=-fexperimental-library \
         -extra-arg=-I$(pwd)/build/include \
         -extra-arg=-I$(pwd)/include \
         $file

@@ -1,4 +1,13 @@
-#include "palloc.hpp"
+#include <argz/argz.hpp>
+#include <chrono>
+#include <optional>
+#include <print>
+#include <stdexcept>
+#include <string>
+
+#include "environment.hpp"
+#include "request_generator.hpp"
+#include "simulator.hpp"
 
 using namespace palloc;
 
@@ -6,12 +15,25 @@ int main(int argc, char **argv) {
     argz::about about{"Palloc", "0.0.1"};
 
     std::optional<std::string> environmentPathOpt;
+<<<<<<< Updated upstream
     uint64_t timesteps = 1000;
     std::optional<uint64_t> seed;
     argz::options opts{
         {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
         {{"timesteps", 't'}, timesteps, "timesteps to simulate"},
         {{"seed", 's'}, seed, "seed for randomization, default: unix timestamp"}};
+=======
+    constexpr uint64_t timesteps = 1000;
+    constexpr uint64_t maxDuration = 60;
+    constexpr uint64_t maxRequestsPerStep = 10;
+    std::optional<uint64_t> seedOpt;
+    argz::options opts{
+        {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
+        {{"timesteps", 't'}, timesteps, "timesteps to simulate"},
+        {{"duration", 'd'}, maxDuration, "max duration of requests"},
+        {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
+        {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"}};
+>>>>>>> Stashed changes
 
     try {
         argz::parse(about, opts, argc, argv);
@@ -29,5 +51,24 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+<<<<<<< Updated upstream
+=======
+        if (!environmentPathOpt.has_value()) { return EXIT_SUCCESS; }
+
+        Environment env(environmentPathOpt.value());
+
+        const auto seed =
+            seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
+
+        Simulator::simulate(env, timesteps, maxDuration, maxRequestsPerStep, seed);
+    } catch (std::exception &e) {
+        std::println(stderr, "Error: {}", e.what());
+        return EXIT_FAILURE;
+    }
+
+    Environment env(environmentPathOpt.value());
+    Simulator::simulate(env, timesteps);
+
+>>>>>>> Stashed changes
     return EXIT_SUCCESS;
 }
