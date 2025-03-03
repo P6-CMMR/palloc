@@ -44,7 +44,13 @@ int main(int argc, char **argv) {
         const auto seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
 
-        Simulator::simulate(env, timesteps, maxDuration, maxRequestsPerStep, batchDelay, seed);
+        Simulator::simulate(env, {
+            .timesteps = timesteps,
+            .maxDuration = maxDuration,
+            .maxRequestsPerStep = maxRequestsPerStep,
+            .batchDelay = batchDelay,
+            .seed = seed
+        });
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;

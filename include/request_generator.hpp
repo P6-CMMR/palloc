@@ -3,13 +3,15 @@
 
 #include <cstdint>
 #include <random>
-#include <utility>
-#include <vector>
 
 namespace palloc {
 class RequestGenerator {
    public:
-    using Request = std::pair<size_t, uint64_t>;
+    struct Request {
+        size_t dropoffNode;
+        uint64_t duration;
+    };
+
     using Requests = std::vector<Request>;
     using Seed = uint64_t;
 

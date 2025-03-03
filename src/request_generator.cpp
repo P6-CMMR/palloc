@@ -7,7 +7,7 @@ const RequestGenerator::Requests RequestGenerator::generate() {
     Requests requests;
     requests.reserve(count);
     for (uint64_t i = 0; i < count; ++i) {
-        requests.emplace_back(std::make_pair(dropoffDist(rng), durationDist(rng)));
+        requests.emplace_back(Request{ .dropoffNode = dropoffDist(rng), .duration = durationDist(rng) });
     }
 
     return requests;

@@ -9,8 +9,15 @@
 namespace palloc {
 class Simulator {
    public:
-    static void simulate(const Environment &env, uint64_t timesteps, uint64_t maxDuration,
-                         uint64_t maxRequestsPerStep, uint64_t batchDelay, uint64_t seed);
+    struct SimulatorOptions {
+        uint64_t timesteps;
+        uint64_t maxDuration;
+        uint64_t maxRequestsPerStep;
+        uint64_t batchDelay;
+        uint64_t seed;
+    };
+
+    static void simulate(const Environment &env, const SimulatorOptions &options);
     
    private:
     static void scheduleBatch(const Environment &env, const RequestGenerator::Requests &requests);
