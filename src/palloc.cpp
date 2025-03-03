@@ -18,12 +18,14 @@ int main(int argc, char **argv) {
     uint64_t timesteps = 1000;
     uint64_t maxDuration = 60;
     uint64_t maxRequestsPerStep = 10;
+    uint64_t batchDelay = 180;
     std::optional<uint64_t> seedOpt;
     argz::options opts{
         {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
         {{"timesteps", 't'}, timesteps, "timesteps to simulate"},
         {{"duration", 'd'}, maxDuration, "max duration of requests"},
         {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
+        {{"batch-delay", 'b'}, batchDelay, "delay before processing requests"},
         {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"}};
 
     try {
@@ -42,7 +44,7 @@ int main(int argc, char **argv) {
         const auto seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
 
-        Simulator::simulate(env, timesteps, maxDuration, maxRequestsPerStep, seed);
+        Simulator::simulate(env, timesteps, maxDuration, maxRequestsPerStep, batchDelay, seed);
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;
