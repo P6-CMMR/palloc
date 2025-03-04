@@ -66,15 +66,15 @@ void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Re
         const auto fromNode = manager.IndexToNode(fromIdx).value();
         const auto toNode = manager.IndexToNode(toIdx).value();
         const int64_t duration = durationMatrix[fromNode][toNode];
-        return duration == -1 ? std::numeric_limits<uint64_t>::max() : duration;
+        return duration == -1 ? std::numeric_limits<uint64_t>::max() / 2 : duration;
     });
 
     routing.SetArcCostEvaluatorOfAllVehicles(transitCallbackIdx);
     
     RoutingSearchParameters searchParameters = DefaultRoutingSearchParameters();
-    searchParameters.set_first_solution_strategy(
-        FirstSolutionStrategy::PATH_CHEAPEST_ARC);
-        searchParameters.mutable_time_limit()->set_seconds(5);
+    searchParameters.set_first_solution_strategy(FirstSolutionStrategy::PATH_CHEAPEST_ARC);
+    searchParameters.mutable_time_limit()->set_seconds(5);
+    searchParameters.set_log_search(true);
 
     const Assignment *solution = routing.SolveWithParameters(searchParameters);
     if (solution) {
