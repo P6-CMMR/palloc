@@ -17,16 +17,16 @@ using namespace palloc;
 using namespace operations_research;
 
 void Simulator::simulate(const Environment &env, const SimulatorOptions &options) {
-    size_t dropoffNodes = env.getDropoffToParking().size();
-    size_t parkingNodes = env.getParkingToDropoff().size();
-    std::println("Dropoff nodes: {}", dropoffNodes);
-    std::println("Parking nodes: {}", parkingNodes);
+    const auto numberOfDropoffs = env.getNumberOfDropoffs();
+    const auto numberOfParkings = env.getNumberOfParkings();
+    std::println("Dropoff nodes: {}", numberOfDropoffs);
+    std::println("Parking nodes: {}", numberOfParkings);
 
     const auto &pCap = env.getParkingCapacities();
     std::println("Total parking capacity: {}", std::reduce(pCap.begin(), pCap.end()));
 
     std::println("Simulating {} timesteps...", options.timesteps);
-    RequestGenerator generator(dropoffNodes, options.maxDuration, options.maxRequestsPerStep, options.seed);
+    RequestGenerator generator(numberOfParkings, options.maxDuration, options.maxRequestsPerStep, options.seed);
     RequestGenerator::Requests requests;
     requests.reserve(options.timesteps * options.maxRequestsPerStep / 2);
     const auto start = std::chrono::high_resolution_clock::now();
@@ -50,18 +50,47 @@ void Simulator::simulate(const Environment &env, const SimulatorOptions &options
 void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Requests &requests) {
     if (requests.empty()) return;
 
-    const auto &dropoffToParking = env.getDropoffToParking();
-    const auto &parkingToDropoff = env.getParkingToDropoff();
-    const auto numDropoffs = dropoffToParking.size();
-    const auto numParkings = parkingToDropoff.size();
+    const auto &durationMatrix = env.getDurationMatrix();
     const auto &parkingCapacities = env.getParkingCapacities();
+    const auto numParkings = env.getNumberOfParkings();
+    const auto numDropoffs = env.getNumberOfDropoffs();
 
-    std::vector<RoutingIndexManager::NodeIndex> starts;
-    std::vector<RoutingIndexManager::NodeIndex> ends;
-    starts.reserve(requests.size());
-    ends.reserve(requests.size());
-
+    std::vector<RoutingIndexManager::NodeIndex> dropoffIndicies;
+    dropoffIndicies.reserve(requests.size());
     for (const auto &request : requests) {
-        starts.emplace_back(request.dropoffNode);
+        dropoffIndicies.emplace_back(request.dropoffNode);
+    }
+
+    RoutingIndexManager manager(durationMatrix.size(), requests.size(), dropoffIndicies, dropoffIndicies);
+    RoutingModel routing(manager);
+
+    const int transitCallbackIdx = routing.RegisterTransitCallback(
+        [&durationMatrix, &manager](const int64_t from_index,
+                          const int64_t to_index) -> int64_t {
+        const int from_node = manager.IndexToNode(from_index).value();
+        const int to_node = manager.IndexToNode(to_index).value();
+        return durationMatrix[from_node][to_node];
+    });
+
+    routing.SetArcCostEvaluatorOfAllVehicles(transitCallbackIdx);
+
+    routing.AddDimension(transitCallbackIdx, 0, 3000,
+        true,  // start cumul to zero
+        "Distance");
+    routing.GetMutableDimension("Distance")->SetGlobalSpanCostCoefficient(100);
+
+    RoutingSearchParameters searchParams = DefaultRoutingSearchParameters();
+    searchParams.set_first_solution_strategy(
+        FirstSolutionStrategy::PATH_CHEAPEST_ARC);
+    searchParams.mutable_time_limit()->set_seconds(60);
+    const Assignment *solution = routing.SolveWithParameters(searchParams);
+
+    if (solution != nullptr) {
+        std::println("solution found");
+        for (size_t i = 0; i < requests.size(); ++i) {
+
+        }
+    } else {
+        std::println("no solution");
     }
 }

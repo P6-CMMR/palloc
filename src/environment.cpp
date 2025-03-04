@@ -2,16 +2,20 @@
 
 using namespace palloc;
 
-const Environment::DurationMatrix &Environment::getDropoffToParking() const noexcept {
-    return dropoffToParking;
-}
-
-const Environment::DurationMatrix &Environment::getParkingToDropoff() const noexcept {
-    return parkingToDropoff;
+const Environment::DurationMatrix &Environment::getDurationMatrix() const noexcept {
+    return durationMatrix;
 }
 
 const Environment::IntVector &Environment::getParkingCapacities() const noexcept {
     return parkingCapacities;
+}
+
+const uint64_t Environment::getNumberOfParkings() const noexcept {
+    return numberOfParkings;
+}
+
+const uint64_t Environment::getNumberOfDropoffs() const noexcept {
+    return numberOfDropoffs;
 }
 
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
@@ -25,7 +29,8 @@ void Environment::loadEnvironment(const std::filesystem::path &environmentPath) 
         throw std::runtime_error("Failed to read environment file: " + environmentPath.string());
     }
 
-    dropoffToParking = std::move(data.dropoffToParking);
-    parkingToDropoff = std::move(data.parkingToDropoff);
+    durationMatrix = std::move(data.durationMatrix);
     parkingCapacities = std::move(data.parkingCapacities);
+    numberOfParkings = data.numberOfParkings;
+    numberOfDropoffs = data.numberOfDropoffs;
 }
