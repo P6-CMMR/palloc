@@ -6,7 +6,6 @@
 #include <limits>
 
 #include "request_generator.hpp"
-#include "ortools/base/logging.h"
 #include "ortools/constraint_solver/constraint_solver.h"
 #include "ortools/constraint_solver/routing.h"
 #include "ortools/constraint_solver/routing_enums.pb.h"
@@ -26,7 +25,7 @@ void Simulator::simulate(const Environment &env, const SimulatorOptions &options
     std::println("Total parking capacity: {}", std::reduce(pCap.begin(), pCap.end()));
 
     std::println("Simulating {} timesteps...", options.timesteps);
-    RequestGenerator generator(numberOfParkings, options.maxDuration, options.maxRequestsPerStep, options.seed);
+    RequestGenerator generator(numberOfDropoffs, numberOfParkings, options.maxDuration, options.maxRequestsPerStep, options.seed);
     RequestGenerator::Requests requests;
     requests.reserve(options.timesteps * options.maxRequestsPerStep / 2);
     const auto start = std::chrono::high_resolution_clock::now();
@@ -51,46 +50,67 @@ void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Re
     if (requests.empty()) return;
 
     const auto &durationMatrix = env.getDurationMatrix();
-    const auto &parkingCapacities = env.getParkingCapacities();
     const auto numParkings = env.getNumberOfParkings();
     const auto numDropoffs = env.getNumberOfDropoffs();
 
-    std::vector<RoutingIndexManager::NodeIndex> dropoffIndicies;
-    dropoffIndicies.reserve(requests.size());
+    std::vector<RoutingIndexManager::NodeIndex> dropoffIndices;
+    dropoffIndices.reserve(requests.size());
     for (const auto &request : requests) {
-        dropoffIndicies.emplace_back(request.dropoffNode);
+        dropoffIndices.emplace_back(request.dropoffNode);
     }
 
-    RoutingIndexManager manager(durationMatrix.size(), requests.size(), dropoffIndicies, dropoffIndicies);
+    RoutingIndexManager manager(durationMatrix.size(), requests.size(), dropoffIndices, dropoffIndices);
     RoutingModel routing(manager);
-
-    const int transitCallbackIdx = routing.RegisterTransitCallback(
-        [&durationMatrix, &manager](const int64_t fromIdx,
-                          const int64_t toIdx) -> int64_t {
+    
+    const int transitCallbackIdx = routing.RegisterTransitCallback([&durationMatrix, &manager](const int64_t fromIdx, const int64_t toIdx) -> int64_t {
         const auto fromNode = manager.IndexToNode(fromIdx).value();
         const auto toNode = manager.IndexToNode(toIdx).value();
-        return durationMatrix[fromNode][toNode];
+        const int64_t duration = durationMatrix[fromNode][toNode];
+        return duration == -1 ? std::numeric_limits<uint64_t>::max() : duration;
     });
 
     routing.SetArcCostEvaluatorOfAllVehicles(transitCallbackIdx);
-
-    routing.AddDimension(transitCallbackIdx, 0, 3000,
-        true,  // start cumul to zero
-        "Distance");
-    routing.GetMutableDimension("Distance")->SetGlobalSpanCostCoefficient(100);
-
-    RoutingSearchParameters searchParams = DefaultRoutingSearchParameters();
-    searchParams.set_first_solution_strategy(
+    
+    RoutingSearchParameters searchParameters = DefaultRoutingSearchParameters();
+    searchParameters.set_first_solution_strategy(
         FirstSolutionStrategy::PATH_CHEAPEST_ARC);
-    searchParams.mutable_time_limit()->set_seconds(60);
-    const Assignment *solution = routing.SolveWithParameters(searchParams);
+        searchParameters.mutable_time_limit()->set_seconds(5);
 
-    if (solution != nullptr) {
-        std::println("solution found");
-        for (size_t i = 0; i < requests.size(); ++i) {
-
+    const Assignment *solution = routing.SolveWithParameters(searchParameters);
+    if (solution) {
+        std::println("Solution found:");
+        int64_t totalDuration = 0;
+        for (int request = 0; request < requests.size(); ++request) {
+            if (!routing.IsVehicleUsed(*solution, request)) {
+                std::println("Vehicle {} is not used in solution", request);
+                continue;
+            }
+            
+            int64_t startIdx = routing.Start(request);
+            std::print("Route for request {}: ", request);
+            
+            int64_t routeDuration = 0;
+            std::vector<int> routeNodes;
+            
+            while (!routing.IsEnd(startIdx)) {
+                const auto nodeIdx = manager.IndexToNode(startIdx).value();
+                routeNodes.push_back(nodeIdx);
+                std::print("{} -> ", nodeIdx);
+                
+                int64_t previousIdx = startIdx;
+                startIdx = solution->Value(routing.NextVar(startIdx));
+                routeDuration += routing.GetArcCostForVehicle(previousIdx, startIdx, request);
+            }
+            
+            auto nodeIdx = manager.IndexToNode(startIdx).value();
+            routeNodes.push_back(nodeIdx);
+            std::println("{}", nodeIdx);
+            std::println("Duration: {}s", routeDuration);
+            totalDuration += routeDuration;
         }
+        
+        std::println("Total duration: {}s", totalDuration);
     } else {
-        std::println("no solution");
+        std::println("No solution found!");
     }
 }

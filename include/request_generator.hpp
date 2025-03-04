@@ -15,9 +15,9 @@ class RequestGenerator {
     using Requests = std::vector<Request>;
     using Seed = uint64_t;
 
-    explicit RequestGenerator(size_t dropoffNodes, uint64_t maxDuration, uint64_t maxRequestsPerStep,
+    explicit RequestGenerator(size_t dropoffNodes, size_t parkingNodes, uint64_t maxDuration, uint64_t maxRequestsPerStep,
                               Seed seed)
-        : dropoffDist(0, dropoffNodes - 1),
+        : dropoffDist(parkingNodes, dropoffNodes + parkingNodes - 2),
           durationDist(1, maxDuration),
           requestCountDist(0, maxRequestsPerStep),
           rng(seed) {}
