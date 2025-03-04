@@ -62,15 +62,25 @@ void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Re
     RoutingIndexManager manager(durationMatrix.size(), requests.size(), dropoffIndices, dropoffIndices);
     RoutingModel routing(manager);
     
+    const int64_t maxTimePerVehicle = std::numeric_limits<int64_t>::max() / 2;
     const int transitCallbackIdx = routing.RegisterTransitCallback([&durationMatrix, &manager](const int64_t fromIdx, const int64_t toIdx) -> int64_t {
         const auto fromNode = manager.IndexToNode(fromIdx).value();
         const auto toNode = manager.IndexToNode(toIdx).value();
         const int64_t duration = durationMatrix[fromNode][toNode];
-        return duration == -1 ? std::numeric_limits<uint64_t>::max() / 2 : duration;
+        return duration == -1 ? maxTimePerVehicle : duration;
     });
 
     routing.SetArcCostEvaluatorOfAllVehicles(transitCallbackIdx);
     
+    const std::string timeStr = "Time";
+    routing.AddDimension(
+        transitCallbackIdx,
+        0,
+        maxTimePerVehicle,
+        true,   
+        timeStr
+    );
+
     RoutingSearchParameters searchParameters = DefaultRoutingSearchParameters();
     searchParameters.set_first_solution_strategy(FirstSolutionStrategy::PATH_CHEAPEST_ARC);
     searchParameters.mutable_time_limit()->set_seconds(5);
