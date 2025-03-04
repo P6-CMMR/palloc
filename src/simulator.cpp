@@ -65,11 +65,11 @@ void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Re
     RoutingModel routing(manager);
 
     const int transitCallbackIdx = routing.RegisterTransitCallback(
-        [&durationMatrix, &manager](const int64_t from_index,
-                          const int64_t to_index) -> int64_t {
-        const int from_node = manager.IndexToNode(from_index).value();
-        const int to_node = manager.IndexToNode(to_index).value();
-        return durationMatrix[from_node][to_node];
+        [&durationMatrix, &manager](const int64_t fromIdx,
+                          const int64_t toIdx) -> int64_t {
+        const auto fromNode = manager.IndexToNode(fromIdx).value();
+        const auto toNode = manager.IndexToNode(toIdx).value();
+        return durationMatrix[fromNode][toNode];
     });
 
     routing.SetArcCostEvaluatorOfAllVehicles(transitCallbackIdx);
