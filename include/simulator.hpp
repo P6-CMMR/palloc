@@ -9,6 +9,14 @@
 namespace palloc {
 class Simulator {
    public:
+    struct Simulation {
+        size_t dropoffNode;
+        size_t parkingNode;
+        size_t duration;
+    };
+
+    using Simulations = std::vector<Simulation>;
+
     struct SimulatorOptions {
         uint64_t timesteps;
         uint64_t maxDuration;

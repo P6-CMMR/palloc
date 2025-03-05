@@ -9,8 +9,8 @@
 namespace palloc {
 class Environment {
    public:
-    using IntVector = std::vector<int64_t>;
-    using DurationMatrix = std::vector<IntVector>;
+    using UintVector = std::vector<uint64_t>;
+    using DurationMatrix = std::vector<std::vector<double>>;
 
     explicit Environment(const std::filesystem::path &environmentPath) {
         loadEnvironment(environmentPath);
@@ -18,14 +18,14 @@ class Environment {
 
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
     const Environment::DurationMatrix &getParkingToDropoff() const noexcept;
-    const IntVector &getParkingCapacities() const noexcept;
+    const UintVector &getParkingCapacities() const noexcept;
     const size_t getNumberOfDropoffs() const noexcept;
     const size_t getNumberOfParkings() const noexcept;
 
     struct EnvironmentData {
         DurationMatrix dropoffToParking;
         DurationMatrix parkingToDropoff;
-        IntVector parkingCapacities;
+        UintVector parkingCapacities;
     };
 
    private:
@@ -33,7 +33,7 @@ class Environment {
 
     DurationMatrix dropoffToParking;
     DurationMatrix parkingToDropoff;
-    IntVector parkingCapacities;
+    UintVector parkingCapacities;
 };
 }  // namespace palloc
 

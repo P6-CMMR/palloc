@@ -27,12 +27,18 @@ void Simulator::simulate(const Environment &env, const SimulatorOptions &options
 
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 0; timestep < options.timesteps; ++timestep) {
-        const auto &newRequests = generator.generate();
+        auto newRequests = generator.generate();
         requests.insert(requests.end(), newRequests.begin(), newRequests.end());
         if ((timestep % options.batchDelay) == 0 && !requests.empty() && timestep != 0 || 
             timestep == options.timesteps - 1 && !requests.empty()) { 
             scheduleBatch(env, requests);
+            
+            if (timestep == options.timesteps - 1) break;
+            
+            ++timestep;
             requests.clear();
+            newRequests = generator.generate();
+            requests.insert(requests.end(), newRequests.begin(), newRequests.end());
         }
     }
 
@@ -44,6 +50,7 @@ void Simulator::simulate(const Environment &env, const SimulatorOptions &options
 
 void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Requests &requests) {
     auto solver = MPSolver::CreateSolver("SCIP");
+    solver->set_time_limit(60000);
 
     const double infinity = solver->infinity();
     const auto &parkingToDropoff = env.getParkingToDropoff();
@@ -70,13 +77,17 @@ void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Re
     MPObjective *objective = solver->MutableObjective();
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].dropoffNode;
-        for (auto j = 0; j < numberOfParkings; ++j) {
+        for (size_t j = 0; j < numberOfParkings; ++j) {
             const auto cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
             objective->SetCoefficient(x[i][j], cost);
         }
     }
 
     objective->SetMinimization();
-    const MPSolver::ResultStatus result = solver->Solve();
-    assert(result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE);
+    const MPSolver::ResultStatus result = solver->Solve(); 
+    if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
+        for (const auto &request : requests) {
+       
+        }
+    }
 }

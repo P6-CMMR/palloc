@@ -10,7 +10,7 @@ const Environment::DurationMatrix &Environment::getParkingToDropoff() const noex
     return parkingToDropoff;
 }
 
-const Environment::IntVector &Environment::getParkingCapacities() const noexcept {
+const Environment::UintVector &Environment::getParkingCapacities() const noexcept {
     return parkingCapacities;
 }
 
