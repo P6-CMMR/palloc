@@ -50,14 +50,6 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
             if (!newSimulations.empty()) {
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
-
-            if (!isLastStep) {
-                traces.emplace_back(
-                    timestep, requests.size(), simulations.size(),
-                    std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
-                ++timestep;
-                insertNewRequests(generator, requests);
-            }
         }
 
         traces.emplace_back(

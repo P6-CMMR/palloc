@@ -57,7 +57,7 @@ list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 FetchContent_Declare(
   glaze
   GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-  GIT_TAG v4.4.3
+  GIT_TAG v5.0.0
   GIT_SHALLOW TRUE
 )
 
