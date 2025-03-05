@@ -25,7 +25,6 @@ if(WIN32)
 else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Wpedantic -Wconversion -Wsign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
