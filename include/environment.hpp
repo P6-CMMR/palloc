@@ -16,25 +16,24 @@ class Environment {
         loadEnvironment(environmentPath);
     }
 
-    const DurationMatrix &getDurationMatrix() const noexcept;
+    const Environment::DurationMatrix &getDropoffToParking() const noexcept;
+    const Environment::DurationMatrix &getParkingToDropoff() const noexcept;
     const IntVector &getParkingCapacities() const noexcept;
-    const uint64_t getNumberOfParkings() const noexcept;
-    const uint64_t getNumberOfDropoffs() const noexcept;
+    const size_t getNumberOfDropoffs() const noexcept;
+    const size_t getNumberOfParkings() const noexcept;
 
     struct EnvironmentData {
-        DurationMatrix durationMatrix;
+        DurationMatrix dropoffToParking;
+        DurationMatrix parkingToDropoff;
         IntVector parkingCapacities;
-        uint64_t numberOfParkings;
-        uint64_t numberOfDropoffs;
     };
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
 
-    DurationMatrix durationMatrix;
+    DurationMatrix dropoffToParking;
+    DurationMatrix parkingToDropoff;
     IntVector parkingCapacities;
-    uint64_t numberOfParkings;
-    uint64_t numberOfDropoffs;
 };
 }  // namespace palloc
 
@@ -42,10 +41,9 @@ template <>
 struct glz::meta<palloc::Environment::EnvironmentData> {
     using T = palloc::Environment::EnvironmentData;
     static constexpr auto value =
-        glz::object("duration_matrix", &T::durationMatrix, 
-                    "parking_capacities", &T::parkingCapacities, 
-                    "num_parkings", &T::numberOfParkings,
-                    "num_dropoffs", &T::numberOfDropoffs);
+        glz::object("dropoff_to_parking", &T::dropoffToParking,
+                    "parking_to_dropoff", &T::parkingToDropoff,
+                    "parking_capacities", &T::parkingCapacities);
 };
 
 #endif
