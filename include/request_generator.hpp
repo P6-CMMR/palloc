@@ -5,24 +5,28 @@
 #include <random>
 
 namespace palloc {
+struct Request {
+    size_t dropoffNode;
+    uint64_t duration;
+
+    explicit Request(size_t dropoffNode, uint64_t duration)
+        : dropoffNode(dropoffNode), duration(duration) {}
+};
+
+using Requests = std::vector<Request>;
+
 class RequestGenerator {
    public:
-    struct Request {
-        size_t dropoffNode;
-        uint64_t duration;
-    };
-
-    using Requests = std::vector<Request>;
     using Seed = uint64_t;
 
-    explicit RequestGenerator(size_t dropoffNodes, uint64_t maxDuration, uint64_t maxRequestsPerStep,
-                              Seed seed)
+    explicit RequestGenerator(size_t dropoffNodes, uint64_t maxDuration,
+                              uint64_t maxRequestsPerStep, Seed seed)
         : dropoffDist(0, dropoffNodes - 1),
           durationDist(1, maxDuration),
           requestCountDist(0, maxRequestsPerStep),
           rng(seed) {}
 
-    const Requests generate();
+    Requests generate();
 
    private:
     std::uniform_int_distribution<uint64_t> dropoffDist;

@@ -1,93 +1,118 @@
 #include "simulator.hpp"
 
+#include <algorithm>
+#include <chrono>
+#include <iostream>
 #include <numeric>
 #include <print>
-#include <chrono>
-#include <limits>
 
 #include "request_generator.hpp"
-#include "ortools/linear_solver/linear_solver.h"
+#include "scheduler.hpp"
 
 using namespace palloc;
-using namespace operations_research;
 
-void Simulator::simulate(const Environment &env, const SimulatorOptions &options) {
+void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
     std::println("Dropoff nodes: {}", numberOfDropoffs);
     std::println("Parking nodes: {}", numberOfParkings);
 
-    const auto &pCap = env.getParkingCapacities();
-    std::println("Total parking capacity: {}", std::reduce(pCap.begin(), pCap.end()));
+    const auto &availableParkingSpots = env.getAvailableParkingSpots();
+    std::println("Total parking capacity: {}",
+                 std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
+
+    std::println("Using seed: {}", options.seed);
 
     std::println("Simulating {} timesteps...", options.timesteps);
-    RequestGenerator generator(numberOfDropoffs, options.maxDuration, options.maxRequestsPerStep, options.seed);
-    RequestGenerator::Requests requests;
+    RequestGenerator generator(numberOfDropoffs, options.maxDuration, options.maxRequestsPerStep,
+                               options.seed);
+    Requests requests;
     requests.reserve(options.timesteps * options.maxRequestsPerStep / 2);
 
+    Simulations simulations;
+    Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 0; timestep < options.timesteps; ++timestep) {
-        auto newRequests = generator.generate();
-        requests.insert(requests.end(), newRequests.begin(), newRequests.end());
-        if ((timestep % options.batchDelay) == 0 && !requests.empty() && timestep != 0 || 
-            timestep == options.timesteps - 1 && !requests.empty()) { 
-            scheduleBatch(env, requests);
-            
-            if (timestep == options.timesteps - 1) break;
-            
-            ++timestep;
-            requests.clear();
-            newRequests = generator.generate();
-            requests.insert(requests.end(), newRequests.begin(), newRequests.end());
+        if (!simulations.empty()) {
+            updateSimulations(simulations, env);
         }
+
+        insertNewRequests(generator, requests);
+
+        const bool isLastStep = timestep == options.timesteps - 1;
+        const bool processBatch =
+            !requests.empty() &&
+            ((timestep % options.batchDelay == 0 && timestep != 0) || isLastStep);
+
+        if (processBatch) {
+            const auto newSimulations = Scheduler::scheduleBatch(env, requests);
+            requests.clear();
+            if (!newSimulations.empty()) {
+                simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
+            }
+
+            if (!isLastStep) {
+                traces.emplace_back(
+                    timestep, requests.size(), simulations.size(),
+                    std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
+                ++timestep;
+                insertNewRequests(generator, requests);
+            }
+        }
+
+        traces.emplace_back(
+            timestep, requests.size(), simulations.size(),
+            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
     const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
+    for (const auto &trace : traces) {
+        std::cout << trace << '\n';
+    }
+
     std::println("Finished after {}ms", time);
 }
 
-void Simulator::scheduleBatch(const Environment &env, const RequestGenerator::Requests &requests) {
-    auto solver = MPSolver::CreateSolver("SCIP");
-    solver->set_time_limit(60000);
-
-    const double infinity = solver->infinity();
-    const auto &parkingToDropoff = env.getParkingToDropoff();
+void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     const auto &dropoffToParking = env.getDropoffToParking();
-    const auto numberOfParkings = env.getNumberOfParkings();
-    const auto requestCount = requests.size();
-    
-    std::vector<std::vector<MPVariable*>> x(requestCount);
-    for (size_t i = 0; i < requestCount; ++i) {
-        x[i].resize(numberOfParkings);
-        for (size_t j = 0; j < numberOfParkings; ++j) {
-            x[i][j] = solver->MakeBoolVar("x_" + std::to_string(i) + std::to_string(j));
+    const auto &parkingToDropoff = env.getParkingToDropoff();
+    auto &availableParkingSpots = env.getAvailableParkingSpots();
+    const auto simulate = [&dropoffToParking, &parkingToDropoff,
+                           &availableParkingSpots](auto &simulation) {
+        auto &durationLeft = simulation.durationLeft;
+        --durationLeft;
+        if (durationLeft == 0) {
+            return true;
         }
-    }
 
-    const double maxParking = 1.0;
-    for (size_t i = 0; i < requestCount; ++i) {
-        MPConstraint *constraint = solver->MakeRowConstraint(maxParking, maxParking);
-        for (size_t j = 0; j < numberOfParkings; ++j) {
-            constraint->SetCoefficient(x[i][j], maxParking);
-        }
-    }
+        const auto &dropoffNode = simulation.dropoffNode;
+        const auto &parkingNode = simulation.parkingNode;
+        auto &currentNode = simulation.currentNode;
 
-    MPObjective *objective = solver->MutableObjective();
-    for (size_t i = 0; i < requestCount; ++i) {
-        const auto dropoffNode = requests[i].dropoffNode;
-        for (size_t j = 0; j < numberOfParkings; ++j) {
-            const auto cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
-            objective->SetCoefficient(x[i][j], cost);
+        if (currentNode == dropoffNode) {
+            uint64_t timeToParking = dropoffToParking[currentNode][parkingNode] / 60;
+            auto durationPassed = simulation.duration - durationLeft;
+            if (durationPassed == timeToParking) {
+                currentNode = parkingNode;
+            }
+        } else if (currentNode == parkingNode) {
+            uint64_t timeToDrive = parkingToDropoff[parkingNode][dropoffNode] / 60;
+            if (durationLeft == timeToDrive) {
+                currentNode = dropoffNode;
+                ++availableParkingSpots[parkingNode];
+            }
         }
-    }
 
-    objective->SetMinimization();
-    const MPSolver::ResultStatus result = solver->Solve(); 
-    if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
-        for (const auto &request : requests) {
-       
-        }
-    }
+        return false;
+    };
+
+    const auto [first, last] = std::ranges::remove_if(simulations, simulate);
+    simulations.erase(first, last);
+}
+
+void Simulator::insertNewRequests(RequestGenerator &generator, Requests &requests) {
+    const auto newRequests = generator.generate();
+    requests.insert(requests.end(), newRequests.begin(), newRequests.end());
 }
