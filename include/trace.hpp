@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <ostream>
-#include <vector>
+#include <list>
 
 namespace palloc {
 class Trace {
@@ -29,7 +29,7 @@ class Trace {
 
 std::ostream &operator<<(std::ostream &os, const Trace &trace);
 
-using Traces = std::vector<Trace>;
+using Traces = std::list<Trace>;
 }  // namespace palloc
 
 #endif

@@ -55,7 +55,6 @@ Simulations Scheduler::scheduleBatch(Environment &env, const Requests &requests)
 
     Simulations simulations;
     if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
-        simulations.reserve(requests.size());
         for (size_t i = 0; i < requestCount; ++i) {
             const auto &request = requests[i];
             size_t parkingNode = 0;

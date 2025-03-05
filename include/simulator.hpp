@@ -2,6 +2,7 @@
 #define SIMULATOR_HPP
 
 #include <cstdint>
+#include <list>
 
 #include "environment.hpp"
 #include "request_generator.hpp"
@@ -23,7 +24,7 @@ struct Simulation {
           durationLeft(duration) {}
 };
 
-using Simulations = std::vector<Simulation>;
+using Simulations = std::list<Simulation>;
 
 class Simulator {
    public:

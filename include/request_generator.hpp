@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <random>
+#include <vector>
 
 namespace palloc {
 struct Request {
