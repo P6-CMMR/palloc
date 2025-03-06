@@ -44,7 +44,7 @@ class Environment {
 template <>
 struct glz::meta<palloc::Environment::EnvironmentData> {
     using T = palloc::Environment::EnvironmentData;
-    static constexpr auto value =
+    constexpr static auto value =
         glz::object("dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff",
                     &T::parkingToDropoff, "parking_capacities", &T::parkingCapacities);
 };

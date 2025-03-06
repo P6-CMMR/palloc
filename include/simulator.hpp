@@ -15,7 +15,7 @@ struct Simulation {
     size_t currentNode;
     uint64_t duration;
     uint64_t durationLeft;
-
+    
     explicit Simulation(size_t dropoffNode, size_t parkingNode, uint64_t duration)
         : dropoffNode(dropoffNode),
           parkingNode(parkingNode),
@@ -41,8 +41,8 @@ class Simulator {
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, Requests &requests);
-
-    constexpr static int SECONDS_TO_MINUTE = 60;
+    static void decrementUnassignedRequestsDuration(Requests &unassignedRequests);
+    static void removeExpiredUnassignedRequests(Requests &unassignedRequests);
 };
 }  // namespace palloc
 

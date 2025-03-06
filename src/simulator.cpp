@@ -6,8 +6,8 @@
 #include <numeric>
 #include <print>
 
-#include "request_generator.hpp"
 #include "scheduler.hpp"
+#include "constants.hpp"
 
 using namespace palloc;
 
@@ -29,12 +29,20 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     Requests requests;
     requests.reserve(options.timesteps * options.maxRequestsPerStep / 2);
 
+    Requests unassignedRequests;
+    size_t droppedNodes = 0;
+
     Simulations simulations;
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 1; timestep <= options.timesteps; ++timestep) {
         if (!simulations.empty()) {
             updateSimulations(simulations, env);
+        }
+
+        if (!unassignedRequests.empty()) {
+            decrementUnassignedRequestsDuration(unassignedRequests);
+            removeExpiredUnassignedRequests(unassignedRequests);
         }
 
         insertNewRequests(generator, requests);
@@ -45,8 +53,18 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
             ((timestep % options.batchDelay == 0) || isLastStep);
 
         if (processBatch) {
-            const auto newSimulations = Scheduler::scheduleBatch(env, requests);
+            if (!unassignedRequests.empty()) {
+                requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
+                unassignedRequests.clear();
+            }
+
+            const auto result = Scheduler::scheduleBatch(env, requests);
             requests.clear();
+
+            unassignedRequests = result.unassignedRequests;
+            droppedNodes += unassignedRequests.size();
+
+            const auto &newSimulations = result.simulations;
             if (!newSimulations.empty()) {
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
@@ -65,6 +83,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     }
 
     std::println("Finished after {}ms", time);
+    std::println("Total nodes dropped: {}", droppedNodes);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
@@ -79,7 +98,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         auto &currentNode = simulation.currentNode;
 
         if (currentNode == dropoffNode) {
-            auto timeToParking = dropoffToParking[currentNode][parkingNode] / SECONDS_TO_MINUTE;
+            auto timeToParking = dropoffToParking[currentNode][parkingNode] / Constants::SECONDS_IN_MINUTE;
             auto durationPassed = simulation.duration - durationLeft;
             if (durationPassed == timeToParking) {
                 currentNode = parkingNode;
@@ -87,7 +106,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         } 
         
         if (currentNode == parkingNode) {
-            auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode] / SECONDS_TO_MINUTE;
+            auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode] / Constants::SECONDS_IN_MINUTE;
             if (durationLeft == timeToDrive) {
                 currentNode = dropoffNode;
                 ++availableParkingSpots[parkingNode];
@@ -95,7 +114,15 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         }
 
         --durationLeft;
-        return durationLeft == 0;
+        if (durationLeft == 0) {
+            if (currentNode == parkingNode) {
+                ++availableParkingSpots[parkingNode];
+            }
+
+            return true;
+        }
+
+        return false;
     };
 
     const auto [first, last] = std::ranges::remove_if(simulations, simulate);
@@ -105,4 +132,18 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
 void Simulator::insertNewRequests(RequestGenerator &generator, Requests &requests) {
     const auto newRequests = generator.generate();
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());
+}
+
+void Simulator::decrementUnassignedRequestsDuration(Requests &unassignedRequests) {
+    for (auto &request : unassignedRequests) {
+        if (request.duration > 0) {
+            --request.duration;
+        }
+    }
+}
+
+void Simulator::removeExpiredUnassignedRequests(Requests &unassignedRequests) {
+    const auto isDead = [](const Request &req) { return req.duration == 0; };
+    const auto [first, last] = std::ranges::remove_if(unassignedRequests, isDead);
+    unassignedRequests.erase(first, last);
 }
