@@ -32,17 +32,17 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     Simulations simulations;
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
-    for (uint64_t timestep = 0; timestep < options.timesteps; ++timestep) {
+    for (uint64_t timestep = 1; timestep <= options.timesteps; ++timestep) {
         if (!simulations.empty()) {
             updateSimulations(simulations, env);
         }
 
         insertNewRequests(generator, requests);
 
-        const bool isLastStep = timestep == options.timesteps - 1;
+        const bool isLastStep = timestep == options.timesteps;
         const bool processBatch =
             !requests.empty() &&
-            ((timestep % options.batchDelay == 0 && timestep != 0) || isLastStep);
+            ((timestep % options.batchDelay == 0) || isLastStep);
 
         if (processBatch) {
             const auto newSimulations = Scheduler::scheduleBatch(env, requests);
@@ -74,30 +74,28 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     const auto simulate = [&dropoffToParking, &parkingToDropoff,
                            &availableParkingSpots](auto &simulation) {
         auto &durationLeft = simulation.durationLeft;
-        --durationLeft;
-        if (durationLeft == 0) {
-            return true;
-        }
-
         const auto &dropoffNode = simulation.dropoffNode;
         const auto &parkingNode = simulation.parkingNode;
         auto &currentNode = simulation.currentNode;
 
         if (currentNode == dropoffNode) {
-            uint64_t timeToParking = dropoffToParking[currentNode][parkingNode] / 60;
+            auto timeToParking = dropoffToParking[currentNode][parkingNode] / SECONDS_TO_MINUTE;
             auto durationPassed = simulation.duration - durationLeft;
             if (durationPassed == timeToParking) {
                 currentNode = parkingNode;
             }
-        } else if (currentNode == parkingNode) {
-            uint64_t timeToDrive = parkingToDropoff[parkingNode][dropoffNode] / 60;
+        } 
+        
+        if (currentNode == parkingNode) {
+            auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode] / SECONDS_TO_MINUTE;
             if (durationLeft == timeToDrive) {
                 currentNode = dropoffNode;
                 ++availableParkingSpots[parkingNode];
             }
         }
 
-        return false;
+        --durationLeft;
+        return durationLeft == 0;
     };
 
     const auto [first, last] = std::ranges::remove_if(simulations, simulate);

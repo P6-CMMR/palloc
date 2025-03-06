@@ -41,6 +41,8 @@ class Simulator {
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, Requests &requests);
+
+    constexpr static int SECONDS_TO_MINUTE = 60;
 };
 }  // namespace palloc
 

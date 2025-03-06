@@ -18,14 +18,14 @@ int main(int argc, char **argv) {
     uint64_t timesteps = 1000;
     uint64_t maxDuration = 60;
     uint64_t maxRequestsPerStep = 10;
-    uint64_t batchDelay = 180;
+    uint64_t batchDelay = 3;
     std::optional<uint64_t> seedOpt;
     argz::options opts{
         {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
-        {{"timesteps", 't'}, timesteps, "timesteps to simulate"},
-        {{"duration", 'd'}, maxDuration, "max duration of requests"},
+        {{"timesteps", 't'}, timesteps, "timesteps in minutes to run simulation"},
+        {{"duration", 'd'}, maxDuration, "max duration in minutes of requests"},
         {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
-        {{"batch-delay", 'b'}, batchDelay, "delay before processing requests"},
+        {{"batch-delay", 'b'}, batchDelay, "delay in minutes before processing requests"},
         {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"}};
 
     try {
