@@ -30,7 +30,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     requests.reserve(options.timesteps * options.maxRequestsPerStep / 2);
 
     Requests unassignedRequests;
-    size_t droppedNodes = 0;
+    size_t droppedRequests = 0;
 
     Simulations simulations;
     Traces traces;
@@ -62,7 +62,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
             requests.clear();
 
             unassignedRequests = result.unassignedRequests;
-            droppedNodes += unassignedRequests.size();
+            droppedRequests += unassignedRequests.size();
 
             const auto &newSimulations = result.simulations;
             if (!newSimulations.empty()) {
@@ -83,7 +83,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     }
 
     std::println("Finished after {}ms", time);
-    std::println("Total nodes dropped: {}", droppedNodes);
+    std::println("Total requests dropped: {}", droppedRequests);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
