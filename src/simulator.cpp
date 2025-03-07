@@ -7,7 +7,6 @@
 #include <print>
 
 #include "scheduler.hpp"
-#include "constants.hpp"
 
 using namespace palloc;
 
@@ -41,18 +40,12 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
         }
 
         if (!unassignedRequests.empty()) {
-            decrementUnassignedRequestsDuration(unassignedRequests);
             removeExpiredUnassignedRequests(unassignedRequests);
         }
 
         insertNewRequests(generator, requests);
 
-        const bool isLastStep = timestep == options.timesteps;
-        const bool processBatch =
-            !requests.empty() &&
-            ((timestep % options.batchDelay == 0) || isLastStep);
-
-        if (processBatch) {
+        if (!requests.empty() && (timestep % options.batchDelay == 0)) {
             if (!unassignedRequests.empty()) {
                 requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
                 unassignedRequests.clear();
@@ -95,34 +88,35 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         auto &durationLeft = simulation.durationLeft;
         const auto &dropoffNode = simulation.dropoffNode;
         const auto &parkingNode = simulation.parkingNode;
-        auto &currentNode = simulation.currentNode;
+        auto &inDropoff = simulation.inDropoff;
+        auto &visitedParking = simulation.visitedParking;
 
-        if (currentNode == dropoffNode) {
-            auto timeToParking = dropoffToParking[currentNode][parkingNode] / Constants::SECONDS_IN_MINUTE;
+        if (inDropoff && !visitedParking) {
+            auto timeToParking = dropoffToParking[dropoffNode][parkingNode];
             auto durationPassed = simulation.duration - durationLeft;
             if (durationPassed == timeToParking) {
-                currentNode = parkingNode;
+                inDropoff = false;
+                visitedParking = true;
             }
         } 
         
-        if (currentNode == parkingNode) {
-            auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode] / Constants::SECONDS_IN_MINUTE;
+        auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode];
+        if (!inDropoff) {
             if (durationLeft == timeToDrive) {
-                currentNode = dropoffNode;
+                inDropoff = true;
                 ++availableParkingSpots[parkingNode];
             }
         }
 
         --durationLeft;
-        if (durationLeft == 0) {
-            if (currentNode == parkingNode) {
-                ++availableParkingSpots[parkingNode];
-            }
-
-            return true;
+        if (durationLeft == 0 && !inDropoff && timeToDrive == 0) {
+            inDropoff = true;
+            ++availableParkingSpots[parkingNode];
         }
 
-        return false;
+        assert(durationLeft || durationLeft == 0 && inDropoff);
+
+        return durationLeft == 0;
     };
 
     const auto [first, last] = std::ranges::remove_if(simulations, simulate);
@@ -134,16 +128,12 @@ void Simulator::insertNewRequests(RequestGenerator &generator, Requests &request
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());
 }
 
-void Simulator::decrementUnassignedRequestsDuration(Requests &unassignedRequests) {
-    for (auto &request : unassignedRequests) {
-        if (request.duration > 0) {
-            --request.duration;
-        }
-    }
-}
-
 void Simulator::removeExpiredUnassignedRequests(Requests &unassignedRequests) {
-    const auto isDead = [](const Request &req) { return req.duration == 0; };
+    const auto isDead = [](Request &req) { 
+        --req.duration; 
+        return req.duration == 0; 
+    };
+
     const auto [first, last] = std::ranges::remove_if(unassignedRequests, isDead);
     unassignedRequests.erase(first, last);
 }

@@ -12,16 +12,18 @@ namespace palloc {
 struct Simulation {
     size_t dropoffNode;
     size_t parkingNode;
-    size_t currentNode;
     uint64_t duration;
     uint64_t durationLeft;
+    bool inDropoff;
+    bool visitedParking;
     
     explicit Simulation(size_t dropoffNode, size_t parkingNode, uint64_t duration)
         : dropoffNode(dropoffNode),
           parkingNode(parkingNode),
-          currentNode(dropoffNode),
           duration(duration),
-          durationLeft(duration) {}
+          durationLeft(duration),
+          inDropoff(true),
+          visitedParking(false) {}
 };
 
 using Simulations = std::list<Simulation>;
@@ -41,7 +43,6 @@ class Simulator {
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, Requests &requests);
-    static void decrementUnassignedRequestsDuration(Requests &unassignedRequests);
     static void removeExpiredUnassignedRequests(Requests &unassignedRequests);
 };
 }  // namespace palloc

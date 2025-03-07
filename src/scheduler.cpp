@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "ortools/linear_solver/linear_solver.h"
-#include "constants.hpp"
 
 using namespace palloc;
 using namespace operations_research;
@@ -47,10 +46,9 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
         const auto dropoffNode = requests[i].dropoffNode;
         const auto requestDuration = requests[i].duration;
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            const double travelTime = static_cast<double>(parkingToDropoff[j][dropoffNode] + 
+            const auto travelTime = (parkingToDropoff[j][dropoffNode] + 
                                                         dropoffToParking[dropoffNode][j]);
-            const double requestDurationInSeconds = requestDuration * Constants::SECONDS_IN_MINUTE;
-            if (travelTime > requestDurationInSeconds) {
+            if (travelTime > requestDuration) {
                 MPConstraint *durationConstraint = solver->MakeRowConstraint(0, 0);
                 durationConstraint->SetCoefficient(var[i][j], 1.0);
             }
