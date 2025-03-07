@@ -92,20 +92,18 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         auto &visitedParking = simulation.visitedParking;
 
         if (inDropoff && !visitedParking) {
-            auto timeToParking = dropoffToParking[dropoffNode][parkingNode];
-            auto durationPassed = simulation.duration - durationLeft;
+            const auto timeToParking = dropoffToParking[dropoffNode][parkingNode];
+            const auto durationPassed = simulation.duration - durationLeft;
             if (durationPassed == timeToParking) {
                 inDropoff = false;
                 visitedParking = true;
             }
         } 
         
-        auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode];
-        if (!inDropoff) {
-            if (durationLeft == timeToDrive) {
-                inDropoff = true;
-                ++availableParkingSpots[parkingNode];
-            }
+        const auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode];
+        if (!inDropoff && durationLeft == timeToDrive) {
+            inDropoff = true;
+            ++availableParkingSpots[parkingNode];
         }
 
         --durationLeft;
