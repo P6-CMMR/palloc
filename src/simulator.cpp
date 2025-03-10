@@ -32,6 +32,20 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     size_t droppedRequests = 0;
 
     Simulations simulations;
+
+    std::optional<size_t> batchCost = std::nullopt;
+    std::optional<double> batchAverageDuration = std::nullopt;
+
+    size_t holderCost = 0;
+    double holderDuration = 0;
+
+    size_t globalCost = 0;
+    double globalDuration = 0;
+
+    // Should just be around timesteps / options.batchDelay, but i count to be safe.
+    uint64_t costCounter = 0;
+    uint64_t durationCounter = 0;
+
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 1; timestep <= options.timesteps; ++timestep) {
@@ -47,12 +61,16 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
 
         if (!requests.empty() && (timestep % options.batchDelay == 0)) {
             if (!unassignedRequests.empty()) {
-                requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
+                requests.insert(requests.end(), unassignedRequests.begin(),
+                                unassignedRequests.end());
                 unassignedRequests.clear();
             }
 
-            const auto result = Scheduler::scheduleBatch(env, requests);
+            auto result = Scheduler::scheduleBatch(env, requests);
             requests.clear();
+
+            batchCost = result.cost;
+            batchAverageDuration = result.averageDurations;
 
             unassignedRequests = result.unassignedRequests;
             droppedRequests += unassignedRequests.size();
@@ -63,9 +81,24 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
             }
         }
 
-        traces.emplace_back(
-            timestep, requests.size(), simulations.size(),
-            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
+        Trace trace =
+            Trace(timestep, requests.size(), simulations.size(),
+                  std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
+
+        if (batchCost.has_value()) {
+            trace.setCost(batchCost.value());
+            globalCost += batchCost.value();
+            costCounter++;
+            batchCost = std::nullopt;
+        }
+        if (batchAverageDuration.has_value()) {
+            trace.setAverageDuration(batchAverageDuration.value());
+            globalDuration += batchAverageDuration.value();
+            durationCounter++;
+            batchAverageDuration = std::nullopt;
+        }
+
+        traces.push_back(trace);
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
@@ -76,6 +109,9 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     }
 
     std::println("Finished after {}ms", time);
+    std::println("Average timesteps to parking {}",
+                 globalDuration / durationCounter);  // Duration to get to parking
+    std::println("Objective cost {}", globalCost / costCounter);
     std::println("Total requests dropped: {}", droppedRequests);
 }
 
@@ -98,8 +134,8 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
                 inDropoff = false;
                 visitedParking = true;
             }
-        } 
-        
+        }
+
         const auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode];
         if (!inDropoff && durationLeft == timeToDrive) {
             inDropoff = true;
@@ -127,9 +163,9 @@ void Simulator::insertNewRequests(RequestGenerator &generator, Requests &request
 }
 
 void Simulator::removeExpiredUnassignedRequests(Requests &unassignedRequests) {
-    const auto isDead = [](Request &req) { 
-        --req.duration; 
-        return req.duration == 0; 
+    const auto isDead = [](Request &req) {
+        --req.duration;
+        return req.duration == 0;
     };
 
     const auto [first, last] = std::ranges::remove_if(unassignedRequests, isDead);

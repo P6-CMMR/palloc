@@ -14,16 +14,15 @@ struct Simulation {
     size_t parkingNode;
     uint64_t duration;
     uint64_t durationLeft;
-    bool inDropoff;
-    bool visitedParking;
-    
+    bool inDropoff{true};
+    bool visitedParking{false};
+
     explicit Simulation(size_t dropoffNode, size_t parkingNode, uint64_t duration)
         : dropoffNode(dropoffNode),
           parkingNode(parkingNode),
           duration(duration),
-          durationLeft(duration),
-          inDropoff(true),
-          visitedParking(false) {}
+          durationLeft(duration)
+          {}
 };
 
 using Simulations = std::list<Simulation>;
