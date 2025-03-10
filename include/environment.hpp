@@ -4,14 +4,22 @@
 #include <cstdint>
 #include <filesystem>
 #include <vector>
+#include <array>
 
 #include "glaze/glaze.hpp"
 
 namespace palloc {
+
+struct Coordinate {
+    double longitude;
+    double latitude;
+};
+
 class Environment {
    public:
     using UintVector = std::vector<uint64_t>;
     using DurationMatrix = std::vector<UintVector>;
+    using Coordinates = std::vector<Coordinate>;
 
     explicit Environment(const std::filesystem::path &environmentPath) {
         loadEnvironment(environmentPath);
@@ -22,31 +30,40 @@ class Environment {
 
     UintVector &getAvailableParkingSpots() noexcept;
 
+    const Environment::Coordinates &getDropoffCoordinates() const noexcept;
+    const Environment::Coordinates &getParkingCoordinates() const noexcept;
+
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
-
-    struct EnvironmentData {
-        DurationMatrix dropoffToParking;
-        DurationMatrix parkingToDropoff;
-        UintVector parkingCapacities;
-    };
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
 
+    friend struct glz::meta<Environment>;
+
     DurationMatrix dropoffToParking;
     DurationMatrix parkingToDropoff;
-    UintVector parkingCapacities;
     UintVector availableParkingSpots;
+    Coordinates dropoffCoords;
+    Coordinates parkingCoords;
 };
 }  // namespace palloc
 
 template <>
-struct glz::meta<palloc::Environment::EnvironmentData> {
-    using T = palloc::Environment::EnvironmentData;
+struct glz::meta<palloc::Coordinate> {
+    using T = palloc::Coordinate;
+    constexpr static auto value = glz::array(&T::longitude, &T::latitude);
+};
+
+template <>
+struct glz::meta<palloc::Environment> {
+    using T = palloc::Environment;
     constexpr static auto value =
-        glz::object("dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff",
-                    &T::parkingToDropoff, "parking_capacities", &T::parkingCapacities);
+        glz::object("dropoff_to_parking", &T::dropoffToParking, 
+                    "parking_to_dropoff", &T::parkingToDropoff, 
+                    "parking_capacities", &T::availableParkingSpots,
+                    "dropoff_coords", &T::dropoffCoords,
+                    "parking_coords", &T::parkingCoords);
 };
 
 #endif
