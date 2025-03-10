@@ -21,8 +21,7 @@ struct Simulation {
         : dropoffNode(dropoffNode),
           parkingNode(parkingNode),
           duration(duration),
-          durationLeft(duration)
-          {}
+          durationLeft(duration) {}
 };
 
 using Simulations = std::list<Simulation>;

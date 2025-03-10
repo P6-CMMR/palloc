@@ -25,11 +25,12 @@ std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
        << trace.getNumberOfRequests() << ", simulations=" << std::setw(5)
        << trace.getNumberOfOngoingSimulations() << ", parkingSpots=" << std::setw(5)
        << trace.getAvailableParkingSpots();
-    if (trace.getCost().has_value()) { os << ", cost=" << std::setw(10) << trace.getCost().value();
-}
+    if (trace.getCost().has_value()) {
+        os << ", cost=" << std::setw(10) << trace.getCost().value();
+    }
     if (trace.getAverageDuration().has_value()) {
         os << ", averageDuration=" << std::setw(10) << trace.getAverageDuration().value();
-}
+    }
     os << ")";
     return os;
 }
