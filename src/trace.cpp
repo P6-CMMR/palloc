@@ -16,3 +16,5 @@ std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
        << ", parkingSpots=" << trace.getAvailableParkingSpots() << ")";
     return os;
 }
+
+void Traces::saveToFile(const std::filesystem::path &outputPath) const {}

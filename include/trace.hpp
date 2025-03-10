@@ -2,8 +2,10 @@
 #define TRACE_HPP
 
 #include <cstdint>
+#include <filesystem>
 #include <list>
 #include <ostream>
+#include <utility>
 
 namespace palloc {
 class Trace {
@@ -29,7 +31,21 @@ class Trace {
 
 std::ostream &operator<<(std::ostream &os, const Trace &trace);
 
-using Traces = std::list<Trace>;
+class Traces {
+   public:
+    auto begin() const { return traces.begin(); }
+    auto end() const { return traces.end(); }
+
+    template <class... Args>
+    void emplace_back(Args &&...args) {
+        traces.emplace_back(std::forward<Args>(args)...);
+    }
+
+    void saveToFile(const std::filesystem::path &outputPath) const;
+
+   private:
+    std::list<Trace> traces;
+};
 }  // namespace palloc
 
 #endif

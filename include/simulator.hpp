@@ -2,6 +2,7 @@
 #define SIMULATOR_HPP
 
 #include <cstdint>
+#include <filesystem>
 #include <list>
 
 #include "environment.hpp"
@@ -21,8 +22,7 @@ struct Simulation {
         : dropoffNode(dropoffNode),
           parkingNode(parkingNode),
           duration(duration),
-          durationLeft(duration)
-          {}
+          durationLeft(duration) {}
 };
 
 using Simulations = std::list<Simulation>;
@@ -37,7 +37,8 @@ class Simulator {
         uint64_t seed;
     };
 
-    static void simulate(Environment &env, const SimulatorOptions &options);
+    static void simulate(Environment &env, const SimulatorOptions &options,
+                         const std::filesystem::path &outputPath);
 
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);

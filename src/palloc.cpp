@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
     argz::about about{"Palloc", "0.0.1"};
 
     std::optional<std::string> environmentPathOpt;
+    std::optional<std::string> outputPathOpt;
     uint64_t timesteps = 1000;
     uint64_t maxDuration = 60;
     uint64_t maxRequestsPerStep = 10;
@@ -22,6 +23,7 @@ int main(int argc, char **argv) {
     std::optional<uint64_t> seedOpt;
     argz::options opts{
         {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
+        {{"output", 'o'}, outputPathOpt, "the output file to store results in"},
         {{"timesteps", 't'}, timesteps, "timesteps in minutes to run simulation"},
         {{"duration", 'd'}, maxDuration, "max duration in minutes of requests"},
         {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
@@ -44,7 +46,8 @@ int main(int argc, char **argv) {
         const auto seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
 
-        Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchDelay, seed});
+        Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchDelay, seed},
+                            outputPathOpt.value_or(""));
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;

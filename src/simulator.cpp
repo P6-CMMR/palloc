@@ -10,7 +10,8 @@
 
 using namespace palloc;
 
-void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
+void Simulator::simulate(Environment &env, const SimulatorOptions &options,
+                         const std::filesystem::path &outputPath) {
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
     std::println("Dropoff nodes: {}", numberOfDropoffs);
@@ -75,6 +76,8 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     for (const auto &trace : traces) {
         std::cout << trace << '\n';
     }
+
+    traces.saveToFile(outputPath);
 
     std::println("Finished after {}ms", time);
     std::println("Total requests dropped: {}", droppedRequests);
