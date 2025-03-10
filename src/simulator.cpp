@@ -47,7 +47,8 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
 
         if (!requests.empty() && (timestep % options.batchDelay == 0)) {
             if (!unassignedRequests.empty()) {
-                requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
+                requests.insert(requests.end(), unassignedRequests.begin(),
+                                unassignedRequests.end());
                 unassignedRequests.clear();
             }
 
@@ -98,8 +99,8 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
                 inDropoff = false;
                 visitedParking = true;
             }
-        } 
-        
+        }
+
         const auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode];
         if (!inDropoff && durationLeft == timeToDrive) {
             inDropoff = true;
@@ -127,9 +128,9 @@ void Simulator::insertNewRequests(RequestGenerator &generator, Requests &request
 }
 
 void Simulator::removeExpiredUnassignedRequests(Requests &unassignedRequests) {
-    const auto isDead = [](Request &req) { 
-        --req.duration; 
-        return req.duration == 0; 
+    const auto isDead = [](Request &req) {
+        --req.duration;
+        return req.duration == 0;
     };
 
     const auto [first, last] = std::ranges::remove_if(unassignedRequests, isDead);

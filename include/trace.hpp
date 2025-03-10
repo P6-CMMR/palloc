@@ -2,8 +2,8 @@
 #define TRACE_HPP
 
 #include <cstdint>
-#include <ostream>
 #include <list>
+#include <ostream>
 
 namespace palloc {
 class Trace {
