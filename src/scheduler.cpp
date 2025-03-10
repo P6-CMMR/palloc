@@ -35,7 +35,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
 
     auto &availableParkingSpots = env.getAvailableParkingSpots();
     for (size_t j = 0; j < numberOfParkings; ++j) {
-        MPConstraint *capacityConstraint = 
+        MPConstraint *capacityConstraint =
             solver->MakeRowConstraint(0, static_cast<double>(availableParkingSpots[j]));
         for (size_t i = 0; i < requestCount; ++i) {
             capacityConstraint->SetCoefficient(var[i][j], 1.0);
@@ -46,8 +46,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
         const auto dropoffNode = requests[i].dropoffNode;
         const auto requestDuration = requests[i].duration;
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            const auto travelTime = (parkingToDropoff[j][dropoffNode] + 
-                                                        dropoffToParking[dropoffNode][j]);
+            const auto travelTime =
+                (parkingToDropoff[j][dropoffNode] + dropoffToParking[dropoffNode][j]);
             if (travelTime > requestDuration) {
                 MPConstraint *durationConstraint = solver->MakeRowConstraint(0, 0);
                 durationConstraint->SetCoefficient(var[i][j], 1.0);
@@ -71,7 +71,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
         const auto dropoffNode = requests[i].dropoffNode;
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const double cost = static_cast<double>(dropoffToParking[dropoffNode][j] +
-                                                  parkingToDropoff[j][dropoffNode]);
+                                                    parkingToDropoff[j][dropoffNode]);
             objective->SetCoefficient(var[i][j], cost);
         }
     }

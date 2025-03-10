@@ -1,10 +1,10 @@
 #ifndef ENVIRONMENT_HPP
 #define ENVIRONMENT_HPP
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <vector>
-#include <array>
 
 #include "glaze/glaze.hpp"
 
@@ -52,18 +52,16 @@ class Environment {
 template <>
 struct glz::meta<palloc::Coordinate> {
     using T = palloc::Coordinate;
-    constexpr static auto value = glz::array(&T::longitude, &T::latitude);
+    static constexpr auto value = glz::array(&T::latitude, &T::longitude);
 };
 
 template <>
 struct glz::meta<palloc::Environment> {
     using T = palloc::Environment;
-    constexpr static auto value =
-        glz::object("dropoff_to_parking", &T::dropoffToParking, 
-                    "parking_to_dropoff", &T::parkingToDropoff, 
-                    "parking_capacities", &T::availableParkingSpots,
-                    "dropoff_coords", &T::dropoffCoords,
-                    "parking_coords", &T::parkingCoords);
+    static constexpr auto value =
+        glz::object("dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff",
+                    &T::parkingToDropoff, "parking_capacities", &T::availableParkingSpots,
+                    "dropoff_coords", &T::dropoffCoords, "parking_coords", &T::parkingCoords);
 };
 
 #endif
