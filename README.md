@@ -5,7 +5,7 @@
 ## How to Compile
 ### Dependencies
 - `cmake >= 3.28`
-- `c++20 compiler`
+- `c++23 compiler`
 
 For Ubuntu simply run:
 ```bash

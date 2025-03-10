@@ -1,9 +1,19 @@
 cmake_minimum_required(VERSION 3.28)
+
+# Try to use g++-14 for better c++23 support
+find_program(GCC14 "gcc-14")
+find_program(GPP14 "g++-14")
+
+if(GCC14 AND GPP14)
+    set(CMAKE_C_COMPILER "${GCC14}")
+    set(CMAKE_CXX_COMPILER "${GPP14}")
+endif()
+
 project(palloc)
 
 enable_testing()
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -15,7 +25,6 @@ if(WIN32)
 else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Wpedantic -Wconversion -Wsign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
@@ -43,6 +52,16 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+
+# Glaze
+FetchContent_Declare(
+  glaze
+  GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+  GIT_TAG v5.0.0
+  GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(glaze)
 
 set(ORTOOLS_VERSION "9.12")
 set(ORTOOLS_BUILD "4544")

@@ -19,10 +19,10 @@ jobs:
             build_type: Release
           - os: ubuntu-latest
             build_type: Release
-            cpp_compiler: clang++
+            cpp_compiler: g++
           - os: macos-latest
             build_type: Release
-            cpp_compiler: clang++
+            cpp_compiler: g++
 
     steps:
     - name: Checkout
