@@ -55,7 +55,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
         const auto requestDuration = requests[i].duration;
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const auto travelTime =
-                (dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode]);
+                (parkingToDropoff[j][dropoffNode] + dropoffToParking[dropoffNode][j]);
             if (travelTime > requestDuration) {
                 MPConstraint *durationConstraint = solver->MakeRowConstraint(0, 0);
                 durationConstraint->SetCoefficient(var[i][j], 1.0);

@@ -18,9 +18,9 @@ class Scheduler {
     static SchedulerResult scheduleBatch(Environment &env, const Requests &requests);
 
    private:
-    constexpr static int MAX_SEARCH_TIME = 60000;
-    constexpr static int PARKING_NODES_TO_VISIT = 1;
-    constexpr static double UNASSIGNED_PENALTY = 100000.0;
+    static constexpr int MAX_SEARCH_TIME = 60000;
+    static constexpr int PARKING_NODES_TO_VISIT = 1;
+    static constexpr double UNASSIGNED_PENALTY = 100000.0;
 };
 }  // namespace palloc
 

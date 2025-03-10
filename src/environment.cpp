@@ -14,6 +14,14 @@ Environment::UintVector &Environment::getAvailableParkingSpots() noexcept {
     return availableParkingSpots;
 }
 
+const Environment::Coordinates &Environment::getDropoffCoordinates() const noexcept {
+    return dropoffCoords;
+}
+
+const Environment::Coordinates &Environment::getParkingCoordinates() const noexcept {
+    return parkingCoords;
+}
+
 size_t Environment::getNumberOfDropoffs() const noexcept { return dropoffToParking.size(); }
 
 size_t Environment::getNumberOfParkings() const noexcept { return parkingToDropoff.size(); }
@@ -23,14 +31,8 @@ void Environment::loadEnvironment(const std::filesystem::path &environmentPath) 
         throw std::runtime_error("Environment file does not exist: " + environmentPath.string());
     }
 
-    EnvironmentData data;
-    const auto error = glz::read_file_json(data, environmentPath.string(), std::string{});
+    const auto error = glz::read_file_json(*this, environmentPath.string(), std::string{});
     if (error) {
         throw std::runtime_error("Failed to read environment file: " + environmentPath.string());
     }
-
-    dropoffToParking = std::move(data.dropoffToParking);
-    parkingToDropoff = std::move(data.parkingToDropoff);
-    parkingCapacities = std::move(data.parkingCapacities);
-    availableParkingSpots = parkingCapacities;
 }
