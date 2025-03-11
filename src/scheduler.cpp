@@ -108,8 +108,9 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
                 if (var[i][j]->solution_value() > 0.5) {
                     parkingNode = j;
                     assigned = true;
-                    sumDuration += dropoffToParking[request.dropoffNode][parkingNode] +
-                                   parkingToDropoff[parkingNode][request.dropoffNode];
+                    sumDuration +=
+                        static_cast<double>(dropoffToParking[request.dropoffNode][parkingNode]) +
+                        static_cast<double>(parkingToDropoff[parkingNode][request.dropoffNode]);
                     break;
                 }
             }

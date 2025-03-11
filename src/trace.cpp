@@ -2,7 +2,7 @@
 
 using namespace palloc;
 
-size_t Trace::getTimeStep() const noexcept { return timestep; }
+uint64_t Trace::getTimeStep() const noexcept { return timestep; }
 
 size_t Trace::getNumberOfRequests() const noexcept { return numberOfRequests; }
 
@@ -23,4 +23,3 @@ std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
 
     return os;
 }
-

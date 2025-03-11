@@ -37,8 +37,13 @@ class Simulator {
         uint64_t seed;
     };
 
-    static void simulate(Environment &env, const SimulatorOptions &options,
-                         const std::filesystem::path &outputPath);
+    struct OutputOptions {
+        std::filesystem::path path;
+        bool prettify;
+    };
+
+    static void simulate(Environment &env, const SimulatorOptions &simOptions,
+                         const OutputOptions &outputOptions);
 
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);
