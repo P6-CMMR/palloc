@@ -10,8 +10,8 @@
 namespace palloc {
 
 struct Coordinate {
-    double longitude;
     double latitude;
+    double longitude;
 };
 
 class Environment {

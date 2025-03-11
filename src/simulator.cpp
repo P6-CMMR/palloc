@@ -7,11 +7,15 @@
 #include <print>
 
 #include "scheduler.hpp"
+#include "result.hpp"
 
 using namespace palloc;
 
 void Simulator::simulate(Environment &env, const SimulatorOptions &options,
                          const std::filesystem::path &outputPath) {
+    assert(options.timesteps > 0);
+    assert(options.maxDuration > 0);
+
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
     std::println("Dropoff nodes: {}", numberOfDropoffs);
@@ -33,6 +37,10 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options,
     size_t droppedRequests = 0;
 
     Simulations simulations;
+
+    double globalCost = 0.0;
+    double globalDuration = 0.0;
+
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 1; timestep <= options.timesteps; ++timestep) {
@@ -46,15 +54,23 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options,
 
         insertNewRequests(generator, requests);
 
+        double batchCost = 0.0;
+        double batchAverageDuration = 0.0;
+
         if (!requests.empty() && (timestep % options.batchDelay == 0)) {
             if (!unassignedRequests.empty()) {
-                requests.insert(requests.end(), unassignedRequests.begin(),
+                requests.insert(requests.end(), 
+                                unassignedRequests.begin(),
                                 unassignedRequests.end());
+
                 unassignedRequests.clear();
             }
 
-            const auto result = Scheduler::scheduleBatch(env, requests);
+            auto result = Scheduler::scheduleBatch(env, requests);
             requests.clear();
+
+            batchCost = result.cost;
+            batchAverageDuration = result.averageDurations;
 
             unassignedRequests = result.unassignedRequests;
             droppedRequests += unassignedRequests.size();
@@ -64,10 +80,16 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options,
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
         }
+                  
+        traces.emplace_back(timestep, 
+                            requests.size(), 
+                            simulations.size(),
+                            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()), 
+                            batchCost, 
+                            batchAverageDuration);
 
-        traces.emplace_back(
-            timestep, requests.size(), simulations.size(),
-            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
+        globalCost += batchCost;
+        globalDuration += batchAverageDuration;
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
@@ -77,10 +99,21 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options,
         std::cout << trace << '\n';
     }
 
-    traces.saveToFile(outputPath);
-
     std::println("Finished after {}ms", time);
+
+    const double globalAvgDuration = globalDuration / static_cast<double>(options.timesteps);
+    const int minutes = static_cast<int>(globalAvgDuration);
+    const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
+    std::println("Average roundtrip time: {}m {}s", minutes, seconds);
+
+    const double globalAvgCost = globalCost / static_cast<double>(options.timesteps);
+    std::println("Average objective cost: {}", globalAvgCost);
     std::println("Total requests dropped: {}", droppedRequests);
+
+    if (!outputPath.empty()) {
+        Result result(traces, globalAvgDuration, globalAvgCost, droppedRequests);
+        result.saveToFile(outputPath);
+    }
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {

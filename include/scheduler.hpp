@@ -9,6 +9,8 @@ namespace palloc {
 struct SchedulerResult {
     Simulations simulations;
     Requests unassignedRequests;
+    double averageDurations;
+    double cost;
 };
 
 class Scheduler {

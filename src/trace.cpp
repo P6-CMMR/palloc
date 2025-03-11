@@ -10,11 +10,17 @@ size_t Trace::getNumberOfOngoingSimulations() const noexcept { return numberOfOn
 
 size_t Trace::getAvailableParkingSpots() const noexcept { return availableParkingSpots; }
 
+double Trace::getCost() const noexcept { return cost; }
+
+double Trace::getAverageDuration() const noexcept { return averageDuration; }
+
 std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
-    os << "Trace(time=" << trace.getTimeStep() << ", requests=" << trace.getNumberOfRequests()
-       << ", simulations=" << trace.getNumberOfOngoingSimulations()
-       << ", parkingSpots=" << trace.getAvailableParkingSpots() << ")";
+    os << "Trace(time=" << std::setw(5) << trace.getTimeStep() << ", requests=" << std::setw(5)
+       << trace.getNumberOfRequests() << ", simulations=" << std::setw(5)
+       << trace.getNumberOfOngoingSimulations() << ", parkingSpots=" << std::setw(5)
+       << trace.getAvailableParkingSpots() << ", cost=" << std::setw(10) << trace.getCost()
+       << ", averageDuration=" << std::setw(10) << trace.getAverageDuration() << ")";
+
     return os;
 }
 
-void Traces::saveToFile(const std::filesystem::path &outputPath) const {}

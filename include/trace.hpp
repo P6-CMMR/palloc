@@ -2,50 +2,59 @@
 #define TRACE_HPP
 
 #include <cstdint>
+#include <iomanip>
 #include <filesystem>
 #include <list>
 #include <ostream>
 #include <utility>
 
+#include "glaze/glaze.hpp"
+
 namespace palloc {
 class Trace {
    public:
     explicit Trace(uint64_t timestep, size_t numberOfRequests, size_t numberOfOngoingSimulations,
-                   size_t availableParkingSpots)
+                   size_t availableParkingSpots, double cost, double averageDuration)
         : timestep(timestep),
           numberOfRequests(numberOfRequests),
           numberOfOngoingSimulations(numberOfOngoingSimulations),
-          availableParkingSpots(availableParkingSpots) {}
+          availableParkingSpots(availableParkingSpots),
+          cost(cost),
+          averageDuration(averageDuration) {}
 
     size_t getTimeStep() const noexcept;
     size_t getNumberOfRequests() const noexcept;
     size_t getNumberOfOngoingSimulations() const noexcept;
     size_t getAvailableParkingSpots() const noexcept;
+    double getCost() const noexcept;
+    double getAverageDuration() const noexcept;
 
    private:
+   friend struct glz::meta<Trace>;
+
     uint64_t timestep;
     size_t numberOfRequests;
     size_t numberOfOngoingSimulations;
     size_t availableParkingSpots;
+    double cost;
+    double averageDuration;
 };
 
 std::ostream &operator<<(std::ostream &os, const Trace &trace);
 
-class Traces {
-   public:
-    auto begin() const { return traces.begin(); }
-    auto end() const { return traces.end(); }
-
-    template <class... Args>
-    void emplace_back(Args &&...args) {
-        traces.emplace_back(std::forward<Args>(args)...);
-    }
-
-    void saveToFile(const std::filesystem::path &outputPath) const;
-
-   private:
-    std::list<Trace> traces;
-};
+using Traces = std::list<Trace>;
 }  // namespace palloc
+
+template <>
+struct glz::meta<palloc::Trace> {
+    using T = palloc::Trace;
+    static constexpr auto value =
+        glz::object("timestep", &T::timestep,
+                    "number_of_requests", &T::numberOfRequests,
+                    "number_of_ongoing_simulations", &T::numberOfOngoingSimulations,
+                    "available_parking_spots", &T::availableParkingSpots,
+                    "cost", &T::cost,
+                    "average_duration", &T::averageDuration);
+};
 
 #endif
