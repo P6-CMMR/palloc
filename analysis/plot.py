@@ -63,21 +63,17 @@ def create_plots(data):
     fig1 = px.line(traces, x="timestep", y="available_parking_spots", 
                   title="Available Parking Spots Over Time")
     fig1.update_yaxes(title_text="# available parking spots")
-    fig1.update_xaxes(title_text="Time (minutes)")
 
     fig2 = px.line(traces, x="timestep", y="number_of_ongoing_simulations",
                   title="Number of Ongoing Simulations Over Time")
     fig2.update_yaxes(title_text="# simulations")
-    fig2.update_xaxes(title_text="Time (minutes)")
     
     fig3 = px.line(traces, x="timestep", y="cost",
                   title="Cost Over Time")
-    fig3.update_xaxes(title_text="Time (minutes)")
     
     fig4 = px.line(traces, x="timestep", y="average_duration",
                   title="Average Duration Over Time")
     fig4.update_yaxes(title_text="average duration")
-    fig4.update_xaxes(title_text="Time (minutes)")
     
     os.makedirs(output_dir_path, exist_ok=True)
     fig1.write_html(os.path.join(output_dir_path, "parking_spots.html"))
