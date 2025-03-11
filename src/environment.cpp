@@ -33,6 +33,8 @@ void Environment::loadEnvironment(const std::filesystem::path &environmentPath) 
 
     const auto error = glz::read_file_json(*this, environmentPath.string(), std::string{});
     if (error) {
-        throw std::runtime_error("Failed to read environment file: " + environmentPath.string());
+        const auto errorStr = glz::format_error(error, std::string{});
+        throw std::runtime_error("Failed to read environment file: " + environmentPath.string() +
+                                 "\nwith error: " + errorStr);
     }
 }
