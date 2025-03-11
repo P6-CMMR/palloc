@@ -124,7 +124,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
         }
     }
 
-    averageDuration = simulations.empty() ? 0 : sumDuration / static_cast<double>(simulations.size());
+    averageDuration =
+        simulations.empty() ? 0 : sumDuration / static_cast<double>(simulations.size());
 
     return {simulations, unassignedRequests, averageDuration, cost};
 }

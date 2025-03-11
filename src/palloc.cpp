@@ -31,12 +31,22 @@ int main(int argc, char **argv) {
 
         argz::parse(about, opts, argc, argv);
         if (!environmentPathOpt.has_value() && !about.printed_help) {
-            std::println("Error: Expected environment file");
+            std::println(stderr, "Error: Expected environment file");
             return EXIT_FAILURE;
         }
 
         if (!environmentPathOpt.has_value()) {
             return EXIT_SUCCESS;
+        }
+
+        if (timesteps < 1) {
+            std::println(stderr, "Error: Timesteps must be a natural number");
+            return EXIT_FAILURE;
+        }
+
+        if (maxDuration < 1) {
+            std::println(stderr, "Error: Max duration must be a natural number");
+            return EXIT_FAILURE;
         }
 
         Environment env(environmentPathOpt.value());
@@ -45,7 +55,7 @@ int main(int argc, char **argv) {
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
 
         Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchDelay, seed});
-        
+
         return EXIT_SUCCESS;
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
