@@ -99,9 +99,9 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
 
     std::println("Finished after {}ms", time);
 
-    double avgDuration = globalDuration / static_cast<double>(options.timesteps);
-    int minutes = static_cast<int>(avgDuration);
-    int seconds = static_cast<int>((avgDuration - minutes) * 60);
+    const double avgDuration = globalDuration / static_cast<double>(options.timesteps);
+    const int minutes = static_cast<int>(avgDuration);
+    const int seconds = static_cast<int>((avgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
     std::println("Average objective cost {}", globalCost / static_cast<double>(options.timesteps));
