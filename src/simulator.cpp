@@ -92,8 +92,10 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
     const auto end = std::chrono::high_resolution_clock::now();
     const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    for (const auto &trace : traces) {
-        std::cout << trace << '\n';
+    if (outputOptions.log) {
+        for (const auto &trace : traces) {
+            std::cout << trace << '\n';
+        }
     }
 
     std::println("Finished after {}ms", time);

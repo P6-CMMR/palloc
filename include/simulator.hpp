@@ -40,6 +40,7 @@ class Simulator {
     struct OutputOptions {
         std::filesystem::path path;
         bool prettify;
+        bool log;
     };
 
     static void simulate(Environment &env, const SimulatorOptions &simOptions,
