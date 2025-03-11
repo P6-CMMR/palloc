@@ -11,6 +11,9 @@
 using namespace palloc;
 
 void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
+    assert(options.timesteps > 0);
+    assert(options.maxDuration > 0);
+
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
     std::println("Dropoff nodes: {}", numberOfDropoffs);
@@ -33,18 +36,8 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
 
     Simulations simulations;
 
-    std::optional<size_t> batchCost = std::nullopt;
-    std::optional<double> batchAverageDuration = std::nullopt;
-
-    size_t holderCost = 0;
-    double holderDuration = 0;
-
-    size_t globalCost = 0;
-    double globalDuration = 0;
-
-    // Should just be around timesteps / options.batchDelay, but i count to be safe.
-    uint64_t costCounter = 0;
-    uint64_t durationCounter = 0;
+    double globalCost = 0.0;
+    double globalDuration = 0.0;
 
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
@@ -58,6 +51,9 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
         }
 
         insertNewRequests(generator, requests);
+
+        double batchCost = 0.0;
+        double batchAverageDuration = 0.0;
 
         if (!requests.empty() && (timestep % options.batchDelay == 0)) {
             if (!unassignedRequests.empty()) {
@@ -85,18 +81,11 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
             Trace(timestep, requests.size(), simulations.size(),
                   std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
 
-        if (batchCost.has_value()) {
-            trace.setCost(batchCost.value());
-            globalCost += batchCost.value();
-            costCounter++;
-            batchCost = std::nullopt;
-        }
-        if (batchAverageDuration.has_value()) {
-            trace.setAverageDuration(batchAverageDuration.value());
-            globalDuration += batchAverageDuration.value();
-            durationCounter++;
-            batchAverageDuration = std::nullopt;
-        }
+        trace.setCost(batchCost);
+        globalCost += batchCost;
+
+        trace.setAverageDuration(batchAverageDuration);
+        globalDuration += batchAverageDuration;
 
         traces.push_back(trace);
     }
@@ -110,8 +99,8 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
 
     std::println("Finished after {}ms", time);
     std::println("Average timesteps to parking {}",
-                 globalDuration / durationCounter);  // Duration to get to parking
-    std::println("Objective cost {}", globalCost / costCounter);
+                 globalDuration / static_cast<double>(options.timesteps));
+    std::println("Average objective cost {}", globalCost / static_cast<double>(options.timesteps));
     std::println("Total requests dropped: {}", droppedRequests);
 }
 

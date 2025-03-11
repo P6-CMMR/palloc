@@ -97,7 +97,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
 
     double sumDuration = 0;
     double averageDuration = 0;
-    size_t cost = (size_t)objective->Value();
+    double cost = objective->Value();
 
     if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
         for (size_t i = 0; i < requestCount; ++i) {
@@ -123,7 +123,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
             }
         }
     }
-    averageDuration = sumDuration / simulations.size();
+
+    averageDuration = simulations.empty() ? 0 : sumDuration / static_cast<double>(simulations.size());
 
     return {simulations, unassignedRequests, averageDuration, cost};
 }

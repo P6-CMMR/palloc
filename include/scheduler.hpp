@@ -10,7 +10,7 @@ struct SchedulerResult {
     Simulations simulations;
     Requests unassignedRequests;
     double averageDurations;
-    size_t cost;
+    double cost;
 };
 
 class Scheduler {

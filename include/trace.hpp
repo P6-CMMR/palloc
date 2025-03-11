@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <iomanip>
 #include <list>
-#include <optional>
 #include <ostream>
 
 namespace palloc {
@@ -15,18 +14,16 @@ class Trace {
         : timestep(timestep),
           numberOfRequests(numberOfRequests),
           numberOfOngoingSimulations(numberOfOngoingSimulations),
-          availableParkingSpots(availableParkingSpots),
-          averageDuration(std::nullopt),
-          cost(std::nullopt) {}
+          availableParkingSpots(availableParkingSpots) {}
 
     size_t getTimeStep() const noexcept;
     size_t getNumberOfRequests() const noexcept;
     size_t getNumberOfOngoingSimulations() const noexcept;
     size_t getAvailableParkingSpots() const noexcept;
-    std::optional<size_t> getCost() const noexcept;
-    std::optional<double> getAverageDuration() const noexcept;
+    double getCost() const noexcept;
+    double getAverageDuration() const noexcept;
 
-    void setCost(size_t cost) noexcept;
+    void setCost(double cost) noexcept;
     void setAverageDuration(double duration) noexcept;
 
    private:
@@ -34,8 +31,8 @@ class Trace {
     size_t numberOfRequests;
     size_t numberOfOngoingSimulations;
     size_t availableParkingSpots;
-    std::optional<size_t> cost;
-    std::optional<double> averageDuration;
+    double cost = 0.0;
+    double averageDuration = 0.0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Trace &trace);
