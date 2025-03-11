@@ -102,7 +102,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     double avgDuration = globalDuration / static_cast<double>(options.timesteps);
     int minutes = static_cast<int>(avgDuration);
     int seconds = static_cast<int>((avgDuration - minutes) * 60);
-    std::println("Average time to parking: {}m {}s", minutes, seconds);
+    std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
     std::println("Average objective cost {}", globalCost / static_cast<double>(options.timesteps));
     std::println("Total requests dropped: {}", droppedRequests);
