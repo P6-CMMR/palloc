@@ -14,7 +14,6 @@ def run_simulation(env_file, output_file, timesteps=None, duration=None,
     
     os.chdir(project_root)
     
-    # Now use relative paths from project root
     executable = project_root / "build" / "palloc"
     
     if not executable.exists():
@@ -119,3 +118,4 @@ def main():
     
 if __name__ == "__main__":
     main()
+    
