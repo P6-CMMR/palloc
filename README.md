@@ -2,6 +2,12 @@
 [![Linting](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yml/badge.svg?branch=main)](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yml)
 
 # Palloc
+## Setup & Preprocessing
+To setup and preprocess the data on Ubuntu run:
+```bash
+./scripts/setup.sh
+```
+
 ## How to Compile
 ### Dependencies
 - `cmake >= 3.28`
@@ -13,7 +19,7 @@ For Ubuntu simply run:
 ```
 
 On other platforms:
-```
+```bash
 mkdir build
 cd build
 cmake ..; cmake --build .
