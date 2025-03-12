@@ -6,9 +6,9 @@
 #include <list>
 
 #include "environment.hpp"
+#include "glaze/glaze.hpp"
 #include "request_generator.hpp"
 #include "trace.hpp"
-#include "glaze/glaze.hpp"
 
 namespace palloc {
 struct Simulation {
@@ -51,14 +51,17 @@ class Simulator {
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
-    static void cutImpossibleRequests(Requests &requests, const Environment::UintVector &smallestRoundTrips);
+    static void cutImpossibleRequests(Requests &requests,
+                                      const Environment::UintVector &smallestRoundTrips);
 };
 }  // namespace palloc
 
 template <>
 struct glz::meta<palloc::SimulatorSettings> {
     using T = palloc::SimulatorSettings;
-    static constexpr auto value = glz::object("timesteps", &T::timesteps, "max_duration", &T::maxDuration, "max_request_per_step", &T::maxRequestsPerStep, "batch_interval", &T::batchInterval, "seed", &T::seed);
+    static constexpr auto value = glz::object(
+        "timesteps", &T::timesteps, "max_duration", &T::maxDuration, "max_request_per_step",
+        &T::maxRequestsPerStep, "batch_interval", &T::batchInterval, "seed", &T::seed);
 };
 
 #endif

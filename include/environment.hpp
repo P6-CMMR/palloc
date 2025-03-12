@@ -60,11 +60,10 @@ struct glz::meta<palloc::Coordinate> {
 template <>
 struct glz::meta<palloc::Environment> {
     using T = palloc::Environment;
-    static constexpr auto value =
-        glz::object("dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff",
-                    &T::parkingToDropoff, "parking_capacities", &T::availableParkingSpots,
-                    "dropoff_coords", &T::dropoffCoords, "parking_coords", &T::parkingCoords, 
-                    "smallest_round_trips", &T::smallestRoundTrips);
+    static constexpr auto value = glz::object(
+        "dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff", &T::parkingToDropoff,
+        "parking_capacities", &T::availableParkingSpots, "dropoff_coords", &T::dropoffCoords,
+        "parking_coords", &T::parkingCoords, "smallest_round_trips", &T::smallestRoundTrips);
 };
 
 #endif

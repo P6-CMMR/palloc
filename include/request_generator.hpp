@@ -8,23 +8,23 @@
 namespace palloc {
 
 class Request {
-    public:
-        explicit Request(uint64_t dropoffNode, uint64_t duration)
-                : dropoffNode(dropoffNode), duration(duration) {}
+   public:
+    explicit Request(uint64_t dropoffNode, uint64_t duration)
+        : dropoffNode(dropoffNode), duration(duration) {}
 
-                uint64_t getDropoffNode() const noexcept;
-        uint64_t getDuration() const noexcept;
-        uint64_t getTimesDropped() const noexcept;
+    uint64_t getDropoffNode() const noexcept;
+    uint64_t getDuration() const noexcept;
+    uint64_t getTimesDropped() const noexcept;
 
-        void decrementDuration() noexcept;
-        void incrementTimesDropped() noexcept;
+    void decrementDuration() noexcept;
+    void incrementTimesDropped() noexcept;
 
-        bool isDead() const noexcept;
+    bool isDead() const noexcept;
 
-    private:
-        uint64_t dropoffNode;
-        uint64_t duration;
-        uint64_t timesDropped = 0;
+   private:
+    uint64_t dropoffNode;
+    uint64_t duration;
+    uint64_t timesDropped = 0;
 };
 
 using Requests = std::vector<Request>;

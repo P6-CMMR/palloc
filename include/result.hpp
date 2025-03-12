@@ -3,16 +3,16 @@
 
 #include <cstdint>
 
-#include "trace.hpp"
 #include "simulator.hpp"
+#include "trace.hpp"
 
 namespace palloc {
 class Result {
    public:
-    explicit Result(Traces traces, SimulatorSettings simSettings, size_t droppedRequests, double globalAvgDuration,
-                    double globalAvgCost)
+    explicit Result(Traces traces, SimulatorSettings simSettings, size_t droppedRequests,
+                    double globalAvgDuration, double globalAvgCost)
         : traces(std::move(traces)),
-          simSettings(std::move(simSettings)),
+          simSettings(simSettings),
           droppedRequests(droppedRequests),
           globalAvgDuration(globalAvgDuration),
           globalAvgCost(globalAvgCost) {}
@@ -34,8 +34,8 @@ template <>
 struct glz::meta<palloc::Result> {
     using T = palloc::Result;
     static constexpr auto value = glz::object(
-        "total_dropped_requests", &T::droppedRequests, "global_avg_duration",
-        &T::globalAvgDuration, "global_avg_cost", &T::globalAvgCost, "settings", &T::simSettings, "traces", &T::traces);
+        "total_dropped_requests", &T::droppedRequests, "global_avg_duration", &T::globalAvgDuration,
+        "global_avg_cost", &T::globalAvgCost, "settings", &T::simSettings, "traces", &T::traces);
 };
 
 #endif

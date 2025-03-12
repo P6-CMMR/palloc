@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
         const auto seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
- 
+
         Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchInterval, seed},
                             {outputPathOpt.value_or(""), prettify, log});
     } catch (std::exception &e) {

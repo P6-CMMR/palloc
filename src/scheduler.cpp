@@ -74,9 +74,9 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    // min sum_{r in R} sum_{p in P} ((tau_P(r_d, p) + tau_D(p, r_d) * x_rp) + (u * penalty * (timesDropped + 1))
-    // minimize the cost of time for getting to parking based on time getting to parking and a large
-    // penalty for being unassigned
+    // min sum_{r in R} sum_{p in P} ((tau_P(r_d, p) + tau_D(p, r_d) * x_rp) + (u * penalty *
+    // (timesDropped + 1)) minimize the cost of time for getting to parking based on time getting to
+    // parking and a large penalty for being unassigned
     MPObjective *objective = solver->MutableObjective();
     for (size_t i = 0; i < requestCount; ++i) {
         const double dropFactor = 1.0 + static_cast<double>(requests[i].getTimesDropped());
@@ -111,9 +111,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
                 if (var[i][j]->solution_value() > 0.5) {
                     parkingNode = j;
                     assigned = true;
-                    sumDuration +=
-                        static_cast<double>(dropoffToParking[dropoffNode][parkingNode]) +
-                        static_cast<double>(parkingToDropoff[parkingNode][dropoffNode]);
+                    sumDuration += static_cast<double>(dropoffToParking[dropoffNode][parkingNode]) +
+                                   static_cast<double>(parkingToDropoff[parkingNode][dropoffNode]);
                     break;
                 }
             }

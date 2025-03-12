@@ -53,8 +53,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
         double batchCost = 0.0;
         double batchAverageDuration = 0.0;
         if (!requests.empty() && (timestep % simSettings.batchInterval == 0)) {
-            requests.insert(requests.end(), unassignedRequests.begin(),
-                            unassignedRequests.end());
+            requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
             unassignedRequests.clear();
 
             auto result = Scheduler::scheduleBatch(env, requests);
@@ -67,13 +66,15 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
             droppedRequests += unassignedRequests.size();
 
             const auto &newSimulations = result.simulations;
-            
+
             simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
         }
 
-        const auto totalAvailableParkingSpots = std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
+        const auto totalAvailableParkingSpots =
+            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
         traces.emplace_back(timestep, requests.size(), simulations.size(),
-                            totalAvailableParkingSpots, batchCost, batchAverageDuration, droppedRequests);
+                            totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                            droppedRequests);
 
         globalCost += batchCost;
         globalDuration += batchAverageDuration;
@@ -159,7 +160,8 @@ void Simulator::removeDeadRequests(Requests &unassignedRequests) {
     });
 }
 
-void Simulator::cutImpossibleRequests(Requests &requests, const Environment::UintVector &smallestRoundTrips) {
+void Simulator::cutImpossibleRequests(Requests &requests,
+                                      const Environment::UintVector &smallestRoundTrips) {
     std::erase_if(requests, [&smallestRoundTrips](Request &request) {
         assert(smallestRoundTrips.size() > request.getDropoffNode());
         return request.getDuration() < smallestRoundTrips[request.getDropoffNode()];
