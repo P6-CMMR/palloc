@@ -11,10 +11,10 @@
 
 using namespace palloc;
 
-void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
-                         const OutputOptions &outputOptions) {
-    assert(simOptions.timesteps > 0);
-    assert(simOptions.maxDuration > 0);
+void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
+                         const OutputSettings &outputSettings) {
+    assert(simSettings.timesteps > 0);
+    assert(simSettings.maxDuration > 0);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
@@ -25,14 +25,14 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
     std::println("Total parking capacity: {}",
                  std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
 
-    const auto seed = simOptions.seed;
+    const auto seed = simSettings.seed;
     std::println("Using seed: {}", seed);
 
-    std::println("Simulating {} timesteps...", simOptions.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simOptions.maxDuration,
-                               simOptions.maxRequestsPerStep, seed);
+    std::println("Simulating {} timesteps...", simSettings.timesteps);
+    RequestGenerator generator(numberOfDropoffs, simSettings.maxDuration,
+                               simSettings.maxRequestsPerStep, seed);
     Requests requests;
-    requests.reserve(simOptions.timesteps * simOptions.maxRequestsPerStep / 2);
+    requests.reserve(simSettings.timesteps * simSettings.maxRequestsPerStep / 2);
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;
@@ -44,27 +44,18 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
 
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
-    for (uint64_t timestep = 1; timestep <= simOptions.timesteps; ++timestep) {
-        if (!simulations.empty()) {
-            updateSimulations(simulations, env);
-        }
-
-        if (!unassignedRequests.empty()) {
-            removeExpiredUnassignedRequests(unassignedRequests);
-        }
-
+    for (uint64_t timestep = 1; timestep <= simSettings.timesteps; ++timestep) {
+        updateSimulations(simulations, env);
+        removeDeadRequests(unassignedRequests);
         insertNewRequests(generator, requests);
+        cutImpossibleRequests(requests, env.getSmallestRoundTrips());
 
         double batchCost = 0.0;
         double batchAverageDuration = 0.0;
-
-        if (!requests.empty() && (timestep % simOptions.batchDelay == 0)) {
-            if (!unassignedRequests.empty()) {
-                requests.insert(requests.end(), unassignedRequests.begin(),
-                                unassignedRequests.end());
-
-                unassignedRequests.clear();
-            }
+        if (!requests.empty() && (timestep % simSettings.batchInterval == 0)) {
+            requests.insert(requests.end(), unassignedRequests.begin(),
+                            unassignedRequests.end());
+            unassignedRequests.clear();
 
             auto result = Scheduler::scheduleBatch(env, requests);
             requests.clear();
@@ -76,14 +67,13 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
             droppedRequests += unassignedRequests.size();
 
             const auto &newSimulations = result.simulations;
-            if (!newSimulations.empty()) {
-                simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
-            }
+            
+            simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
         }
 
+        const auto totalAvailableParkingSpots = std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
         traces.emplace_back(timestep, requests.size(), simulations.size(),
-                            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()),
-                            batchCost, batchAverageDuration);
+                            totalAvailableParkingSpots, batchCost, batchAverageDuration, droppedRequests);
 
         globalCost += batchCost;
         globalDuration += batchAverageDuration;
@@ -92,7 +82,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
     const auto end = std::chrono::high_resolution_clock::now();
     const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    if (outputOptions.log) {
+    if (outputSettings.log) {
         for (const auto &trace : traces) {
             std::cout << trace << '\n';
         }
@@ -100,18 +90,18 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
 
     std::println("Finished after {}ms", time);
 
-    const double globalAvgDuration = globalDuration / static_cast<double>(simOptions.timesteps);
+    const double globalAvgDuration = globalDuration / static_cast<double>(simSettings.timesteps);
     const int minutes = static_cast<int>(globalAvgDuration);
     const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    const double globalAvgCost = globalCost / static_cast<double>(simOptions.timesteps);
+    const double globalAvgCost = globalCost / static_cast<double>(simSettings.timesteps);
     std::println("Average objective cost: {}", globalAvgCost);
     std::println("Total requests dropped: {}", droppedRequests);
 
-    if (!outputOptions.path.empty()) {
-        Result result(traces, seed, droppedRequests, globalAvgDuration, globalAvgCost);
-        result.saveToFile(outputOptions.path, outputOptions.prettify);
+    if (!outputSettings.path.empty()) {
+        Result result(traces, simSettings, droppedRequests, globalAvgDuration, globalAvgCost);
+        result.saveToFile(outputSettings.path, outputSettings.prettify);
     }
 }
 
@@ -162,12 +152,16 @@ void Simulator::insertNewRequests(RequestGenerator &generator, Requests &request
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());
 }
 
-void Simulator::removeExpiredUnassignedRequests(Requests &unassignedRequests) {
-    const auto isDead = [](Request &req) {
-        --req.duration;
-        return req.duration == 0;
-    };
+void Simulator::removeDeadRequests(Requests &unassignedRequests) {
+    std::erase_if(unassignedRequests, [](Request &request) {
+        request.decrementDuration();
+        return request.isDead();
+    });
+}
 
-    const auto [first, last] = std::ranges::remove_if(unassignedRequests, isDead);
-    unassignedRequests.erase(first, last);
+void Simulator::cutImpossibleRequests(Requests &requests, const Environment::UintVector &smallestRoundTrips) {
+    std::erase_if(requests, [&smallestRoundTrips](Request &request) {
+        assert(smallestRoundTrips.size() > request.getDropoffNode());
+        return request.getDuration() < smallestRoundTrips[request.getDropoffNode()];
+    });
 }

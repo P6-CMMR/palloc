@@ -4,14 +4,15 @@
 #include <cstdint>
 
 #include "trace.hpp"
+#include "simulator.hpp"
 
 namespace palloc {
 class Result {
    public:
-    explicit Result(Traces traces, uint64_t seed, size_t droppedRequests, double globalAvgDuration,
+    explicit Result(Traces traces, SimulatorSettings simSettings, size_t droppedRequests, double globalAvgDuration,
                     double globalAvgCost)
         : traces(std::move(traces)),
-          seed(seed),
+          simSettings(std::move(simSettings)),
           droppedRequests(droppedRequests),
           globalAvgDuration(globalAvgDuration),
           globalAvgCost(globalAvgCost) {}
@@ -22,7 +23,7 @@ class Result {
     friend struct glz::meta<Result>;
 
     Traces traces;
-    uint64_t seed;
+    SimulatorSettings simSettings;
     size_t droppedRequests;
     double globalAvgDuration;
     double globalAvgCost;
@@ -33,8 +34,8 @@ template <>
 struct glz::meta<palloc::Result> {
     using T = palloc::Result;
     static constexpr auto value = glz::object(
-        "seed", &T::seed, "droppedRequests", &T::droppedRequests, "globalAvgDuration",
-        &T::globalAvgDuration, "globalAvgCost", &T::globalAvgCost, "traces", &T::traces);
+        "total_dropped_requests", &T::droppedRequests, "global_avg_duration",
+        &T::globalAvgDuration, "global_avg_cost", &T::globalAvgCost, "settings", &T::simSettings, "traces", &T::traces);
 };
 
 #endif

@@ -91,18 +91,37 @@ def extract_coordinates_with_parking(root):
     
     return dropoff_coords, coords_list, capacities_list
 
+def calculate_shortest_roundtrips(dropoff_to_parking, parking_to_dropoff):
+    print("Generating shortest round trips...")
+    smallest_round_trips = []
+    for i in range(len(dropoff_to_parking)):
+        min_round_trip = 2**64 - 1
+    
+        for j in range(len(parking_to_dropoff)):
+            round_trip_time = dropoff_to_parking[i][j] + parking_to_dropoff[j][i]
+            
+            if round_trip_time < min_round_trip:
+                min_round_trip = round_trip_time
+        
+        smallest_round_trips.append(min_round_trip)
+        
+    return smallest_round_trips
+
 def write_response_to_file(dropoff_to_parking, parking_to_dropoff, parking_capacities, dropoff_coords, parking_coords):
     filename = f"../data.json"
 
     dropoff_to_parking = [[round(d / 60) for d in row] for row in dropoff_to_parking]
     parking_to_dropoff = [[round(d / 60) for d in row] for row in parking_to_dropoff]
 
+    smallest_round_trips = calculate_shortest_roundtrips(dropoff_to_parking, parking_to_dropoff)
+
     output = {
         "dropoff_to_parking": dropoff_to_parking,
         "parking_to_dropoff": parking_to_dropoff,
         "parking_capacities": parking_capacities,
         "dropoff_coords": dropoff_coords,
-        "parking_coords": parking_coords
+        "parking_coords": parking_coords,
+        "smallest_round_trips": smallest_round_trips
     }
     
     with open(filename, 'w') as f:

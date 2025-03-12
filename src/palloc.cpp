@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
         uint64_t timesteps = 1000;
         uint64_t maxDuration = 60;
         uint64_t maxRequestsPerStep = 10;
-        uint64_t batchDelay = 2;
+        uint64_t batchInterval = 2;
         std::optional<uint64_t> seedOpt;
         bool prettify = false;
         bool log = false;
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
             {{"timesteps", 't'}, timesteps, "timesteps in minutes to run simulation"},
             {{"duration", 'd'}, maxDuration, "max duration in minutes of requests"},
             {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
-            {{"batch-delay", 'b'}, batchDelay, "delay in minutes before processing requests"},
+            {{"batch-delay", 'b'}, batchInterval, "interval in minutes before processing requests"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
             {{"output", 'o'}, outputPathOpt, "the output file to store results in"},
             {{"prettify", 'p'}, prettify, "whether to prettify output or not"},
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
         const auto seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
  
-        Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchDelay, seed},
+        Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchInterval, seed},
                             {outputPathOpt.value_or(""), prettify, log});
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());

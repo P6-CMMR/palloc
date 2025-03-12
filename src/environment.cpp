@@ -24,7 +24,11 @@ const Environment::Coordinates &Environment::getParkingCoordinates() const noexc
 
 size_t Environment::getNumberOfDropoffs() const noexcept { return dropoffToParking.size(); }
 
-size_t Environment::getNumberOfParkings() const noexcept { return parkingToDropoff.size(); }
+size_t Environment::getNumberOfParkings() const noexcept { 
+    return parkingToDropoff.size(); 
+}
+
+const Environment::UintVector &Environment::getSmallestRoundTrips() const noexcept { return smallestRoundTrips; }
 
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
     if (!std::filesystem::exists(environmentPath)) {

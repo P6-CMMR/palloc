@@ -6,19 +6,32 @@
 #include <vector>
 
 namespace palloc {
-struct Request {
-    size_t dropoffNode;
-    uint64_t duration;
 
-    explicit Request(size_t dropoffNode, uint64_t duration)
-        : dropoffNode(dropoffNode), duration(duration) {}
+class Request {
+    public:
+        explicit Request(uint64_t dropoffNode, uint64_t duration)
+                : dropoffNode(dropoffNode), duration(duration) {}
+
+                uint64_t getDropoffNode() const noexcept;
+        uint64_t getDuration() const noexcept;
+        uint64_t getTimesDropped() const noexcept;
+
+        void decrementDuration() noexcept;
+        void incrementTimesDropped() noexcept;
+
+        bool isDead() const noexcept;
+
+    private:
+        uint64_t dropoffNode;
+        uint64_t duration;
+        uint64_t timesDropped = 0;
 };
 
 using Requests = std::vector<Request>;
 
 class RequestGenerator {
    public:
-    explicit RequestGenerator(size_t dropoffNodes, uint64_t maxDuration,
+    explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxDuration,
                               uint64_t maxRequestsPerStep, uint64_t seed)
         : dropoffDist(0, dropoffNodes - 1),
           durationDist(1, maxDuration),

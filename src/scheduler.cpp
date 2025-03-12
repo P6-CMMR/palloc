@@ -7,7 +7,7 @@
 using namespace palloc;
 using namespace operations_research;
 
-SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &requests) {
+SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     assert(!requests.empty());
 
     std::unique_ptr<MPSolver> solver(MPSolver::CreateSolver("SCIP"));
@@ -51,8 +51,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
     // if a duration to a parking spot is longer than the time request duration then the constrain
     // x_rp is 0
     for (size_t i = 0; i < requestCount; ++i) {
-        const auto dropoffNode = requests[i].dropoffNode;
-        const auto requestDuration = requests[i].duration;
+        const auto dropoffNode = requests[i].getDropoffNode();
+        const auto requestDuration = requests[i].getDuration();
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const auto travelTime =
                 (parkingToDropoff[j][dropoffNode] + dropoffToParking[dropoffNode][j]);
@@ -74,13 +74,14 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
         }
     }
 
-    // min sum_{r in R} sum_{p in P} ((tau_P(r_d, p) + tau_D(p, r_d) * x_rp) + (u * penalty)
+    // min sum_{r in R} sum_{p in P} ((tau_P(r_d, p) + tau_D(p, r_d) * x_rp) + (u * penalty * (timesDropped + 1))
     // minimize the cost of time for getting to parking based on time getting to parking and a large
     // penalty for being unassigned
     MPObjective *objective = solver->MutableObjective();
     for (size_t i = 0; i < requestCount; ++i) {
-        objective->SetCoefficient(unassignedVars[i], UNASSIGNED_PENALTY);
-        const auto dropoffNode = requests[i].dropoffNode;
+        const double dropFactor = 1.0 + static_cast<double>(requests[i].getTimesDropped());
+        objective->SetCoefficient(unassignedVars[i], UNASSIGNED_PENALTY * dropFactor);
+        const auto dropoffNode = requests[i].getDropoffNode();
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const double cost = static_cast<double>(dropoffToParking[dropoffNode][j] +
                                                     parkingToDropoff[j][dropoffNode]);
@@ -101,26 +102,28 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, const Requests &reque
 
     if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
         for (size_t i = 0; i < requestCount; ++i) {
-            const auto &request = requests[i];
+            auto &request = requests[i];
             size_t parkingNode = 0;
             bool assigned = false;
+            const auto dropoffNode = request.getDropoffNode();
+            const auto duration = request.getDuration();
             for (size_t j = 0; j < numberOfParkings; ++j) {
                 if (var[i][j]->solution_value() > 0.5) {
                     parkingNode = j;
                     assigned = true;
                     sumDuration +=
-                        static_cast<double>(dropoffToParking[request.dropoffNode][parkingNode]) +
-                        static_cast<double>(parkingToDropoff[parkingNode][request.dropoffNode]);
+                        static_cast<double>(dropoffToParking[dropoffNode][parkingNode]) +
+                        static_cast<double>(parkingToDropoff[parkingNode][dropoffNode]);
                     break;
                 }
             }
 
             if (assigned) {
                 --availableParkingSpots[parkingNode];
-                simulations.emplace_back(request.dropoffNode, parkingNode, request.duration);
-
+                simulations.emplace_back(dropoffNode, parkingNode, duration);
             } else {
                 unassignedRequests.push_back(request);
+                request.incrementTimesDropped();
             }
         }
     }
