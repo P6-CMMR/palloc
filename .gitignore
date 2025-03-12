@@ -4,4 +4,4 @@ build
 osrm-server
 .venv
 *.osm
-*.html
+plots
