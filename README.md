@@ -24,3 +24,10 @@ mkdir build
 cd build
 cmake ..; cmake --build .
 ```
+
+## Plotting Results
+From project directory run:
+```bash
+./build/palloc -e data.json -o <output-file-name> <OPTIONS>
+python3 analysis/plot.py <output-file-name>
+```
