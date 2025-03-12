@@ -2,8 +2,6 @@
 [![Linting](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yml/badge.svg?branch=main)](https://github.com/P6-CMMR/palloc/actions/workflows/linting.yml)
 
 # Palloc
-Parking Allocator for Autonomous Vehicles
-
 ## Setup & Preprocessing
 To setup and preprocess the data on Ubuntu run:
 ```bash
