@@ -2,7 +2,7 @@
 
 using namespace palloc;
 
-size_t Trace::getTimeStep() const noexcept { return timestep; }
+uint64_t Trace::getTimeStep() const noexcept { return timestep; }
 
 size_t Trace::getNumberOfRequests() const noexcept { return numberOfRequests; }
 
@@ -13,12 +13,6 @@ size_t Trace::getAvailableParkingSpots() const noexcept { return availableParkin
 double Trace::getCost() const noexcept { return cost; }
 
 double Trace::getAverageDuration() const noexcept { return averageDuration; }
-
-void Trace::setAverageDuration(double averageDuration) noexcept {
-    this->averageDuration = averageDuration;
-}
-
-void Trace::setCost(double cost) noexcept { this->cost = cost; }
 
 std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
     os << "Trace(time=" << std::setw(5) << trace.getTimeStep() << ", requests=" << std::setw(5)

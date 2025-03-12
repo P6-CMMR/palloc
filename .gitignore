@@ -1,3 +1,7 @@
 build
 .vscode
 *.json
+osrm-server
+.venv
+*.osm
+*.html

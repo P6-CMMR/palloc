@@ -6,13 +6,15 @@
 #include <numeric>
 #include <print>
 
+#include "result.hpp"
 #include "scheduler.hpp"
 
 using namespace palloc;
 
-void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
-    assert(options.timesteps > 0);
-    assert(options.maxDuration > 0);
+void Simulator::simulate(Environment &env, const SimulatorOptions &simOptions,
+                         const OutputOptions &outputOptions) {
+    assert(simOptions.timesteps > 0);
+    assert(simOptions.maxDuration > 0);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
@@ -23,13 +25,14 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
     std::println("Total parking capacity: {}",
                  std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
 
-    std::println("Using seed: {}", options.seed);
+    const auto seed = simOptions.seed;
+    std::println("Using seed: {}", seed);
 
-    std::println("Simulating {} timesteps...", options.timesteps);
-    RequestGenerator generator(numberOfDropoffs, options.maxDuration, options.maxRequestsPerStep,
-                               options.seed);
+    std::println("Simulating {} timesteps...", simOptions.timesteps);
+    RequestGenerator generator(numberOfDropoffs, simOptions.maxDuration,
+                               simOptions.maxRequestsPerStep, seed);
     Requests requests;
-    requests.reserve(options.timesteps * options.maxRequestsPerStep / 2);
+    requests.reserve(simOptions.timesteps * simOptions.maxRequestsPerStep / 2);
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;
@@ -41,7 +44,7 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
 
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
-    for (uint64_t timestep = 1; timestep <= options.timesteps; ++timestep) {
+    for (uint64_t timestep = 1; timestep <= simOptions.timesteps; ++timestep) {
         if (!simulations.empty()) {
             updateSimulations(simulations, env);
         }
@@ -55,10 +58,11 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
         double batchCost = 0.0;
         double batchAverageDuration = 0.0;
 
-        if (!requests.empty() && (timestep % options.batchDelay == 0)) {
+        if (!requests.empty() && (timestep % simOptions.batchDelay == 0)) {
             if (!unassignedRequests.empty()) {
                 requests.insert(requests.end(), unassignedRequests.begin(),
                                 unassignedRequests.end());
+
                 unassignedRequests.clear();
             }
 
@@ -77,35 +81,38 @@ void Simulator::simulate(Environment &env, const SimulatorOptions &options) {
             }
         }
 
-        Trace trace =
-            Trace(timestep, requests.size(), simulations.size(),
-                  std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
+        traces.emplace_back(timestep, requests.size(), simulations.size(),
+                            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()),
+                            batchCost, batchAverageDuration);
 
-        trace.setCost(batchCost);
         globalCost += batchCost;
-
-        trace.setAverageDuration(batchAverageDuration);
         globalDuration += batchAverageDuration;
-
-        traces.push_back(trace);
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
     const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    for (const auto &trace : traces) {
-        std::cout << trace << '\n';
+    if (outputOptions.log) {
+        for (const auto &trace : traces) {
+            std::cout << trace << '\n';
+        }
     }
 
     std::println("Finished after {}ms", time);
 
-    const double avgDuration = globalDuration / static_cast<double>(options.timesteps);
-    const int minutes = static_cast<int>(avgDuration);
-    const int seconds = static_cast<int>((avgDuration - minutes) * 60);
+    const double globalAvgDuration = globalDuration / static_cast<double>(simOptions.timesteps);
+    const int minutes = static_cast<int>(globalAvgDuration);
+    const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    std::println("Average objective cost {}", globalCost / static_cast<double>(options.timesteps));
+    const double globalAvgCost = globalCost / static_cast<double>(simOptions.timesteps);
+    std::println("Average objective cost: {}", globalAvgCost);
     std::println("Total requests dropped: {}", droppedRequests);
+
+    if (!outputOptions.path.empty()) {
+        Result result(traces, seed, droppedRequests, globalAvgDuration, globalAvgCost);
+        result.saveToFile(outputOptions.path, outputOptions.prettify);
+    }
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {

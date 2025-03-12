@@ -2,6 +2,7 @@
 #define SIMULATOR_HPP
 
 #include <cstdint>
+#include <filesystem>
 #include <list>
 
 #include "environment.hpp"
@@ -36,7 +37,14 @@ class Simulator {
         uint64_t seed;
     };
 
-    static void simulate(Environment &env, const SimulatorOptions &options);
+    struct OutputOptions {
+        std::filesystem::path path;
+        bool prettify;
+        bool log;
+    };
+
+    static void simulate(Environment &env, const SimulatorOptions &simOptions,
+                         const OutputOptions &outputOptions);
 
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);
