@@ -31,3 +31,5 @@ From project directory run:
 ./build/palloc -e data.json -o <output-file-name> <OPTIONS>
 python3 analysis/plot.py <output-file-name>
 ```
+
+now open `plots/index.html` with a browser
