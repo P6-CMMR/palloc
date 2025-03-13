@@ -72,9 +72,15 @@ def create_plots(data):
     # Settings
     settings = data.get("settings", {})
     timesteps = settings.get("timesteps", "N/A")
-    max_duration = settings.get("max_duration", "N/A")
+    
+    max_request_duration_raw = settings.get("max_request_duration", "N/A")
+    max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
+    
     max_request_per_step = settings.get("max_request_per_step", "N/A")
-    batch_interval = settings.get("batch_interval", "N/A")
+    
+    batch_interval_raw = settings.get("batch_interval", "N/A")
+    batch_interval = f"{batch_interval_raw}m" if batch_interval_raw != "N/A" else "N/A"
+    
     seed = settings.get("seed", "N/A")
     
     # Stats
@@ -91,7 +97,7 @@ def create_plots(data):
         sys.exit(1)
     
     html_content = template.replace("{{timesteps}}", str(timesteps))
-    html_content = html_content.replace("{{max_duration}}", str(max_duration))
+    html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
     html_content = html_content.replace("{{max_request_per_step}}", str(max_request_per_step))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{seed}}", str(seed))

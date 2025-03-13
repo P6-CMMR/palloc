@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
         std::optional<std::string> environmentPathOpt;
         std::optional<std::string> outputPathOpt;
         uint64_t timesteps = 1000;
-        uint64_t maxDuration = 60;
+        uint64_t maxRequestDuration = 60;
         uint64_t maxRequestsPerStep = 10;
         uint64_t batchInterval = 2;
         std::optional<uint64_t> seedOpt;
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
         argz::options opts{
             {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
             {{"timesteps", 't'}, timesteps, "timesteps in minutes to run simulation"},
-            {{"duration", 'd'}, maxDuration, "max duration in minutes of requests"},
+            {{"duration", 'd'}, maxRequestDuration, "max duration in minutes of requests"},
             {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
             {{"batch-delay", 'b'}, batchInterval, "interval in minutes before processing requests"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        if (maxDuration < 1) {
+        if (maxRequestDuration < 1) {
             std::println(stderr, "Error: Max duration must be a natural number");
             return EXIT_FAILURE;
         }
@@ -60,8 +60,9 @@ int main(int argc, char **argv) {
         const auto seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
 
-        Simulator::simulate(env, {timesteps, maxDuration, maxRequestsPerStep, batchInterval, seed},
-                            {outputPathOpt.value_or(""), prettify, log});
+        Simulator::simulate(
+            env, {timesteps, maxRequestDuration, maxRequestsPerStep, batchInterval, seed},
+            {outputPathOpt.value_or(""), prettify, log});
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;

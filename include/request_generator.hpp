@@ -31,10 +31,10 @@ using Requests = std::vector<Request>;
 
 class RequestGenerator {
    public:
-    explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxDuration,
+    explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxRequestDuration,
                               uint64_t maxRequestsPerStep, uint64_t seed)
         : dropoffDist(0, dropoffNodes - 1),
-          durationDist(1, maxDuration),
+          durationDist(1, maxRequestDuration),
           requestCountDist(0, maxRequestsPerStep),
           rng(seed) {}
 

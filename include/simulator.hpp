@@ -30,7 +30,7 @@ using Simulations = std::list<Simulation>;
 
 struct SimulatorSettings {
     uint64_t timesteps;
-    uint64_t maxDuration;
+    uint64_t maxRequestDuration;
     uint64_t maxRequestsPerStep;
     uint64_t batchInterval;
     uint64_t seed;
@@ -59,9 +59,10 @@ class Simulator {
 template <>
 struct glz::meta<palloc::SimulatorSettings> {
     using T = palloc::SimulatorSettings;
-    static constexpr auto value = glz::object(
-        "timesteps", &T::timesteps, "max_duration", &T::maxDuration, "max_request_per_step",
-        &T::maxRequestsPerStep, "batch_interval", &T::batchInterval, "seed", &T::seed);
+    static constexpr auto value =
+        glz::object("timesteps", &T::timesteps, "max_request_duration", &T::maxRequestDuration,
+                    "max_request_per_step", &T::maxRequestsPerStep, "batch_interval",
+                    &T::batchInterval, "seed", &T::seed);
 };
 
 #endif

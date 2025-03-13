@@ -14,7 +14,7 @@ using namespace palloc;
 void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings) {
     assert(simSettings.timesteps > 0);
-    assert(simSettings.maxDuration > 0);
+    assert(simSettings.maxRequestDuration > 0);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
@@ -29,7 +29,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::println("Using seed: {}", seed);
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxDuration,
+    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration,
                                simSettings.maxRequestsPerStep, seed);
     Requests requests;
     requests.reserve(simSettings.timesteps * simSettings.maxRequestsPerStep / 2);
