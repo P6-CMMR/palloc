@@ -26,6 +26,10 @@ size_t Environment::getNumberOfDropoffs() const noexcept { return dropoffToParki
 
 size_t Environment::getNumberOfParkings() const noexcept { return parkingToDropoff.size(); }
 
+const Environment::UintVector &Environment::getSmallestRoundTrips() const noexcept {
+    return smallestRoundTrips;
+}
+
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
     if (!std::filesystem::exists(environmentPath)) {
         throw std::runtime_error("Environment file does not exist: " + environmentPath.string());

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Palloc Simulation Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { color: #2c3e50; }
+        .container { 
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .settings-container {
+            border-left: 5px solid #27ae60;  /* Green border for settings */
+        }
+        .stats-container { 
+            border-left: 5px solid #3498db;  /* Blue border for stats */
+        }
+        .stat-item { 
+            margin: 8px 0;
+        }
+        .stat-item span:first-child { 
+            font-weight: bold;
+            margin-right: 10px; 
+        }
+        .plot-links { margin: 20px 0; }
+        .plot-links a { 
+            display: block; 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #f5f5f5; 
+            text-decoration: none;
+            color: #3498db;
+            border-radius: 5px;
+        }
+        .plot-links a:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Palloc Simulation Results</h1>
+    <div class="container settings-container">
+        <h2>Simulation Settings</h2>
+        <div class="stat-item">
+            <span>Timesteps:</span>
+            <span>{{timesteps}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Request Duration:</span>
+            <span>{{max_request_duration}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Requests Per Step:</span>
+            <span>{{max_request_per_step}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Batch Interval:</span>
+            <span>{{batch_interval}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Seed:</span>
+            <span>{{seed}}</span>
+        </div>
+    </div>
+    
+    <div class="container stats-container">
+        <h2>General Statistics</h2>
+        <div class="stat-item">
+            <span>Total Dropped Requests:</span>
+            <span>{{total_dropped}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Global Average Duration:</span>
+            <span>{{global_avg_duration}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Global Average Cost:</span>
+            <span>{{global_avg_cost}}</span>
+        </div>
+    </div>
+    
+    <h2>Plots</h2>
+    <div class="plot-links">
+        <a href="parking_spots.html">Available Parking Spots Over Time</a>
+        <a href="simulations.html">Number of Ongoing Simulations Over Time</a>
+        <a href="cost.html">Cost Over Time</a>
+        <a href="duration.html">Average Duration Over Time</a>
+        <a href="dropped_requests.html">Dropped Requests Over Time</a>
+    </div>
+</body>
+</html>

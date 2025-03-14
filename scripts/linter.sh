@@ -27,8 +27,8 @@ if [ ! -f "build/compile_commands.json" ]; then
     ./scripts/compile.sh
 fi
 
-# Run clang-format and clang-tidy on all cpp and hpp files in the project except in lib and build directories
-for file in $(find . -name '*.cpp' -o -name '*.hpp' | grep -v -e '^./build/' -e '^./tests/'); do
+# Run clang-format and clang-tidy on all cpp and hpp files in the project except grepped directories
+for file in $(find . -name '*.cpp' -o -name '*.hpp' | grep -v -e '^./build/' -e '^./tests/' -e '^./.venv/'); do
     echo "Running clang-format on: $file"
     clang-format -i $file
 

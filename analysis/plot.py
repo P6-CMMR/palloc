@@ -1,51 +1,13 @@
 import plotly.express as px
 import pandas as pd
 import json
-import subprocess
 import sys
 import os
 import argparse
 from pathlib import Path
 
-def run_simulation(env_file, output_file, timesteps=None, duration=None, 
-                  requests=None, batch_delay=None, seed=None):
-    script_path = Path(__file__).resolve()
-    project_root = script_path.parent.parent
-    
-    os.chdir(project_root)
-    
-    executable = project_root / "build" / "palloc"
-    
-    if not executable.exists():
-        print(f"Error: Executable not found at {executable}", file=sys.stderr)
-        sys.exit(1)
-        
-    cmd = [str(executable), "-e", env_file]
-    
-    cmd.extend(["-o", output_file])
-        
-    if timesteps is not None:
-        cmd.extend(["-t", str(timesteps)])
-    if requests is not None:
-        cmd.extend(["-r", str(requests)])
-    if seed is not None:
-        cmd.extend(["-s", str(seed)])
-    if duration is not None:
-        cmd.extend(["-d", str(duration)])
-    if batch_delay is not None:
-        cmd.extend(["-b", str(batch_delay)])
-        
-    print(f"Running: {" ".join(cmd)}")
-    
-    try:
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print("Simulation completed successfully")
-    except subprocess.CalledProcessError as e:
-        print(f"Error running simulation: {e}", file=sys.stderr)
-        print(f"Error output: {e.stderr}", file=sys.stderr)
-        sys.exit(1)
-
 def load_results(json_file):
+    """Load simulation results from a JSON file."""
     try:
         with open(json_file, "r") as f:
             return json.load(f)
@@ -53,13 +15,25 @@ def load_results(json_file):
         print(f"Error loading results: {e}", file=sys.stderr)
         sys.exit(1)
 
+def format_duration_min_sec(duration_in_minutes):
+    """Convert decimal minutes to minutes and seconds format."""
+    minutes = int(duration_in_minutes)
+    seconds = int((duration_in_minutes - minutes) * 60)
+    return f"{minutes}m {seconds}s"
+
+def write_html_with_button(fig, filename, button_template, output_dir_path):
+    """Write html with backlink"""
+    fig_html = fig.to_html(include_plotlyjs="cdn")
+    modified_html = fig_html.replace("<body>", f"<body>{button_template}")
+    with open(os.path.join(output_dir_path, filename), "w") as f:
+        f.write(modified_html)
+
 def create_plots(data):
+    """Create plots from simulation data and save to directory."""
     output_dir_path = Path("plots")
-    if not output_dir_path.is_absolute():
-        output_dir_path = Path.cwd() / output_dir_path
-    
+
     traces = pd.DataFrame(data["traces"])
-    
+
     fig1 = px.line(traces, x="timestep", y="available_parking_spots", 
                   title="Available Parking Spots Over Time")
     fig1.update_yaxes(title_text="# available parking spots")
@@ -75,43 +49,75 @@ def create_plots(data):
                   title="Average Duration Over Time")
     fig4.update_yaxes(title_text="average duration")
     
+    fig5 = px.line(traces, x="timestep", y="dropped_requests",
+                  title="Dropped Requests Over Time")
+    fig5.update_yaxes(title_text="# dropped requests")
+    
     os.makedirs(output_dir_path, exist_ok=True)
-    fig1.write_html(os.path.join(output_dir_path, "parking_spots.html"))
-    fig2.write_html(os.path.join(output_dir_path, "simulations.html"))
-    fig3.write_html(os.path.join(output_dir_path, "cost.html"))
-    fig4.write_html(os.path.join(output_dir_path, "duration.html"))
+    
+    try:
+        button_template_path = Path(__file__).parent / "button_template.html"
+        with open(button_template_path, "r") as f:
+            button_template = f.read()
+    except Exception as e:
+        print(f"Error loading button template: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    write_html_with_button(fig1, "parking_spots.html", button_template, output_dir_path)
+    write_html_with_button(fig2, "simulations.html", button_template, output_dir_path)
+    write_html_with_button(fig3, "cost.html", button_template, output_dir_path)
+    write_html_with_button(fig4, "duration.html", button_template, output_dir_path)
+    write_html_with_button(fig5, "dropped_requests.html", button_template, output_dir_path)
+    
+    # Settings
+    settings = data.get("settings", {})
+    timesteps = settings.get("timesteps", "N/A")
+    
+    max_request_duration_raw = settings.get("max_request_duration", "N/A")
+    max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
+    
+    max_request_per_step = settings.get("max_request_per_step", "N/A")
+    
+    batch_interval_raw = settings.get("batch_interval", "N/A")
+    batch_interval = f"{batch_interval_raw}m" if batch_interval_raw != "N/A" else "N/A"
+    
+    seed = settings.get("seed", "N/A")
+    
+    # Stats
+    total_dropped = data.get("total_dropped_requests", "N/A")
+    global_avg_duration = format_duration_min_sec(data.get("global_avg_duration", 0))
+    global_avg_cost = round(data.get("global_avg_cost", 0), 2)
+    
+    try:
+        template_path = Path(__file__).parent / "template.html"
+        with open(template_path, "r") as f:
+            template = f.read()
+    except Exception as e:
+        print(f"Error loading template: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    html_content = template.replace("{{timesteps}}", str(timesteps))
+    html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
+    html_content = html_content.replace("{{max_request_per_step}}", str(max_request_per_step))
+    html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
+    html_content = html_content.replace("{{seed}}", str(seed))
+    html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
+    html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
+    html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
+    
+    with open(os.path.join(output_dir_path, "index.html"), "w") as f:
+        f.write(html_content)
+    
     print(f"Plots saved to {output_dir_path}")
+    print(f"Open {os.path.join(output_dir_path, "index.html")} to view all plots")
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Palloc and plot results")
-    parser.add_argument("-e", "--environment", required=True, help="the environment file to simulate")
-    parser.add_argument("-o", "--output", help="the output file to store results in")
-    parser.add_argument("-t", "--timesteps", type=int, help="timesteps in minutes to run simulation")
-    parser.add_argument("-d", "--duration", type=int, help="max duration in minutes of requests")
-    parser.add_argument("-r", "--requests", type=int, help="max requests to generate per timestep")
-    parser.add_argument("-b", "--batch-delay", type=int, help="delay in minutes before processing requests")
-    parser.add_argument("-s", "--seed", type=int, help="seed for randomization")
+    parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
+    parser.add_argument("json_file", help="Path to the JSON results file")
     args = parser.parse_args()
     
-    use_temp_file = args.output is None
-    output_file = args.output
-    
-    if use_temp_file:
-        import tempfile
-        temp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
-        output_file = temp.name
-        temp.close()  
-        
-    run_simulation(args.environment, output_file, args.timesteps, args.duration, 
-                  args.requests, args.batch_delay, args.seed)
-    
-    data = load_results(output_file)
+    data = load_results(args.json_file)
     create_plots(data)
-    
-    if use_temp_file and os.path.exists(output_file):
-        os.remove(output_file)
-        print(f"Removed temporary output file")
-    
+
 if __name__ == "__main__":
     main()
-    

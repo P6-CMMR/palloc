@@ -35,6 +35,8 @@ class Environment {
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
 
+    const Environment::UintVector &getSmallestRoundTrips() const noexcept;
+
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
 
@@ -45,6 +47,7 @@ class Environment {
     UintVector availableParkingSpots;
     Coordinates dropoffCoords;
     Coordinates parkingCoords;
+    UintVector smallestRoundTrips;
 };
 }  // namespace palloc
 
@@ -57,10 +60,10 @@ struct glz::meta<palloc::Coordinate> {
 template <>
 struct glz::meta<palloc::Environment> {
     using T = palloc::Environment;
-    static constexpr auto value =
-        glz::object("dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff",
-                    &T::parkingToDropoff, "parking_capacities", &T::availableParkingSpots,
-                    "dropoff_coords", &T::dropoffCoords, "parking_coords", &T::parkingCoords);
+    static constexpr auto value = glz::object(
+        "dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff", &T::parkingToDropoff,
+        "parking_capacities", &T::availableParkingSpots, "dropoff_coords", &T::dropoffCoords,
+        "parking_coords", &T::parkingCoords, "smallest_round_trips", &T::smallestRoundTrips);
 };
 
 #endif
