@@ -117,17 +117,25 @@ def create_html(data):
                     request_duration = f"{request_duration} min" if request_duration != "N/A" else "N/A"
                     route_duration = f"{route_duration} min" if route_duration != "N/A" else "N/A"
                     
+                    # Calculate center coordinates for the map view
                     route_link = ""
                     if (dropoff_lat != "N/A" and dropoff_lon != "N/A" and 
                         parking_lat != "N/A" and parking_lon != "N/A"):
-                        graphhopper_url = (
-                            f"https://graphhopper.com/maps/?"
-                            f"point={dropoff_lat}%2C{dropoff_lon}_{dropoff_lat}%2C+{dropoff_lon}&"
-                            f"point={parking_lat}%2C{parking_lon}_{parking_lat}%2C+{parking_lon}&"
-                            f"point={dropoff_lat}%2C{dropoff_lon}_{dropoff_lat}%2C+{dropoff_lon}&"
-                            f"profile=car&layer=Esri+Satellite"
+                        # Center point between dropoff and parking
+                        center_lat = (float(dropoff_lat) + float(parking_lat)) / 2
+                        center_lon = (float(dropoff_lon) + float(parking_lon)) / 2
+                        
+                        # OSRM format: ?z=16&center=lat,lon&loc=lat,lon&loc=lat,lon&loc=lat,lon
+                        osrm_url = (
+                            f"https://map.project-osrm.org/?"
+                            f"z=16&"
+                            f"center={center_lat}%2C{center_lon}&"
+                            f"loc={dropoff_lat}%2C{dropoff_lon}&"
+                            f"loc={parking_lat}%2C{parking_lon}&"
+                            f"loc={dropoff_lat}%2C{dropoff_lon}&"
+                            f"hl=en&alt=0&srv=0"
                         )
-                        route_link = f'<a href="{graphhopper_url}" target="_blank" class="route-link-btn">View route on GraphHopper</a>'
+                        route_link = f'<a href="{osrm_url}" target="_blank" class="route-link-btn">View route on OSRM</a>'
                     
                     assignments_html += f"""
                     <div class="assignment-item">
