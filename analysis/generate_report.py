@@ -132,8 +132,8 @@ def create_html(data):
                     assignments_html += f"""
                     <div class="assignment-item">
                         <div><span class="assignment-label">Assignment {idx+1}:</span></div>
-                        <div>Dropoff: ({dropoff_lat}, {dropoff_lon})</div>
-                        <div>Parking: ({parking_lat}, {parking_lon})</div>
+                        <div>Dropoff: (lat: {dropoff_lat}, lon: {dropoff_lon})</div>
+                        <div>Parking: (lat: {parking_lat}, lon: {parking_lon})</div>
                         <div>Request duration: {request_duration}</div>
                         <div>Route duration: {route_duration}</div>
                         <div class="route-link">{route_link}</div>
