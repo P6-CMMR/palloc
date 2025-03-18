@@ -11,19 +11,39 @@
 #include "trace.hpp"
 
 namespace palloc {
-struct Simulation {
-    uint64_t dropoffNode;
-    uint64_t parkingNode;
-    uint64_t duration;
-    uint64_t durationLeft;
-    bool inDropoff{true};
-    bool visitedParking{false};
-
-    explicit Simulation(uint64_t dropoffNode, uint64_t parkingNode, uint64_t duration)
+class Simulation {
+   public:
+    explicit Simulation(uint64_t dropoffNode, uint64_t parkingNode, uint64_t requestDuration,
+                        uint64_t routeDuration)
         : dropoffNode(dropoffNode),
           parkingNode(parkingNode),
-          duration(duration),
-          durationLeft(duration) {}
+          requestDuration(requestDuration),
+          durationLeft(requestDuration),
+          routeDuration(routeDuration) {}
+
+    uint64_t getDropoffNode() const noexcept;
+    uint64_t getParkingNode() const noexcept;
+    uint64_t getRequestDuration() const noexcept;
+    uint64_t getDurationLeft() const noexcept;
+    uint64_t getRouteDuration() const noexcept;
+
+    bool isInDropoff() const noexcept;
+    bool hasVisitedParking() const noexcept;
+
+    void setIsInDropoff(bool inDropoff) noexcept;
+    void setHasVisitedParking(bool visitedParking) noexcept;
+
+    void decrementDuration() noexcept;
+
+   private:
+    uint64_t dropoffNode;
+    uint64_t parkingNode;
+    uint64_t requestDuration;
+    uint64_t durationLeft;
+    uint64_t routeDuration;
+
+    bool inDropoff{true};
+    bool visitedParking{false};
 };
 
 using Simulations = std::list<Simulation>;

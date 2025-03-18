@@ -12,10 +12,15 @@
             border-radius: 5px;
         }
         .settings-container {
-            border-left: 5px solid #27ae60;  /* Green border for settings */
+            border-left: 5px solid #27ae60;  
         }
         .stats-container { 
-            border-left: 5px solid #3498db;  /* Blue border for stats */
+            border-left: 5px solid #3498db; 
+        }
+        .assignments-container {
+            border-left: 5px solid #9b59b6;  
+            max-height: 300px;
+            overflow-y: auto;
         }
         .stat-item { 
             margin: 8px 0;
@@ -37,7 +42,40 @@
         .plot-links a:hover {
             background: #e0e0e0;
         }
+        .assignment-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .assignment-item:last-child {
+            border-bottom: none;
+        }
+        .assignment-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .toggle-btn {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
     </style>
+    <script>
+        function toggleAssignments() {
+            const container = document.getElementById('assignments-container');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                document.getElementById('toggle-btn').textContent = 'Hide Assignments';
+            } else {
+                container.style.display = 'none';
+                document.getElementById('toggle-btn').textContent = 'Show Assignments';
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Palloc Simulation Results</h1>
@@ -80,7 +118,6 @@
             <span>{{global_avg_cost}}</span>
         </div>
     </div>
-    
     <h2>Plots</h2>
     <div class="plot-links">
         <a href="parking_spots.html">Available Parking Spots Over Time</a>
@@ -88,6 +125,11 @@
         <a href="cost.html">Cost Over Time</a>
         <a href="duration.html">Average Duration Over Time</a>
         <a href="dropped_requests.html">Dropped Requests Over Time</a>
+    </div>
+    <h2>Assignments</h2>
+    <button id="toggle-btn" class="toggle-btn" onclick="toggleAssignments()">Show Assignments</button>
+    <div id="assignments-container" class="container assignments-container" style="display: none;">
+        {{assignments_list}}
     </div>
 </body>
 </html>

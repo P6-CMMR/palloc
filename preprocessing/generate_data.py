@@ -115,12 +115,26 @@ def write_response_to_file(dropoff_to_parking, parking_to_dropoff, parking_capac
 
     smallest_round_trips = calculate_shortest_roundtrips(dropoff_to_parking, parking_to_dropoff)
 
+    formatted_dropoff_coords = []
+    for lat, lon in dropoff_coords:
+        formatted_dropoff_coords.append({
+            "latitude": lat,
+            "longitude": lon
+        })
+
+    formatted_parking_coords = []
+    for lat, lon in parking_coords:
+        formatted_parking_coords.append({
+            "latitude": lat,
+            "longitude": lon
+        })
+
     output = {
         "dropoff_to_parking": dropoff_to_parking,
         "parking_to_dropoff": parking_to_dropoff,
         "parking_capacities": parking_capacities,
-        "dropoff_coords": dropoff_coords,
-        "parking_coords": parking_coords,
+        "dropoff_coords": formatted_dropoff_coords,
+        "parking_coords": formatted_parking_coords,
         "smallest_round_trips": smallest_round_trips
     }
     

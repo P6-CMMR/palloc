@@ -54,7 +54,7 @@ class Environment {
 template <>
 struct glz::meta<palloc::Coordinate> {
     using T = palloc::Coordinate;
-    static constexpr auto value = glz::array(&T::latitude, &T::longitude);
+    static constexpr auto value = glz::object("latitude", &T::latitude, "longitude", &T::longitude);
 };
 
 template <>
