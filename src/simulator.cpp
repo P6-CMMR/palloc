@@ -174,8 +174,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         return simulation.getDurationLeft() == 0;
     };
 
-    const auto [first, last] = std::ranges::remove_if(simulations, simulate);
-    simulations.erase(first, last);
+    std::erase_if(simulations, simulate);
 }
 
 void Simulator::insertNewRequests(RequestGenerator &generator, Requests &requests) {
