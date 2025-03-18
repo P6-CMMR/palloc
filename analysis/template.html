@@ -54,28 +54,23 @@
             font-weight: bold;
             margin-right: 5px;
         }
-        .toggle-btn {
+        .route-link-btn {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 4px 8px;
             background-color: #9b59b6;
             color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .route-link-btn:hover {
+            background-color: #8e44ad;
+        }
+        .route-link {
+            margin-top: 5px;
         }
     </style>
-    <script>
-        function toggleAssignments() {
-            const container = document.getElementById('assignments-container');
-            if (container.style.display === 'none') {
-                container.style.display = 'block';
-                document.getElementById('toggle-btn').textContent = 'Hide Assignments';
-            } else {
-                container.style.display = 'none';
-                document.getElementById('toggle-btn').textContent = 'Show Assignments';
-            }
-        }
-    </script>
 </head>
 <body>
     <h1>Palloc Simulation Results</h1>
@@ -102,7 +97,6 @@
             <span>{{seed}}</span>
         </div>
     </div>
-    
     <div class="container stats-container">
         <h2>General Statistics</h2>
         <div class="stat-item">
@@ -127,8 +121,7 @@
         <a href="dropped_requests.html">Dropped Requests Over Time</a>
     </div>
     <h2>Assignments</h2>
-    <button id="toggle-btn" class="toggle-btn" onclick="toggleAssignments()">Show Assignments</button>
-    <div id="assignments-container" class="container assignments-container" style="display: none;">
+    <div class="container assignments-container">
         {{assignments_list}}
     </div>
 </body>
