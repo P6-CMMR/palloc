@@ -45,9 +45,9 @@ class Environment {
     DurationMatrix dropoffToParking;
     DurationMatrix parkingToDropoff;
     UintVector availableParkingSpots;
+    UintVector smallestRoundTrips;
     Coordinates dropoffCoords;
     Coordinates parkingCoords;
-    UintVector smallestRoundTrips;
 };
 }  // namespace palloc
 

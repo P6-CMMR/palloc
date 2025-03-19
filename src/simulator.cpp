@@ -37,6 +37,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings) {
     assert(simSettings.timesteps > 0);
     assert(simSettings.maxRequestDuration > 0);
+    assert(simSettings.startTime >= 0 && simSettings.startTime <= 1439);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
@@ -49,6 +50,11 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     const auto seed = simSettings.seed;
     std::println("Using seed: {}", seed);
+
+    uint64_t startHour = simSettings.startTime / 60;
+    uint64_t startMin = simSettings.startTime % 60;
+    std::println("Starting simulation from start time {} ({:02d}:{:02d})", simSettings.startTime,
+                 startHour, startMin);
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
     RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration,
@@ -67,9 +73,11 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 1; timestep <= simSettings.timesteps; ++timestep) {
+        uint64_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
+
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
-        insertNewRequests(generator, requests);
+        insertNewRequests(generator, currentTimeOfDay, requests);
         cutImpossibleRequests(requests, env.getSmallestRoundTrips());
 
         double batchCost = 0.0;
@@ -103,7 +111,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
         const auto totalAvailableParkingSpots =
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
-        traces.emplace_back(timestep, requests.size(), simulations.size(),
+        traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
                             totalAvailableParkingSpots, batchCost, batchAverageDuration,
                             droppedRequests, assignments);
 
@@ -177,8 +185,9 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     std::erase_if(simulations, simulate);
 }
 
-void Simulator::insertNewRequests(RequestGenerator &generator, Requests &requests) {
-    const auto newRequests = generator.generate();
+void Simulator::insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
+                                  Requests &requests) {
+    const auto newRequests = generator.generate(currentTimeOfDay);
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());
 }
 

@@ -38,7 +38,9 @@ class RequestGenerator {
           requestCountDist(0, maxRequestsPerStep),
           rng(seed) {}
 
-    Requests generate();
+    Requests generate(uint64_t currentTimeOfDay);
+
+    static uint64_t getTimeMultiplier(uint64_t currentTimeOfDay);
 
    private:
     std::uniform_int_distribution<uint64_t> dropoffDist;

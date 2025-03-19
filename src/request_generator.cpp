@@ -1,5 +1,7 @@
 #include "request_generator.hpp"
 
+#include <cassert>
+
 using namespace palloc;
 
 size_t Request::getDropoffNode() const noexcept { return dropoffNode; }
@@ -14,8 +16,9 @@ void Request::incrementTimesDropped() noexcept { ++timesDropped; }
 
 bool Request::isDead() const noexcept { return requestDuration == 0; }
 
-Requests RequestGenerator::generate() {
-    const auto count = requestCountDist(rng);
+Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
+    const auto multiplier = getTimeMultiplier(currentTimeOfDay);
+    const auto count = requestCountDist(rng) * multiplier;
     Requests requests;
     requests.reserve(count);
     for (uint64_t i = 0; i < count; ++i) {
@@ -23,4 +26,11 @@ Requests RequestGenerator::generate() {
     }
 
     return requests;
+}
+
+uint64_t RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
+    uint64_t multiplier = 1;
+    // TODO: add more advanced logic
+    assert(multiplier <= 1);
+    return multiplier;
 }

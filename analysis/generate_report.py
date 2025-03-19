@@ -28,6 +28,19 @@ def write_html_with_button(fig, filename, button_template, output_dir_path):
     with open(os.path.join(output_dir_path, filename), "w") as f:
         f.write(modified_html)
 
+def format_minutes_to_time(minutes_raw):
+    """Convert minutes to HH:MM time format."""
+    if minutes_raw == "N/A":
+        return "N/A"
+    
+    try:
+        total_minutes = int(minutes_raw)
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+        return f"{hours:02d}:{minutes:02d}"
+    except (ValueError, TypeError):
+        return "N/A"
+
 def create_html(data):
     """Create html from simulation data and save to directory."""
     output_dir_path = Path("plots")
@@ -72,6 +85,8 @@ def create_html(data):
     # Settings
     settings = data.get("settings", {})
     timesteps = settings.get("timesteps", "N/A")
+    start_time_raw = settings.get("start_time", "N/A")
+    start_time = format_minutes_to_time(start_time_raw)
     
     max_request_duration_raw = settings.get("max_request_duration", "N/A")
     max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
@@ -102,6 +117,11 @@ def create_html(data):
             if "assignments" in trace and trace["assignments"]:
                 timestep = trace.get("timestep", "N/A")
                 assignments_html += f"<h3>Timestep {timestep}</h3>"
+                
+                current_time_of_day_raw = trace.get("current_time_of_day", "N/A")
+                current_time_of_day = format_minutes_to_time(current_time_of_day_raw)
+                    
+                assignments_html += f"<p>Time of day: {current_time_of_day}</p>"
                 
                 for idx, assignment in enumerate(trace["assignments"]):
                     dropoff = assignment.get("dropoff_coordinate", {})
@@ -152,6 +172,7 @@ def create_html(data):
         assignments_html = "<p>No assignment data available.</p>"
     
     html_content = template.replace("{{timesteps}}", str(timesteps))
+    html_content = html_content.replace("{{start_time}}", str(start_time))
     html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
     html_content = html_content.replace("{{max_request_per_step}}", str(max_request_per_step))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))

@@ -35,10 +35,11 @@ using Assignments = std::vector<Assignment>;
 
 class Trace {
    public:
-    explicit Trace(uint64_t timestep, size_t numberOfRequests, size_t numberOfOngoingSimulations,
-                   uint64_t availableParkingSpots, double cost, double averageDuration,
-                   size_t droppedRequests, Assignments assignments)
+    explicit Trace(uint64_t timestep, uint64_t currentTimeOfDay, size_t numberOfRequests,
+                   size_t numberOfOngoingSimulations, uint64_t availableParkingSpots, double cost,
+                   double averageDuration, size_t droppedRequests, Assignments assignments)
         : timestep(timestep),
+          currentTimeOfDay(currentTimeOfDay),
           numberOfRequests(numberOfRequests),
           numberOfOngoingSimulations(numberOfOngoingSimulations),
           availableParkingSpots(availableParkingSpots),
@@ -52,6 +53,7 @@ class Trace {
     size_t getNumberOfRequests() const noexcept;
 
     uint64_t getAvailableParkingSpots() const noexcept;
+
     uint64_t getTimeStep() const noexcept;
 
     double getCost() const noexcept;
@@ -68,6 +70,7 @@ class Trace {
     size_t droppedRequests;
 
     uint64_t timestep;
+    uint64_t currentTimeOfDay;
 
     double cost;
     double averageDuration;
@@ -90,10 +93,11 @@ template <>
 struct glz::meta<palloc::Trace> {
     using T = palloc::Trace;
     static constexpr auto value = glz::object(
-        "timestep", &T::timestep, "number_of_requests", &T::numberOfRequests,
-        "number_of_ongoing_simulations", &T::numberOfOngoingSimulations, "available_parking_spots",
-        &T::availableParkingSpots, "cost", &T::cost, "average_duration", &T::averageDuration,
-        "dropped_requests", &T::droppedRequests, "assignments", &T::assignments);
+        "timestep", &T::timestep, "current_time_of_day", &T::currentTimeOfDay, "number_of_requests",
+        &T::numberOfRequests, "number_of_ongoing_simulations", &T::numberOfOngoingSimulations,
+        "available_parking_spots", &T::availableParkingSpots, "cost", &T::cost, "average_duration",
+        &T::averageDuration, "dropped_requests", &T::droppedRequests, "assignments",
+        &T::assignments);
 };
 
 #endif
