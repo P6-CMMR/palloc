@@ -39,11 +39,11 @@ class RequestGenerator {
           requestRate(requestRate) {}
 
     Requests generate(uint64_t currentTimeOfDay);
-    
+
     /**
-     * Normally poisson is in interval [0, ∞]. When rate > 100 then it approximates central limit
-     * theorem for gaussian distirbution so we limit it to rate + 3σ. When rate <= 100 we act like
-     * its 100 and limit it to 100 + 3σ
+     * Normally poisson is in interval [0, ∞]. When rate > 100 then it becomes a decent
+     * approximation of the central limit theorem for gaussian distirbution so we limit it to r
+     * ate + 3σ. When rate <= 100 we act like its 100 and limit it to 100 + 3σ
      */
     static uint64_t getPoissonUpperBound(double rate);
 

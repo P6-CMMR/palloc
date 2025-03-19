@@ -36,7 +36,8 @@ uint64_t RequestGenerator::getPoissonUpperBound(double rate) {
     constexpr double rateThresholdStddev = 10;
     constexpr double numStddevs = 3.0;
     constexpr double defaultUpperBound = rateThreshold + numStddevs * rateThresholdStddev;
-    return (rate > rateThreshold) ? std::ceil(rate + numStddevs * std::sqrt(rate)) : defaultUpperBound;
+    return (rate > rateThreshold) ? std::ceil(rate + numStddevs * std::sqrt(rate))
+                                  : defaultUpperBound;
 }
 
 double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
@@ -48,7 +49,7 @@ double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
     constexpr double morningAmplitude = 0.8;
     constexpr double morningCenter = 8.0;
     constexpr double morningWidth = 1.5;
-    
+
     constexpr double morningFactor = 1.0 / (2.0 * morningWidth * morningWidth);
     constexpr double morningScale = morningAmplitude - baseline;
 
@@ -56,7 +57,7 @@ double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
     constexpr double eveningAmplitude = 1.0;
     constexpr double eveningCenter = 17.0;
     constexpr double eveningWidth = 2.0;
-    
+
     constexpr double eveningFactor = 1.0 / (2.0 * eveningWidth * eveningWidth);
     constexpr double eveningScale = eveningAmplitude - baseline;
 
