@@ -28,8 +28,8 @@ Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
     return requests;
 }
 
-uint64_t RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
-    uint64_t multiplier = 1;
+double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
+    double multiplier = 1;
     // TODO: add more advanced logic
     assert(multiplier <= 1);
     return multiplier;
