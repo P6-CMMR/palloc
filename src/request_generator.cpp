@@ -25,13 +25,13 @@ Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
     Requests requests;
     requests.reserve(count);
     for (uint64_t i = 0; i < count; ++i) {
-        requests.emplace_back(dropoffDist(rng), durationDist(rng));
+        requests.emplace_back(dropoffDist(rng), getDuration());
     }
 
     return requests;
 }
 
-uint64_t RequestGenerator::getPoissonUpperBound(double rate) {
+uint64_t RequestGenerator::getPoissonUpperBound(double rate) const {
     constexpr double rateThreshold = 100;
     constexpr double rateThresholdStddev = 10;
     constexpr double numStddevs = 3.0;
@@ -40,7 +40,7 @@ uint64_t RequestGenerator::getPoissonUpperBound(double rate) {
                                   : defaultUpperBound;
 }
 
-double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
+double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) const {
     double timeInHours = static_cast<double>(currentTimeOfDay % 1440) / 60.0;
 
     constexpr double baseline = 0.3;
@@ -72,4 +72,41 @@ double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
     multiplier = std::min(1.0, multiplier);
 
     return multiplier;
+}
+
+uint64_t RequestGenerator::getDuration() {
+    const uint64_t selectedBucket = durationDist(rng);
+
+    const uint64_t start = durationBuckets[selectedBucket][0];
+    const uint64_t end = std::min(durationBuckets[selectedBucket][1], maxRequestDuration);
+
+    std::uniform_int_distribution<uint64_t> uniformDist(start, end);
+
+    return uniformDist(rng);
+}
+
+std::vector<double> RequestGenerator::getDurationBuckets(uint64_t maxDuration) const {
+    // Weights based on COWI
+    constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
+
+    std::vector<double> weightBuckets;
+    for (size_t i = 0; i < durationBuckets.size(); ++i) {
+        const uint64_t start = durationBuckets[i][0];
+        const uint64_t end = durationBuckets[i][1];
+        
+        if (start > maxDuration)  break;
+    
+        if (end <= maxDuration) { 
+            // Full bucket
+            weightBuckets.emplace_back(originalWeights[i]);
+        } else { 
+            // Partial bucket
+            const double availableRange = maxDuration - start + 1;
+            const double totalRange = end - start + 1;
+            const double adjustedWeight = originalWeights[i] * (availableRange / totalRange);
+            weightBuckets.emplace_back(adjustedWeight);;
+        }
+    }
+
+    return weightBuckets;
 }

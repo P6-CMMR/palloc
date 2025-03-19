@@ -53,7 +53,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     uint64_t startHour = simSettings.startTime / 60;
     uint64_t startMin = simSettings.startTime % 60;
-    std::println("Starting simulation from start time {} ({:02d}:{:02d})", simSettings.startTime,
+    std::println("Starting simulation from start time: {} ({:02d}:{:02d})", simSettings.startTime,
                  startHour, startMin);
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
