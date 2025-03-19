@@ -28,8 +28,8 @@ def write_html_with_button(fig, filename, button_template, output_dir_path):
     with open(os.path.join(output_dir_path, filename), "w") as f:
         f.write(modified_html)
 
-def create_plots(data):
-    """Create plots from simulation data and save to directory."""
+def create_html(data):
+    """Create html from simulation data and save to directory."""
     output_dir_path = Path("plots")
 
     traces = pd.DataFrame(data["traces"])
@@ -96,6 +96,61 @@ def create_plots(data):
         print(f"Error loading template: {e}", file=sys.stderr)
         sys.exit(1)
     
+    assignments_html = ""
+    if "traces" in data:
+        for trace in data["traces"]:
+            if "assignments" in trace and trace["assignments"]:
+                timestep = trace.get("timestep", "N/A")
+                assignments_html += f"<h3>Timestep {timestep}</h3>"
+                
+                for idx, assignment in enumerate(trace["assignments"]):
+                    dropoff = assignment.get("dropoff_coordinate", {})
+                    parking = assignment.get("parking_coordinate", {})
+                    request_duration = assignment.get("request_duration", "N/A")
+                    route_duration = assignment.get("route_duration", "N/A")
+                    
+                    dropoff_lat = dropoff.get("latitude", "N/A")
+                    dropoff_lon = dropoff.get("longitude", "N/A")
+                    parking_lat = parking.get("latitude", "N/A")
+                    parking_lon = parking.get("longitude", "N/A")
+                    
+                    request_duration = f"{request_duration} min" if request_duration != "N/A" else "N/A"
+                    route_duration = f"{route_duration} min" if route_duration != "N/A" else "N/A"
+                    
+                    # Calculate center coordinates for the map view
+                    route_link = ""
+                    if (dropoff_lat != "N/A" and dropoff_lon != "N/A" and 
+                        parking_lat != "N/A" and parking_lon != "N/A"):
+                        # Center point between dropoff and parking
+                        center_lat = (float(dropoff_lat) + float(parking_lat)) / 2
+                        center_lon = (float(dropoff_lon) + float(parking_lon)) / 2
+                        
+                        # OSRM format: ?z=16&center=lat,lon&loc=lat,lon&loc=lat,lon&loc=lat,lon
+                        osrm_url = (
+                            f"https://map.project-osrm.org/?"
+                            f"z=16&"
+                            f"center={center_lat}%2C{center_lon}&"
+                            f"loc={dropoff_lat}%2C{dropoff_lon}&"
+                            f"loc={parking_lat}%2C{parking_lon}&"
+                            f"loc={dropoff_lat}%2C{dropoff_lon}&"
+                            f"hl=en&alt=0&srv=0"
+                        )
+                        route_link = f'<a href="{osrm_url}" target="_blank" class="route-link-btn">View route on OSRM</a>'
+                    
+                    assignments_html += f"""
+                    <div class="assignment-item">
+                        <div><span class="assignment-label">Assignment {idx+1}:</span></div>
+                        <div>Dropoff: (lat: {dropoff_lat}, lon: {dropoff_lon})</div>
+                        <div>Parking: (lat: {parking_lat}, lon: {parking_lon})</div>
+                        <div>Request duration: {request_duration}</div>
+                        <div>Route duration: {route_duration}</div>
+                        <div class="route-link">{route_link}</div>
+                    </div>
+                    """
+
+    if not assignments_html:
+        assignments_html = "<p>No assignment data available.</p>"
+    
     html_content = template.replace("{{timesteps}}", str(timesteps))
     html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
     html_content = html_content.replace("{{max_request_per_step}}", str(max_request_per_step))
@@ -104,6 +159,7 @@ def create_plots(data):
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
     html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
+    html_content = html_content.replace("{{assignments_list}}", assignments_html)
     
     with open(os.path.join(output_dir_path, "index.html"), "w") as f:
         f.write(html_content)
@@ -117,7 +173,7 @@ def main():
     args = parser.parse_args()
     
     data = load_results(args.json_file)
-    create_plots(data)
+    create_html(data)
 
 if __name__ == "__main__":
     main()

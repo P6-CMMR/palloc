@@ -29,7 +29,7 @@ cmake ..; cmake --build .
 From project directory run:
 ```bash
 ./build/palloc -e data.json -o <output-file-name> <OPTIONS>
-python3 analysis/plot.py <output-file-name>
+python3 analysis/generate_report.py <output-file-name>
 ```
 
 now open `plots/index.html` with a browser

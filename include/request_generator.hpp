@@ -9,11 +9,11 @@ namespace palloc {
 
 class Request {
    public:
-    explicit Request(uint64_t dropoffNode, uint64_t duration)
-        : dropoffNode(dropoffNode), duration(duration) {}
+    explicit Request(uint64_t dropoffNode, uint64_t requestDuration)
+        : dropoffNode(dropoffNode), requestDuration(requestDuration) {}
 
     uint64_t getDropoffNode() const noexcept;
-    uint64_t getDuration() const noexcept;
+    uint64_t getRequestDuration() const noexcept;
     uint64_t getTimesDropped() const noexcept;
 
     void decrementDuration() noexcept;
@@ -23,7 +23,7 @@ class Request {
 
    private:
     uint64_t dropoffNode;
-    uint64_t duration;
+    uint64_t requestDuration;
     uint64_t timesDropped = 0;
 };
 
