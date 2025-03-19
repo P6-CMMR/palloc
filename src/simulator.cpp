@@ -37,7 +37,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings) {
     assert(simSettings.timesteps > 0);
     assert(simSettings.requestRate > 0);
-    assert(simSettings.startTime >= 0 && simSettings.startTime <= 1439);
+    assert(simSettings.startTime <= 1439);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
