@@ -52,7 +52,7 @@ struct SimulatorSettings {
     uint64_t timesteps;
     uint64_t startTime;
     uint64_t maxRequestDuration;
-    uint64_t maxRequestsPerStep;
+    double requestRate;
     uint64_t batchInterval;
     uint64_t seed;
 };
@@ -83,8 +83,8 @@ struct glz::meta<palloc::SimulatorSettings> {
     using T = palloc::SimulatorSettings;
     static constexpr auto value =
         glz::object("timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
-                    &T::maxRequestDuration, "max_request_per_step", &T::maxRequestsPerStep,
-                    "batch_interval", &T::batchInterval, "seed", &T::seed);
+                    &T::maxRequestDuration, "request_rate", &T::requestRate, "batch_interval",
+                    &T::batchInterval, "seed", &T::seed);
 };
 
 #endif

@@ -36,7 +36,7 @@ void Simulation::decrementDuration() noexcept { --durationLeft; }
 void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings) {
     assert(simSettings.timesteps > 0);
-    assert(simSettings.maxRequestDuration > 0);
+    assert(simSettings.requestRate > 0);
     assert(simSettings.startTime >= 0 && simSettings.startTime <= 1439);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
@@ -57,10 +57,10 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  startHour, startMin);
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration,
-                               simSettings.maxRequestsPerStep, seed);
+    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
+                               simSettings.requestRate);
     Requests requests;
-    requests.reserve(simSettings.timesteps * simSettings.maxRequestsPerStep / 2);
+    requests.reserve(static_cast<size_t>(simSettings.timesteps * std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;

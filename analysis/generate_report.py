@@ -46,25 +46,37 @@ def create_html(data):
     output_dir_path = Path("plots")
 
     traces = pd.DataFrame(data["traces"])
+    traces["time_labels"] = traces.apply(
+        lambda row: f"{row["timestep"]}: {format_minutes_to_time(row["current_time_of_day"])}", 
+        axis=1
+    )
 
-    fig1 = px.line(traces, x="timestep", y="available_parking_spots", 
+
+    fig1 = px.line(traces, x="time_labels", y="available_parking_spots", 
                   title="Available Parking Spots Over Time")
     fig1.update_yaxes(title_text="# available parking spots")
 
-    fig2 = px.line(traces, x="timestep", y="number_of_ongoing_simulations",
+    fig2 = px.line(traces, x="time_labels", y="number_of_ongoing_simulations",
                   title="Number of Ongoing Simulations Over Time")
     fig2.update_yaxes(title_text="# simulations")
     
-    fig3 = px.line(traces, x="timestep", y="cost",
+    fig3 = px.line(traces, x="time_labels", y="cost",
                   title="Cost Over Time")
     
-    fig4 = px.line(traces, x="timestep", y="average_duration",
+    fig4 = px.line(traces, x="time_labels", y="average_duration",
                   title="Average Duration Over Time")
     fig4.update_yaxes(title_text="average duration")
     
-    fig5 = px.line(traces, x="timestep", y="dropped_requests",
+    fig5 = px.line(traces, x="time_labels", y="dropped_requests",
                   title="Dropped Requests Over Time")
     fig5.update_yaxes(title_text="# dropped requests")
+    
+    for fig in [fig1, fig2, fig3, fig4, fig5]:
+        fig.update_xaxes(
+            nticks=12,
+            tickangle=45,
+            title_text="time of day"
+        )
     
     os.makedirs(output_dir_path, exist_ok=True)
     
@@ -91,7 +103,7 @@ def create_html(data):
     max_request_duration_raw = settings.get("max_request_duration", "N/A")
     max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
     
-    max_request_per_step = settings.get("max_request_per_step", "N/A")
+    request_rate = settings.get("request_rate", "N/A")
     
     batch_interval_raw = settings.get("batch_interval", "N/A")
     batch_interval = f"{batch_interval_raw}m" if batch_interval_raw != "N/A" else "N/A"
@@ -174,7 +186,7 @@ def create_html(data):
     html_content = template.replace("{{timesteps}}", str(timesteps))
     html_content = html_content.replace("{{start_time}}", str(start_time))
     html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
-    html_content = html_content.replace("{{max_request_per_step}}", str(max_request_per_step))
+    html_content = html_content.replace("{{request_rate}}", str(request_rate))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{seed}}", str(seed))
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))

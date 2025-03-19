@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
         SimulatorSettings simSettings{.timesteps = 1000,
                                       .startTime = 1,
                                       .maxRequestDuration = 60,
-                                      .maxRequestsPerStep = 10,
+                                      .requestRate = 10,
                                       .batchInterval = 2};
 
         OutputSettings outputSettings{.prettify = false, .log = false};
@@ -24,13 +24,13 @@ int main(int argc, char **argv) {
             {{"timesteps", 't'}, simSettings.timesteps, "timesteps in minutes to run simulation"},
             {{"start-time", 'S'},
              startTimeStr,
-             "timestep to start simulation at where 0 represents 00:00 and 1439 represents 23:59"},
+             "time to start simulation where 0 represents 00:00 and 1439 represents 23:59"},
             {{"duration", 'd'},
              simSettings.maxRequestDuration,
              "max duration in minutes of requests"},
             {{"requests", 'r'},
-             simSettings.maxRequestsPerStep,
-             "max requests to generate per timestep"},
+             simSettings.requestRate,
+             "rate of requests to generate per timestep"},
             {{"batch-delay", 'b'},
              simSettings.batchInterval,
              "interval in minutes before processing requests"},
@@ -65,6 +65,11 @@ int main(int argc, char **argv) {
         if (simSettings.startTime > 1439) {
             std::println(stderr,
                          "Error: Start time must be a positive integer in the range [1..1439]");
+            return EXIT_FAILURE;
+        }
+
+        if (simSettings.requestRate <= 0) {
+            std::println(stderr, "Error: Request rate must be a positive real");
             return EXIT_FAILURE;
         }
 
