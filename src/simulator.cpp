@@ -50,6 +50,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     for (uint64_t timestep = 1; timestep <= simSettings.timesteps; ++timestep) {
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
+        decrementArrivalTime(earlyRequests);
         insertNewRequests(generator, requests);
         cutImpossibleRequests(requests, env.getSmallestRoundTrips());
 
@@ -146,12 +147,12 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
             inDropoff = true;
             ++availableParkingSpots[parkingNode];
         }
-
+        
         assert(durationLeft || durationLeft == 0 && inDropoff);
-
+        
         return durationLeft == 0;
     };
-
+    
     const auto [first, last] = std::ranges::remove_if(simulations, simulate);
     simulations.erase(first, last);
 }
@@ -181,11 +182,18 @@ void Simulator::insertNewRequests(RequestGenerator &generator, Requests &request
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());
 }
 
+
 void Simulator::removeDeadRequests(Requests &unassignedRequests) {
     std::erase_if(unassignedRequests, [](Request &request) {
         request.decrementDuration();
         return request.isDead();
     });
+}
+
+void Simulator::decrementArrivalTime(Requests &earlyRequests) {
+    for (auto &request : earlyRequests) {
+        request.decrementTillArrival();
+    }
 }
 
 void Simulator::cutImpossibleRequests(Requests &requests,

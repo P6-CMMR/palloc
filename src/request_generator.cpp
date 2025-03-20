@@ -12,6 +12,8 @@ uint64_t Request::getTimesDropped() const noexcept { return timesDropped; }
 
 void Request::decrementDuration() noexcept { --duration; }
 
+void Request::decrementTillArrival() noexcept { --tillArrival; }
+
 void Request::incrementTimesDropped() noexcept { ++timesDropped; }
 
 bool Request::isDead() const noexcept { return duration == 0; }

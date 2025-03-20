@@ -55,6 +55,7 @@ class Simulator {
     static void insertNewRequests(RequestGenerator &generator, Requests &requests);
     static void insertSimulations(Simulations &simulations, Simulations &newSimulations);
     static void removeDeadRequests(Requests &unassignedRequests);
+    static void decrementArrivalTime(Requests &earlyRequests);
     static void seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration, Requests &earlyRequests);
     static void cutImpossibleRequests(Requests &requests,
                                       const Environment::UintVector &smallestRoundTrips);

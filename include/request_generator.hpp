@@ -18,6 +18,7 @@ class Request {
     uint64_t getTimesDropped() const noexcept;
 
     void decrementDuration() noexcept;
+    void decrementTillArrival() noexcept;
     void incrementTimesDropped() noexcept;
 
     bool isDead() const noexcept;
