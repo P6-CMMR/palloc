@@ -1,7 +1,5 @@
 #include "request_generator.hpp"
 
-#include <cassert>
-
 using namespace palloc;
 
 size_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
