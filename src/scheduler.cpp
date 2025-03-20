@@ -107,6 +107,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
             bool assigned = false;
             const auto dropoffNode = request.getDropoffNode();
             const auto duration = request.getDuration();
+            const auto tillArrival = request.getArrival();
             for (size_t j = 0; j < numberOfParkings; ++j) {
                 if (var[i][j]->solution_value() > 0.5) {
                     parkingNode = j;
@@ -119,7 +120,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
 
             if (assigned) {
                 --availableParkingSpots[parkingNode];
-                simulations.emplace_back(dropoffNode, parkingNode, duration);
+                simulations.emplace_back(dropoffNode, parkingNode, duration, tillArrival);
             } else {
                 unassignedRequests.push_back(request);
                 request.incrementTimesDropped();

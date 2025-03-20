@@ -30,12 +30,15 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
     RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration,
-                               simSettings.maxRequestsPerStep, seed);
+                               simSettings.maxTimeTillArrival, simSettings.maxRequestsPerStep, 
+                               seed);
     Requests requests;
     requests.reserve(simSettings.timesteps * simSettings.maxRequestsPerStep / 2);
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;
+
+    Requests earlyRequests;
 
     Simulations simulations;
 
@@ -54,7 +57,14 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
         double batchAverageDuration = 0.0;
         if (!requests.empty() && (timestep % simSettings.batchInterval == 0)) {
             requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
+            requests.insert(requests.end(), earlyRequests.begin(), earlyRequests.end());
+            uint64_t maxDuration = max_element(requests.begin(), requests.end(),
+                            [](const Request &r1, const Request & r2) {
+                                return r2.getArrival() > 0 || (r1.getDuration() < r2.getDuration() && r2.getArrival() == 0); 
+                            })->getDuration();
             unassignedRequests.clear();
+            earlyRequests.clear();
+            seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
             auto result = Scheduler::scheduleBatch(env, requests);
             requests.clear();
@@ -65,9 +75,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
             unassignedRequests = result.unassignedRequests;
             droppedRequests += unassignedRequests.size();
 
-            const auto &newSimulations = result.simulations;
-
-            simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
+            insertSimulations(simulations, result.simulations);
         }
 
         const auto totalAvailableParkingSpots =
@@ -146,6 +154,26 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
 
     const auto [first, last] = std::ranges::remove_if(simulations, simulate);
     simulations.erase(first, last);
+}
+
+void Simulator::seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration, Requests &earlyRequests) {
+    for (auto it = requests.begin(); it != requests.end(); ++it) {
+        if (maxDuration < it->getArrival()) {
+            earlyRequests.push_back(std::move(*it));
+            requests.erase(it);
+        }
+        else if (it->getArrival() > 0) {
+            earlyRequests.push_back(std::move(*it));
+        }
+    }
+}
+
+void Simulator::insertSimulations(Simulations &simulations, Simulations &newSimulations) {
+    for (auto &simulation : newSimulations) {
+        if (!(simulation.tillArrival > 0)) {   
+            simulations.push_back(std::move(simulation));
+        }
+    }
 }
 
 void Simulator::insertNewRequests(RequestGenerator &generator, Requests &requests) {

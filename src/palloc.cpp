@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
         std::optional<std::string> outputPathOpt;
         uint64_t timesteps = 1000;
         uint64_t maxRequestDuration = 60;
+        uint64_t maxTimeTillArrival = 60;
         uint64_t maxRequestsPerStep = 10;
         uint64_t batchInterval = 2;
         std::optional<uint64_t> seedOpt;
@@ -28,6 +29,7 @@ int main(int argc, char **argv) {
             {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
             {{"timesteps", 't'}, timesteps, "timesteps in minutes to run simulation"},
             {{"duration", 'd'}, maxRequestDuration, "max duration in minutes of requests"},
+            {{"arrival", 'a'}, maxTimeTillArrival, "max duration of early requests in minutes"},
             {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
             {{"batch-delay", 'b'}, batchInterval, "interval in minutes before processing requests"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
 
         Simulator::simulate(
-            env, {timesteps, maxRequestDuration, maxRequestsPerStep, batchInterval, seed},
+            env, {timesteps, maxRequestDuration, maxTimeTillArrival, maxRequestsPerStep, batchInterval, seed},
             {outputPathOpt.value_or(""), prettify, log});
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
