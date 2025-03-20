@@ -42,12 +42,12 @@ class Environment {
 
     friend struct glz::meta<Environment>;
 
-    DurationMatrix dropoffToParking;
-    DurationMatrix parkingToDropoff;
-    UintVector availableParkingSpots;
-    UintVector smallestRoundTrips;
-    Coordinates dropoffCoords;
-    Coordinates parkingCoords;
+    DurationMatrix _dropoffToParking;
+    DurationMatrix _parkingToDropoff;
+    UintVector _availableParkingSpots;
+    UintVector _smallestRoundTrips;
+    Coordinates _dropoffCoords;
+    Coordinates _parkingCoords;
 };
 }  // namespace palloc
 
@@ -61,9 +61,9 @@ template <>
 struct glz::meta<palloc::Environment> {
     using T = palloc::Environment;
     static constexpr auto value = glz::object(
-        "dropoff_to_parking", &T::dropoffToParking, "parking_to_dropoff", &T::parkingToDropoff,
-        "parking_capacities", &T::availableParkingSpots, "dropoff_coords", &T::dropoffCoords,
-        "parking_coords", &T::parkingCoords, "smallest_round_trips", &T::smallestRoundTrips);
+        "dropoff_to_parking", &T::_dropoffToParking, "parking_to_dropoff", &T::_parkingToDropoff,
+        "parking_capacities", &T::_availableParkingSpots, "dropoff_coords", &T::_dropoffCoords,
+        "parking_coords", &T::_parkingCoords, "smallest_round_trips", &T::_smallestRoundTrips);
 };
 
 #endif

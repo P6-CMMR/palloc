@@ -11,27 +11,27 @@
 
 using namespace palloc;
 
-uint64_t Simulation::getDropoffNode() const noexcept { return dropoffNode; }
+uint64_t Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
 
-uint64_t Simulation::getParkingNode() const noexcept { return parkingNode; }
+uint64_t Simulation::getParkingNode() const noexcept { return _parkingNode; }
 
-uint64_t Simulation::getRequestDuration() const noexcept { return requestDuration; }
+uint64_t Simulation::getRequestDuration() const noexcept { return _requestDuration; }
 
-uint64_t Simulation::getDurationLeft() const noexcept { return durationLeft; }
+uint64_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
 
-uint64_t Simulation::getRouteDuration() const noexcept { return routeDuration; }
+uint64_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
 
-bool Simulation::isInDropoff() const noexcept { return inDropoff; }
+bool Simulation::isInDropoff() const noexcept { return _inDropoff; }
 
-bool Simulation::hasVisitedParking() const noexcept { return visitedParking; }
+bool Simulation::hasVisitedParking() const noexcept { return _visitedParking; }
 
-void Simulation::setIsInDropoff(bool inDropoff) noexcept { this->inDropoff = inDropoff; }
+void Simulation::setIsInDropoff(bool inDropoff) noexcept { this->_inDropoff = inDropoff; }
 
 void Simulation::setHasVisitedParking(bool visitedParking) noexcept {
-    this->visitedParking = visitedParking;
+    this->_visitedParking = visitedParking;
 }
 
-void Simulation::decrementDuration() noexcept { --durationLeft; }
+void Simulation::decrementDuration() noexcept { --_durationLeft; }
 
 void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings) {
@@ -60,8 +60,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
                                simSettings.requestRate);
     Requests requests;
-    requests.reserve(
-        static_cast<size_t>(simSettings.timesteps * std::ceil(simSettings.requestRate)));
+    requests.reserve(simSettings.timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;
@@ -178,7 +177,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         }
 
         assert(simulation.getDurationLeft() ||
-               simulation.getDurationLeft() == 0 && simulation.isInDropoff());
+               (simulation.getDurationLeft() == 0 && simulation.isInDropoff()));
 
         return simulation.getDurationLeft() == 0;
     };

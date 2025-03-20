@@ -5,3 +5,6 @@ osrm-server
 .venv
 *.osm
 plots
+*.data
+flamegraph.html
+FlameGraph

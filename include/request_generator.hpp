@@ -1,17 +1,17 @@
 #ifndef REQUEST_GENERATOR_HPP
 #define REQUEST_GENERATOR_HPP
 
+#include <array>
 #include <cstdint>
 #include <random>
 #include <vector>
-#include <array>
 
 namespace palloc {
 
 class Request {
    public:
     explicit Request(uint64_t dropoffNode, uint64_t requestDuration)
-        : dropoffNode(dropoffNode), requestDuration(requestDuration) {}
+        : _dropoffNode(dropoffNode), _requestDuration(requestDuration) {}
 
     uint64_t getDropoffNode() const noexcept;
     uint64_t getRequestDuration() const noexcept;
@@ -23,9 +23,9 @@ class Request {
     bool isDead() const noexcept;
 
    private:
-    uint64_t dropoffNode;
-    uint64_t requestDuration;
-    uint64_t timesDropped = 0;
+    uint64_t _dropoffNode;
+    uint64_t _requestDuration;
+    uint64_t _timesDropped = 0;
 };
 
 using Requests = std::vector<Request>;
@@ -34,13 +34,14 @@ class RequestGenerator {
    public:
     explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxRequestDuration, uint64_t seed,
                               double requestRate)
-        : dropoffDist(0, dropoffNodes - 1),
-          maxRequestDuration(maxRequestDuration),
-          rng(seed),
-          requestRate(requestRate) {
-            std::vector<double> durationWeights = getDurationBuckets(maxRequestDuration);
-            durationDist = std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
-        }
+        : _dropoffDist(0, dropoffNodes - 1),
+          _rng(seed),
+          _requestRate(requestRate),
+          _maxRequestDuration(maxRequestDuration) {
+        std::vector<double> durationWeights = getDurationBuckets(maxRequestDuration);
+        _durationDist =
+            std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
+    }
 
     Requests generate(uint64_t currentTimeOfDay);
 
@@ -50,14 +51,14 @@ class RequestGenerator {
      * approximation of the central limit theorem for gaussian distirbution so we limit it to r
      * ate + 3σ. When rate <= 100 we act like its 100 and limit it to 100 + 3σ
      */
-    uint64_t getPoissonUpperBound(double rate) const;
+    static uint64_t getPoissonUpperBound(double rate);
 
     /**
      * Function that returns a multiplier which changes during the day to represent parking requests
      * as a function of time
      */
-    double getTimeMultiplier(uint64_t currentTimeOfDay) const;
-    
+    static double getTimeMultiplier(uint64_t currentTimeOfDay);
+
     /**
      * Uniformly sample duration from a random weighted bucket
      */
@@ -68,25 +69,25 @@ class RequestGenerator {
      */
     std::vector<double> getDurationBuckets(uint64_t maxDuration) const;
 
-    std::uniform_int_distribution<uint64_t> dropoffDist;
-    std::discrete_distribution<uint64_t> durationDist;
-    std::minstd_rand rng;
-    
+    std::uniform_int_distribution<uint64_t> _dropoffDist;
+    std::discrete_distribution<uint64_t> _durationDist;
+    std::minstd_rand _rng;
+
     /**
      * Bucket intervals based on COWI
      */
-    const std::array<std::array<uint64_t, 2>, 7> durationBuckets{{
-        {{0, 60}},   
-        {{61, 120}},  
-        {{121, 240}},  
-        {{241, 480}}, 
+    static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{{
+        {{0, 60}},
+        {{61, 120}},
+        {{121, 240}},
+        {{241, 480}},
         {{481, 1440}},
         {{1441, 2880}},
         {{2881, std::numeric_limits<uint64_t>::max()}}
     }};
 
-    double requestRate;
-    uint64_t maxRequestDuration;
+    double _requestRate;
+    uint64_t _maxRequestDuration;
 };
 }  // namespace palloc
 

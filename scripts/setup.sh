@@ -21,6 +21,19 @@ if [ "$1" == "clean" ]; then
     fi
 fi
 
+cd tools
+if [ ! -d "FlameGraph" ]; then
+    echo "FlameGraph not found. Cloning repository..."
+    if ! command -v git &> /dev/null; then
+        echo "Git could not be found. Installing Git..."
+        sudo apt install git -y
+    fi
+
+    git clone https://github.com/brendangregg/FlameGraph.git
+    echo "FlameGraph cloned successfully"
+fi
+
+cd ..
 if ! command -v docker &> /dev/null; then
     echo "Docker could not be found. Installing Docker..."
 

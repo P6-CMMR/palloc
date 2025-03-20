@@ -15,11 +15,11 @@ class Simulation {
    public:
     explicit Simulation(uint64_t dropoffNode, uint64_t parkingNode, uint64_t requestDuration,
                         uint64_t routeDuration)
-        : dropoffNode(dropoffNode),
-          parkingNode(parkingNode),
-          requestDuration(requestDuration),
-          durationLeft(requestDuration),
-          routeDuration(routeDuration) {}
+        : _dropoffNode(dropoffNode),
+          _parkingNode(parkingNode),
+          _requestDuration(requestDuration),
+          _durationLeft(requestDuration),
+          _routeDuration(routeDuration) {}
 
     uint64_t getDropoffNode() const noexcept;
     uint64_t getParkingNode() const noexcept;
@@ -36,14 +36,14 @@ class Simulation {
     void decrementDuration() noexcept;
 
    private:
-    uint64_t dropoffNode;
-    uint64_t parkingNode;
-    uint64_t requestDuration;
-    uint64_t durationLeft;
-    uint64_t routeDuration;
+    uint64_t _dropoffNode;
+    uint64_t _parkingNode;
+    uint64_t _requestDuration;
+    uint64_t _durationLeft;
+    uint64_t _routeDuration;
 
-    bool inDropoff{true};
-    bool visitedParking{false};
+    bool _inDropoff{true};
+    bool _visitedParking{false};
 };
 
 using Simulations = std::list<Simulation>;
