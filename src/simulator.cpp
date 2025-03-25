@@ -21,8 +21,6 @@ uint64_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
 
 uint64_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
 
-uint64_t Simulation::getTillArrival() const noexcept { return _tillArrival; }
-
 bool Simulation::isInDropoff() const noexcept { return _inDropoff; }
 
 bool Simulation::hasVisitedParking() const noexcept { return _visitedParking; }
@@ -88,13 +86,14 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
         double batchCost = 0.0;
         double batchAverageDuration = 0.0;
         Assignments assignments;
+        // surely these if entences should be fixed
         if (!requests.empty() && (timestep % simSettings.batchInterval == 0)) {
             requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
             requests.insert(requests.end(), earlyRequests.begin(), earlyRequests.end());
 
             auto maxDurationRequest = max_element(requests.begin(), requests.end(),
                 [](const Request &r1, const Request & r2) {
-                    return r2.getArrival() > 0 || (r1.getRequestDuration() < r2.getRequestDuration() && r2.getArrival() == 0); 
+                    return r1.getArrival() > 0 || (r1.getRequestDuration() < r2.getRequestDuration() && r2.getArrival() == 0); 
                 });
             uint64_t maxDuration = (maxDurationRequest->getArrival() > 0) ? 0 : maxDurationRequest->getRequestDuration();
             
@@ -113,18 +112,19 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                 unassignedRequests = result.unassignedRequests;
                 droppedRequests += unassignedRequests.size();
 
+                earlyRequests = result.earlyRequests;
+
                 const auto &newSimulations = result.simulations;
                 assignments.reserve(newSimulations.size());
                 for (const auto &simulation : newSimulations) {
                     assert(simulation.getRequestDuration() >= simulation.getRouteDuration());
-                    if (simulation.getTillArrival() > 0) continue;
                     assignments.emplace_back(env.getDropoffCoordinates()[simulation.getDropoffNode()],
                                             env.getParkingCoordinates()[simulation.getParkingNode()],
                                             simulation.getRequestDuration(),
                                             simulation.getRouteDuration());
                 }
 
-                insertSimulations(simulations, result.simulations);
+                simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
         }
 
@@ -208,21 +208,9 @@ void Simulator::seperateTooEarlyRequests(Requests &requests, uint64_t maxDuratio
     auto end = requests.rend();
     for (auto it = requests.rbegin(); it != end; ++it) {
         if (requests.size() < 1) return;
-        if (maxDuration < it->getArrival()) {
-            earlyRequests.push_back(std::move(*it));
-            requests.erase(std::next(it).base());
-        }
-        else if (it->getArrival() > 0) {
-            earlyRequests.push_back(std::move(*it));
-        }
-    }
-}
-
-void Simulator::insertSimulations(Simulations &simulations, Simulations &newSimulations) {
-    for (auto &simulation : newSimulations) {
-        if (!(simulation.getTillArrival() > 0)) {   
-            simulations.push_back(std::move(simulation));
-        }
+        if (it->getArrival() > 0) earlyRequests.push_back(std::move(*it));
+        if (maxDuration >= it->getArrival()) continue;
+        requests.erase(std::next(it).base());
     }
 }
 
@@ -241,6 +229,7 @@ void Simulator::removeDeadRequests(Requests &unassignedRequests) {
 
 void Simulator::decrementArrivalTime(Requests &earlyRequests) {
     for (auto &request : earlyRequests) {
+        if (request.getArrival() == 0) continue;
         request.decrementTillArrival();
     }
 }

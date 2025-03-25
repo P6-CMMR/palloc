@@ -14,20 +14,18 @@ namespace palloc {
 class Simulation {
    public:
     explicit Simulation(uint64_t dropoffNode, uint64_t parkingNode, uint64_t requestDuration,
-                        uint64_t routeDuration, uint64_t tillArrival)
+                        uint64_t routeDuration)
         : _dropoffNode(dropoffNode),
           _parkingNode(parkingNode),
           _requestDuration(requestDuration),
           _durationLeft(requestDuration),
-          _routeDuration(routeDuration),
-          _tillArrival(tillArrival) {}
+          _routeDuration(routeDuration) {}
 
     uint64_t getDropoffNode() const noexcept;
     uint64_t getParkingNode() const noexcept;
     uint64_t getRequestDuration() const noexcept;
     uint64_t getDurationLeft() const noexcept;
     uint64_t getRouteDuration() const noexcept;
-    uint64_t getTillArrival() const noexcept;
 
     bool isInDropoff() const noexcept;
     bool hasVisitedParking() const noexcept;
@@ -43,7 +41,6 @@ class Simulation {
     uint64_t _requestDuration;
     uint64_t _durationLeft;
     uint64_t _routeDuration;
-    uint64_t _tillArrival;
 
     bool _inDropoff{true};
     bool _visitedParking{false};
@@ -76,7 +73,6 @@ class Simulator {
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
                                   Requests &requests);
-    static void insertSimulations(Simulations &simulations, Simulations &newSimulations);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void decrementArrivalTime(Requests &earlyRequests);
     static void seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration, Requests &earlyRequests);

@@ -95,6 +95,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
 
     Simulations simulations;
     Requests unassignedRequests;
+    Requests earlyRequests;
 
     double sumDuration = 0.0;
     double averageDuration = 0.0;
@@ -121,9 +122,11 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
 
             sumDuration += routeDuration;
 
-            if (assigned) {
+            if (tillArrival > 0) { 
+                earlyRequests.push_back(request);
+            } else if (assigned) {
                 --availableParkingSpots[parkingNode];
-                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, routeDuration, tillArrival);
+                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, routeDuration);
             } else {
                 unassignedRequests.push_back(request);
                 request.incrementTimesDropped();
@@ -134,5 +137,5 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     averageDuration =
         simulations.empty() ? 0 : sumDuration / static_cast<double>(simulations.size());
 
-    return {simulations, unassignedRequests, averageDuration, cost};
+    return {simulations, unassignedRequests, earlyRequests, averageDuration, cost};
 }
