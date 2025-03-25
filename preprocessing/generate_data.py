@@ -1,8 +1,6 @@
 import xml.etree.ElementTree as ET
 import requests
 import json
-import numpy as np
-from scipy.stats import gaussian_kde
 
 def read(filename):
     tree = ET.parse(filename)

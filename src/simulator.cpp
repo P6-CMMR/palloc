@@ -58,7 +58,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  startHour, startMin);
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed, simSettings.requestRate);
+    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
+                               simSettings.requestRate);
     Requests requests;
     requests.reserve(simSettings.timesteps *
                      static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
