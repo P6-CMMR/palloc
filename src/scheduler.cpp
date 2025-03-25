@@ -52,7 +52,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     // x_rp is 0
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].getDropoffNode();
-        const auto requestDuration = requests[i].getDuration();
+        const auto requestDuration = requests[i].getRequestDuration();
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const auto travelTime =
                 (parkingToDropoff[j][dropoffNode] + dropoffToParking[dropoffNode][j]);
@@ -96,31 +96,34 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     Simulations simulations;
     Requests unassignedRequests;
 
-    double sumDuration = 0;
-    double averageDuration = 0;
+    double sumDuration = 0.0;
+    double averageDuration = 0.0;
     double cost = objective->Value();
-
     if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
         for (size_t i = 0; i < requestCount; ++i) {
             auto &request = requests[i];
             size_t parkingNode = 0;
             bool assigned = false;
             const auto dropoffNode = request.getDropoffNode();
-            const auto duration = request.getDuration();
+            const auto requestDuration = request.getRequestDuration();
             const auto tillArrival = request.getArrival();
+            double routeDuration = 0.0;
             for (size_t j = 0; j < numberOfParkings; ++j) {
                 if (var[i][j]->solution_value() > 0.5) {
                     parkingNode = j;
                     assigned = true;
-                    sumDuration += static_cast<double>(dropoffToParking[dropoffNode][parkingNode]) +
-                                   static_cast<double>(parkingToDropoff[parkingNode][dropoffNode]);
+                    routeDuration =
+                        static_cast<double>(dropoffToParking[dropoffNode][parkingNode]) +
+                        static_cast<double>(parkingToDropoff[parkingNode][dropoffNode]);
                     break;
                 }
             }
 
+            sumDuration += routeDuration;
+
             if (assigned) {
                 --availableParkingSpots[parkingNode];
-                simulations.emplace_back(dropoffNode, parkingNode, duration, tillArrival);
+                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, routeDuration, tillArrival);
             } else {
                 unassignedRequests.push_back(request);
                 request.incrementTimesDropped();

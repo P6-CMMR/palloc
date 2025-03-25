@@ -2,19 +2,19 @@
 
 using namespace palloc;
 
-uint64_t Trace::getTimeStep() const noexcept { return timestep; }
+size_t Trace::getNumberOfOngoingSimulations() const noexcept { return _numberOfOngoingSimulations; }
 
-size_t Trace::getNumberOfRequests() const noexcept { return numberOfRequests; }
+size_t Trace::getDroppedRequests() const noexcept { return _droppedRequests; }
 
-size_t Trace::getNumberOfOngoingSimulations() const noexcept { return numberOfOngoingSimulations; }
+size_t Trace::getNumberOfRequests() const noexcept { return _numberOfRequests; }
 
-uint64_t Trace::getAvailableParkingSpots() const noexcept { return availableParkingSpots; }
+uint64_t Trace::getAvailableParkingSpots() const noexcept { return _availableParkingSpots; }
 
-double Trace::getCost() const noexcept { return cost; }
+uint64_t Trace::getTimeStep() const noexcept { return _timestep; }
 
-double Trace::getAverageDuration() const noexcept { return averageDuration; }
+double Trace::getCost() const noexcept { return _cost; }
 
-size_t Trace::getDroppedRequests() const noexcept { return droppedRequests; }
+double Trace::getAverageDuration() const noexcept { return _averageDuration; }
 
 std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
     os << "Trace(time=" << std::setw(5) << trace.getTimeStep() << ", requests=" << std::setw(5)
