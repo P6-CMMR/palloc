@@ -64,7 +64,7 @@ def create_map_visualization(env, data, output_dir_path):
 
     m = folium.Map(location=[center_lat, center_lng], zoom_start=14)
     simple_heatmap = HeatMap(
-        dropoff_points,  # Just use the points without weights
+        dropoff_points,
         gradient={"0.4": "blue", "0.65": "lime", "1": "red"}, 
         radius=15,
         name="Dropoff Points Distribution",
