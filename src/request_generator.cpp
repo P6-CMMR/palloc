@@ -75,7 +75,6 @@ double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
 
 uint64_t RequestGenerator::getDuration() {
     const uint64_t selectedBucket = _durationDist(_rng);
-
     const uint64_t start = DURATION_BUCKETS[selectedBucket][0];
     const uint64_t end = std::min(DURATION_BUCKETS[selectedBucket][1], _maxRequestDuration);
 
@@ -99,13 +98,13 @@ std::vector<double> RequestGenerator::getDurationBuckets(uint64_t maxDuration) {
 
         if (end <= maxDuration) {
             // Full bucket
-            weightBuckets.emplace_back(originalWeights[i]);
+            weightBuckets.push_back(originalWeights[i]);
         } else {
             // Partial bucket
             const double availableRange = static_cast<double>(maxDuration - start + 1);
             const double totalRange = static_cast<double>(end - start + 1);
             const double adjustedWeight = originalWeights[i] * (availableRange / totalRange);
-            weightBuckets.emplace_back(adjustedWeight);
+            weightBuckets.push_back(adjustedWeight);
         }
     }
 

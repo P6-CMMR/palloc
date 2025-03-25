@@ -77,13 +77,13 @@ class RequestGenerator {
      * Bucket intervals based on COWI
      */
     static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{
-        {{{0, 60}},                                        // 14%
-         {{61, 120}},                                      // 13%
-         {{121, 240}},                                     // 10%
-         {{241, 480}},                                     // 16%
-         {{481, 1440}},                                    // 21%
-         {{1441, 2880}},                                   // 9%
-         {{2881, std::numeric_limits<uint64_t>::max()}}}}; // 7%
+        {{{0, 60}},                                         // 14%
+         {{61, 120}},                                       // 13%
+         {{121, 240}},                                      // 10%
+         {{241, 480}},                                      // 16%
+         {{481, 1440}},                                     // 21%
+         {{1441, 2880}},                                    // 9%
+         {{2881, std::numeric_limits<uint64_t>::max()}}}};  // 7%
 
     double _requestRate;
     uint64_t _maxRequestDuration;
