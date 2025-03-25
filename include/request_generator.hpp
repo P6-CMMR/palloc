@@ -67,7 +67,7 @@ class RequestGenerator {
     /**
      * Get viable duration buckets
      */
-    std::vector<double> getDurationBuckets(uint64_t maxDuration) const;
+    static std::vector<double> getDurationBuckets(uint64_t maxDuration);
 
     std::uniform_int_distribution<uint64_t> _dropoffDist;
     std::discrete_distribution<uint64_t> _durationDist;
@@ -76,15 +76,14 @@ class RequestGenerator {
     /**
      * Bucket intervals based on COWI
      */
-    static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{{
-        {{0, 60}},
-        {{61, 120}},
-        {{121, 240}},
-        {{241, 480}},
-        {{481, 1440}},
-        {{1441, 2880}},
-        {{2881, std::numeric_limits<uint64_t>::max()}}
-    }};
+    static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{
+        {{{0, 60}},                                        // 14%
+         {{61, 120}},                                      // 13%
+         {{121, 240}},                                     // 10%
+         {{241, 480}},                                     // 16%
+         {{481, 1440}},                                    // 21%
+         {{1441, 2880}},                                   // 9%
+         {{2881, std::numeric_limits<uint64_t>::max()}}}}; // 7%
 
     double _requestRate;
     uint64_t _maxRequestDuration;

@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
         std::string outputPathStr;
         SimulatorSettings simSettings{.timesteps = 1000,
                                       .startTime = 1,
-                                      .maxRequestDuration = 60,
+                                      .maxRequestDuration = 600,
                                       .requestRate = 10,
                                       .batchInterval = 2};
 

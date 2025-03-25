@@ -60,7 +60,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
                                simSettings.requestRate);
     Requests requests;
-    requests.reserve(simSettings.timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
+    requests.reserve(simSettings.timesteps *
+                     static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;

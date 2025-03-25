@@ -42,20 +42,20 @@ uint64_t RequestGenerator::getPoissonUpperBound(double rate) {
 double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
     double timeInHours = static_cast<double>(currentTimeOfDay % 1440) / 60.0;
 
-    constexpr double baseline = 0.3;
+    constexpr double baseline = 0.4;
 
     // Morning peak parameters
-    constexpr double morningAmplitude = 0.8;
-    constexpr double morningCenter = 8.0;
-    constexpr double morningWidth = 1.5;
+    constexpr double morningAmplitude = 0.95;
+    constexpr double morningCenter = 9.0;
+    constexpr double morningWidth = 3.0;
 
     constexpr double morningFactor = 1.0 / (2.0 * morningWidth * morningWidth);
     constexpr double morningScale = morningAmplitude - baseline;
 
     // Evening peak parameters
-    constexpr double eveningAmplitude = 1.0;
+    constexpr double eveningAmplitude = 0.9;
     constexpr double eveningCenter = 17.0;
-    constexpr double eveningWidth = 2.0;
+    constexpr double eveningWidth = 3.0;
 
     constexpr double eveningFactor = 1.0 / (2.0 * eveningWidth * eveningWidth);
     constexpr double eveningScale = eveningAmplitude - baseline;
@@ -84,7 +84,7 @@ uint64_t RequestGenerator::getDuration() {
     return uniformDist(_rng);
 }
 
-std::vector<double> RequestGenerator::getDurationBuckets(uint64_t maxDuration) const {
+std::vector<double> RequestGenerator::getDurationBuckets(uint64_t maxDuration) {
     // Weights based on COWI
     constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
 
