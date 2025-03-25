@@ -3,31 +3,31 @@
 using namespace palloc;
 
 const Environment::DurationMatrix &Environment::getDropoffToParking() const noexcept {
-    return dropoffToParking;
+    return _dropoffToParking;
 }
 
 const Environment::DurationMatrix &Environment::getParkingToDropoff() const noexcept {
-    return parkingToDropoff;
+    return _parkingToDropoff;
 }
 
 Environment::UintVector &Environment::getAvailableParkingSpots() noexcept {
-    return availableParkingSpots;
+    return _availableParkingSpots;
 }
 
 const Environment::Coordinates &Environment::getDropoffCoordinates() const noexcept {
-    return dropoffCoords;
+    return _dropoffCoords;
 }
 
 const Environment::Coordinates &Environment::getParkingCoordinates() const noexcept {
-    return parkingCoords;
+    return _parkingCoords;
 }
 
-size_t Environment::getNumberOfDropoffs() const noexcept { return dropoffToParking.size(); }
+size_t Environment::getNumberOfDropoffs() const noexcept { return _dropoffToParking.size(); }
 
-size_t Environment::getNumberOfParkings() const noexcept { return parkingToDropoff.size(); }
+size_t Environment::getNumberOfParkings() const noexcept { return _parkingToDropoff.size(); }
 
 const Environment::UintVector &Environment::getSmallestRoundTrips() const noexcept {
-    return smallestRoundTrips;
+    return _smallestRoundTrips;
 }
 
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {

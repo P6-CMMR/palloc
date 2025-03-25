@@ -11,32 +11,33 @@
 
 using namespace palloc;
 
-uint64_t Simulation::getDropoffNode() const noexcept { return dropoffNode; }
+uint64_t Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
 
-uint64_t Simulation::getParkingNode() const noexcept { return parkingNode; }
+uint64_t Simulation::getParkingNode() const noexcept { return _parkingNode; }
 
-uint64_t Simulation::getRequestDuration() const noexcept { return requestDuration; }
+uint64_t Simulation::getRequestDuration() const noexcept { return _requestDuration; }
 
-uint64_t Simulation::getDurationLeft() const noexcept { return durationLeft; }
+uint64_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
 
-uint64_t Simulation::getRouteDuration() const noexcept { return routeDuration; }
+uint64_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
 
-bool Simulation::isInDropoff() const noexcept { return inDropoff; }
+bool Simulation::isInDropoff() const noexcept { return _inDropoff; }
 
-bool Simulation::hasVisitedParking() const noexcept { return visitedParking; }
+bool Simulation::hasVisitedParking() const noexcept { return _visitedParking; }
 
-void Simulation::setIsInDropoff(bool inDropoff) noexcept { this->inDropoff = inDropoff; }
+void Simulation::setIsInDropoff(bool inDropoff) noexcept { this->_inDropoff = inDropoff; }
 
 void Simulation::setHasVisitedParking(bool visitedParking) noexcept {
-    this->visitedParking = visitedParking;
+    this->_visitedParking = visitedParking;
 }
 
-void Simulation::decrementDuration() noexcept { --durationLeft; }
+void Simulation::decrementDuration() noexcept { --_durationLeft; }
 
 void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings) {
     assert(simSettings.timesteps > 0);
-    assert(simSettings.maxRequestDuration > 0);
+    assert(simSettings.requestRate > 0);
+    assert(simSettings.startTime <= 1439);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
@@ -50,11 +51,16 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     const auto seed = simSettings.seed;
     std::println("Using seed: {}", seed);
 
+    uint64_t startHour = simSettings.startTime / 60;
+    uint64_t startMin = simSettings.startTime % 60;
+    std::println("Starting simulation from start time: {} ({:02d}:{:02d})", simSettings.startTime,
+                 startHour, startMin);
+
     std::println("Simulating {} timesteps...", simSettings.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration,
-                               simSettings.maxRequestsPerStep, seed);
+    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
+                               simSettings.requestRate);
     Requests requests;
-    requests.reserve(simSettings.timesteps * simSettings.maxRequestsPerStep / 2);
+    requests.reserve(simSettings.timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     size_t droppedRequests = 0;
@@ -67,9 +73,11 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     Traces traces;
     const auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t timestep = 1; timestep <= simSettings.timesteps; ++timestep) {
+        uint64_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
+
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
-        insertNewRequests(generator, requests);
+        insertNewRequests(generator, currentTimeOfDay, requests);
         cutImpossibleRequests(requests, env.getSmallestRoundTrips());
 
         double batchCost = 0.0;
@@ -103,7 +111,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
         const auto totalAvailableParkingSpots =
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
-        traces.emplace_back(timestep, requests.size(), simulations.size(),
+        traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
                             totalAvailableParkingSpots, batchCost, batchAverageDuration,
                             droppedRequests, assignments);
 
@@ -169,7 +177,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         }
 
         assert(simulation.getDurationLeft() ||
-               simulation.getDurationLeft() == 0 && simulation.isInDropoff());
+               (simulation.getDurationLeft() == 0 && simulation.isInDropoff()));
 
         return simulation.getDurationLeft() == 0;
     };
@@ -177,8 +185,9 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     std::erase_if(simulations, simulate);
 }
 
-void Simulator::insertNewRequests(RequestGenerator &generator, Requests &requests) {
-    const auto newRequests = generator.generate();
+void Simulator::insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
+                                  Requests &requests) {
+    const auto newRequests = generator.generate(currentTimeOfDay);
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());
 }
 

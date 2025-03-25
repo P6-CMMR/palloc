@@ -22,12 +22,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 if(WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "/W4 /Od /DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+    set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE}")
 else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Wpedantic -Wconversion -Wsign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
 endif()
 
-set(CMAKE_BUILD_TYPE Release)
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS}")
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
@@ -44,14 +48,18 @@ endif()
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 
 # Catch2
-FetchContent_Declare(
-    Catch2 
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.8.0
-)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    enable_testing()
+    
+    FetchContent_Declare(
+        Catch2 
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.8.0
+    )
 
-FetchContent_MakeAvailable(Catch2)
-list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+    FetchContent_MakeAvailable(Catch2)
+    list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+endif()
 
 # Glaze
 FetchContent_Declare(

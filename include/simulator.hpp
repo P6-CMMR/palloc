@@ -15,11 +15,11 @@ class Simulation {
    public:
     explicit Simulation(uint64_t dropoffNode, uint64_t parkingNode, uint64_t requestDuration,
                         uint64_t routeDuration)
-        : dropoffNode(dropoffNode),
-          parkingNode(parkingNode),
-          requestDuration(requestDuration),
-          durationLeft(requestDuration),
-          routeDuration(routeDuration) {}
+        : _dropoffNode(dropoffNode),
+          _parkingNode(parkingNode),
+          _requestDuration(requestDuration),
+          _durationLeft(requestDuration),
+          _routeDuration(routeDuration) {}
 
     uint64_t getDropoffNode() const noexcept;
     uint64_t getParkingNode() const noexcept;
@@ -36,40 +36,42 @@ class Simulation {
     void decrementDuration() noexcept;
 
    private:
-    uint64_t dropoffNode;
-    uint64_t parkingNode;
-    uint64_t requestDuration;
-    uint64_t durationLeft;
-    uint64_t routeDuration;
+    uint64_t _dropoffNode;
+    uint64_t _parkingNode;
+    uint64_t _requestDuration;
+    uint64_t _durationLeft;
+    uint64_t _routeDuration;
 
-    bool inDropoff{true};
-    bool visitedParking{false};
+    bool _inDropoff{true};
+    bool _visitedParking{false};
 };
 
 using Simulations = std::list<Simulation>;
 
 struct SimulatorSettings {
     uint64_t timesteps;
+    uint64_t startTime;
     uint64_t maxRequestDuration;
-    uint64_t maxRequestsPerStep;
+    double requestRate;
     uint64_t batchInterval;
     uint64_t seed;
 };
 
+struct OutputSettings {
+    std::filesystem::path path;
+    bool prettify;
+    bool log;
+};
+
 class Simulator {
    public:
-    struct OutputSettings {
-        std::filesystem::path path;
-        bool prettify;
-        bool log;
-    };
-
     static void simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings);
 
    private:
     static void updateSimulations(Simulations &simulations, Environment &env);
-    static void insertNewRequests(RequestGenerator &generator, Requests &requests);
+    static void insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
+                                  Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void cutImpossibleRequests(Requests &requests,
                                       const Environment::UintVector &smallestRoundTrips);
@@ -80,8 +82,8 @@ template <>
 struct glz::meta<palloc::SimulatorSettings> {
     using T = palloc::SimulatorSettings;
     static constexpr auto value =
-        glz::object("timesteps", &T::timesteps, "max_request_duration", &T::maxRequestDuration,
-                    "max_request_per_step", &T::maxRequestsPerStep, "batch_interval",
+        glz::object("timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
+                    &T::maxRequestDuration, "request_rate", &T::requestRate, "batch_interval",
                     &T::batchInterval, "seed", &T::seed);
 };
 

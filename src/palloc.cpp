@@ -1,13 +1,4 @@
-#include <chrono>
-#include <optional>
-#include <print>
-#include <stdexcept>
-#include <string>
-
-#include "argz/argz.hpp"
-#include "environment.hpp"
-#include "request_generator.hpp"
-#include "simulator.hpp"
+#include "palloc.hpp"
 
 using namespace palloc;
 
@@ -15,56 +6,84 @@ int main(int argc, char **argv) {
     try {
         argz::about about{"Palloc", "0.0.1"};
 
-        std::optional<std::string> environmentPathOpt;
-        std::optional<std::string> outputPathOpt;
-        uint64_t timesteps = 1000;
-        uint64_t maxRequestDuration = 60;
-        uint64_t maxRequestsPerStep = 10;
-        uint64_t batchInterval = 2;
+        std::string environmentPathStr;
+        std::string outputPathStr;
+        SimulatorSettings simSettings{.timesteps = 1000,
+                                      .startTime = 1,
+                                      .maxRequestDuration = 60,
+                                      .requestRate = 10,
+                                      .batchInterval = 2};
+
+        OutputSettings outputSettings{.prettify = false, .log = false};
+
         std::optional<uint64_t> seedOpt;
-        bool prettify = false;
-        bool log = false;
+        std::string startTimeStr = "00:00";
+
         argz::options opts{
-            {{"environment", 'e'}, environmentPathOpt, "the environment file to simulate"},
-            {{"timesteps", 't'}, timesteps, "timesteps in minutes to run simulation"},
-            {{"duration", 'd'}, maxRequestDuration, "max duration in minutes of requests"},
-            {{"requests", 'r'}, maxRequestsPerStep, "max requests to generate per timestep"},
-            {{"batch-delay", 'b'}, batchInterval, "interval in minutes before processing requests"},
+            {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},
+            {{"timesteps", 't'}, simSettings.timesteps, "timesteps in minutes to run simulation"},
+            {{"start-time", 'S'},
+             startTimeStr,
+             "time to start simulation where 0 represents 00:00 and 1439 represents 23:59"},
+            {{"duration", 'd'},
+             simSettings.maxRequestDuration,
+             "max duration in minutes of requests"},
+            {{"requests", 'r'},
+             simSettings.requestRate,
+             "rate of requests to generate per timestep"},
+            {{"batch-delay", 'b'},
+             simSettings.batchInterval,
+             "interval in minutes before processing requests"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
-            {{"output", 'o'}, outputPathOpt, "the output file to store results in"},
-            {{"prettify", 'p'}, prettify, "whether to prettify output or not"},
-            {{"log", 'l'}, log, "log detailed execution to stdout"}};
+            {{"output", 'o'},
+             outputPathStr,
+             "the output file to store results in, default: no output"},
+            {{"prettify", 'p'}, outputSettings.prettify, "whether to prettify output or not"},
+            {{"log", 'l'}, outputSettings.log, "log detailed execution to stdout"}};
 
         argz::parse(about, opts, argc, argv);
-        if (!environmentPathOpt.has_value() && !about.printed_help) {
+        if (environmentPathStr.empty() && !about.printed_help) {
             std::println(stderr, "Error: Expected environment file");
             return EXIT_FAILURE;
         }
 
-        if (!environmentPathOpt.has_value()) {
+        if (environmentPathStr.empty()) {
             return EXIT_SUCCESS;
         }
 
-        if (timesteps < 1) {
+        if (simSettings.timesteps < 1) {
             std::println(stderr, "Error: Timesteps must be a natural number");
             return EXIT_FAILURE;
         }
 
-        if (maxRequestDuration < 1) {
+        if (simSettings.maxRequestDuration < 1) {
             std::println(stderr, "Error: Max duration must be a natural number");
             return EXIT_FAILURE;
         }
 
-        Environment env(environmentPathOpt.value());
+        simSettings.startTime = DateParser::parseTimeToMinutes(startTimeStr);
+        if (simSettings.startTime > 1439) {
+            std::println(stderr,
+                         "Error: Start time must be a positive integer in the range [1..1439]");
+            return EXIT_FAILURE;
+        }
 
-        const auto seed =
+        if (simSettings.requestRate <= 0) {
+            std::println(stderr, "Error: Request rate must be a positive real");
+            return EXIT_FAILURE;
+        }
+
+        Environment env(environmentPathStr);
+
+        simSettings.seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
+        outputSettings.path = outputPathStr;
 
-        Simulator::simulate(
-            env, {timesteps, maxRequestDuration, maxRequestsPerStep, batchInterval, seed},
-            {outputPathOpt.value_or(""), prettify, log});
+        Simulator::simulate(env, simSettings, outputSettings);
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
