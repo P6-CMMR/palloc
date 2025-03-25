@@ -74,8 +74,8 @@
 </head>
 <body>
     <h1>Palloc Simulation Results</h1>
+    <h2>Simulation Settings</h2>
     <div class="container settings-container">
-        <h2>Simulation Settings</h2>
         <div class="stat-item">
             <span>Timesteps:</span>
             <span>{{timesteps}}</span>
@@ -89,7 +89,7 @@
             <span>{{max_request_duration}}</span>
         </div>
         <div class="stat-item">
-            <span>Request rate per step:</span>
+            <span>Request Rate Per Step:</span>
             <span>{{request_rate}}</span>
         </div>
         <div class="stat-item">
@@ -101,8 +101,8 @@
             <span>{{seed}}</span>
         </div>
     </div>
+    <h2>General Statistics</h2>
     <div class="container stats-container">
-        <h2>General Statistics</h2>
         <div class="stat-item">
             <span>Total Dropped Requests:</span>
             <span>{{total_dropped}}</span>
@@ -115,6 +115,10 @@
             <span>Global Average Cost:</span>
             <span>{{global_avg_cost}}</span>
         </div>
+    </div>
+    <h2>Map of Data</h2>
+    <div class="plot-links">
+        {{map_link}}
     </div>
     <h2>Plots</h2>
     <div class="plot-links">

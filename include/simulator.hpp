@@ -74,7 +74,7 @@ class Simulator {
                                   Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void cutImpossibleRequests(Requests &requests,
-                                      const Environment::UintVector &smallestRoundTrips);
+                                      const types::UintVector &smallestRoundTrips);
 };
 }  // namespace palloc
 

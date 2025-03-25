@@ -1,6 +1,7 @@
 #include "request_generator.hpp"
 
 using namespace palloc;
+using namespace types;
 
 size_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
 
@@ -83,11 +84,11 @@ uint64_t RequestGenerator::getDuration() {
     return uniformDist(_rng);
 }
 
-std::vector<double> RequestGenerator::getDurationBuckets(uint64_t maxDuration) {
+DoubleVector RequestGenerator::getDurationBuckets(uint64_t maxDuration) {
     // Weights based on COWI
     constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
 
-    std::vector<double> weightBuckets;
+    DoubleVector weightBuckets;
     for (size_t i = 0; i < DURATION_BUCKETS.size(); ++i) {
         const uint64_t start = DURATION_BUCKETS[i][0];
         const uint64_t end = DURATION_BUCKETS[i][1];

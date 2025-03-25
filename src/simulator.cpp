@@ -10,6 +10,7 @@
 #include "scheduler.hpp"
 
 using namespace palloc;
+using namespace types;
 
 uint64_t Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
 
@@ -57,8 +58,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  startHour, startMin);
 
     std::println("Simulating {} timesteps...", simSettings.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
-                               simSettings.requestRate);
+    RequestGenerator generator(simSettings.maxRequestDuration, seed, simSettings.requestRate,
+                               env.getDropoffProbabilities());
     Requests requests;
     requests.reserve(simSettings.timesteps *
                      static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
@@ -199,8 +200,7 @@ void Simulator::removeDeadRequests(Requests &unassignedRequests) {
     });
 }
 
-void Simulator::cutImpossibleRequests(Requests &requests,
-                                      const Environment::UintVector &smallestRoundTrips) {
+void Simulator::cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips) {
     std::erase_if(requests, [&smallestRoundTrips](Request &request) {
         assert(smallestRoundTrips.size() > request.getDropoffNode());
         return request.getRequestDuration() < smallestRoundTrips[request.getDropoffNode()];

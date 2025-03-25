@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "glaze/glaze.hpp"
+#include "types.hpp"
 
 namespace palloc {
 
@@ -16,8 +17,7 @@ struct Coordinate {
 
 class Environment {
    public:
-    using UintVector = std::vector<uint64_t>;
-    using DurationMatrix = std::vector<UintVector>;
+    using DurationMatrix = std::vector<types::UintVector>;
     using Coordinates = std::vector<Coordinate>;
 
     explicit Environment(const std::filesystem::path &environmentPath) {
@@ -27,7 +27,7 @@ class Environment {
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
     const Environment::DurationMatrix &getParkingToDropoff() const noexcept;
 
-    UintVector &getAvailableParkingSpots() noexcept;
+    types::UintVector &getAvailableParkingSpots() noexcept;
 
     const Environment::Coordinates &getDropoffCoordinates() const noexcept;
     const Environment::Coordinates &getParkingCoordinates() const noexcept;
@@ -35,7 +35,9 @@ class Environment {
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
 
-    const Environment::UintVector &getSmallestRoundTrips() const noexcept;
+    const types::DoubleVector &getDropoffProbabilities() const noexcept;
+
+    const types::UintVector &getSmallestRoundTrips() const noexcept;
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
@@ -44,8 +46,9 @@ class Environment {
 
     DurationMatrix _dropoffToParking;
     DurationMatrix _parkingToDropoff;
-    UintVector _availableParkingSpots;
-    UintVector _smallestRoundTrips;
+    types::UintVector _availableParkingSpots;
+    types::DoubleVector _dropoffProbabilities;
+    types::UintVector _smallestRoundTrips;
     Coordinates _dropoffCoords;
     Coordinates _parkingCoords;
 };
@@ -63,7 +66,8 @@ struct glz::meta<palloc::Environment> {
     static constexpr auto value = glz::object(
         "dropoff_to_parking", &T::_dropoffToParking, "parking_to_dropoff", &T::_parkingToDropoff,
         "parking_capacities", &T::_availableParkingSpots, "dropoff_coords", &T::_dropoffCoords,
-        "parking_coords", &T::_parkingCoords, "smallest_round_trips", &T::_smallestRoundTrips);
+        "parking_coords", &T::_parkingCoords, "dropoff_probabilities", &T::_dropoffProbabilities,
+        "smallest_round_trips", &T::_smallestRoundTrips);
 };
 
 #endif

@@ -6,6 +6,8 @@
 #include <random>
 #include <vector>
 
+#include "types.hpp"
+
 namespace palloc {
 
 class Request {
@@ -32,13 +34,12 @@ using Requests = std::vector<Request>;
 
 class RequestGenerator {
    public:
-    explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxRequestDuration, uint64_t seed,
-                              double requestRate)
-        : _dropoffDist(0, dropoffNodes - 1),
-          _rng(seed),
-          _requestRate(requestRate),
-          _maxRequestDuration(maxRequestDuration) {
-        std::vector<double> durationWeights = getDurationBuckets(maxRequestDuration);
+    explicit RequestGenerator(uint64_t maxRequestDuration, uint64_t seed, double requestRate,
+                              types::DoubleVector dropoffProbabilities)
+        : _rng(seed), _maxRequestDuration(maxRequestDuration), _requestRate(requestRate) {
+        types::DoubleVector durationWeights = getDurationBuckets(maxRequestDuration);
+        _dropoffDist = std::discrete_distribution<uint64_t>(dropoffProbabilities.begin(),
+                                                            dropoffProbabilities.end());
         _durationDist =
             std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
     }
@@ -67,9 +68,9 @@ class RequestGenerator {
     /**
      * Get viable duration buckets
      */
-    static std::vector<double> getDurationBuckets(uint64_t maxDuration);
+    static types::DoubleVector getDurationBuckets(uint64_t maxDuration);
 
-    std::uniform_int_distribution<uint64_t> _dropoffDist;
+    std::discrete_distribution<uint64_t> _dropoffDist;
     std::discrete_distribution<uint64_t> _durationDist;
     std::minstd_rand _rng;
 
@@ -85,8 +86,8 @@ class RequestGenerator {
          {{1441, 2880}},                                    // 9%
          {{2881, std::numeric_limits<uint64_t>::max()}}}};  // 7%
 
-    double _requestRate;
     uint64_t _maxRequestDuration;
+    double _requestRate;
 };
 }  // namespace palloc
 
