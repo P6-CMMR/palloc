@@ -57,27 +57,20 @@ def create_map_visualization(env, data, output_dir_path):
     """Create an interactive map visualization of dropoff points, density, and parking spots."""
     dropoff_points = [(point["latitude"], point["longitude"]) for point in env["dropoff_coords"]]
     parking_points = [(point["latitude"], point["longitude"]) for point in env["parking_coords"]]
-    dropoff_probabilities = env["dropoff_probabilities"]
 
     all_points = dropoff_points + parking_points
     center_lat = sum(p[0] for p in all_points) / len(all_points)
     center_lng = sum(p[1] for p in all_points) / len(all_points)
 
     m = folium.Map(location=[center_lat, center_lng], zoom_start=14)
-    
-    weighted_points = []
-    for i, (dropoff_lat, dropoff_lon) in enumerate(dropoff_points):
-        weight = float(dropoff_probabilities[i])
-        weighted_points.append([dropoff_lat, dropoff_lon, weight])
-    
-    probability_heatmap = HeatMap(
-        weighted_points,
+    simple_heatmap = HeatMap(
+        dropoff_points,  # Just use the points without weights
         gradient={"0.4": "blue", "0.65": "lime", "1": "red"}, 
         radius=15,
-        name="Dropoff Probability Distribution",
+        name="Dropoff Points Distribution",
         show=False
     )
-    m.add_child(probability_heatmap)
+    m.add_child(simple_heatmap)
     
     dropoff_assignment_points = []
     parking_assignment_points = []

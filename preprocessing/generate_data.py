@@ -109,17 +109,6 @@ def calculate_shortest_roundtrips(dropoff_to_parking, parking_to_dropoff):
         
     return smallest_round_trips
 
-def calculate_dropoff_probabilities(dropoff_points):
-    """Calculate probability for each dropoff point using Kernel Density Estimation."""
-    points_array = np.array(dropoff_points)
-    
-    kde = gaussian_kde(points_array.T)
-    point_densities = kde(points_array.T)
-    
-    total = np.sum(point_densities)
-    probabilities = point_densities / total
-    return probabilities.tolist()
-
 def write_response_to_file(dropoff_to_parking, parking_to_dropoff, parking_capacities, dropoff_coords, parking_coords):
     filename = f"../data.json"
 
@@ -142,15 +131,12 @@ def write_response_to_file(dropoff_to_parking, parking_to_dropoff, parking_capac
             "longitude": lon
         })
 
-    dropoff_probabilities = calculate_dropoff_probabilities(dropoff_coords)
-
     output = {
         "dropoff_to_parking": dropoff_to_parking,
         "parking_to_dropoff": parking_to_dropoff,
         "parking_capacities": parking_capacities,
         "dropoff_coords": formatted_dropoff_coords,
         "parking_coords": formatted_parking_coords,
-        "dropoff_probabilities": dropoff_probabilities,
         "smallest_round_trips": smallest_round_trips
     }
     

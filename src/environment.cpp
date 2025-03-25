@@ -25,10 +25,6 @@ size_t Environment::getNumberOfDropoffs() const noexcept { return _dropoffToPark
 
 size_t Environment::getNumberOfParkings() const noexcept { return _parkingToDropoff.size(); }
 
-const DoubleVector &Environment::getDropoffProbabilities() const noexcept {
-    return _dropoffProbabilities;
-}
-
 const UintVector &Environment::getSmallestRoundTrips() const noexcept {
     return _smallestRoundTrips;
 }

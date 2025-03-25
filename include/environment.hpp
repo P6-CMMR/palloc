@@ -35,8 +35,6 @@ class Environment {
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
 
-    const types::DoubleVector &getDropoffProbabilities() const noexcept;
-
     const types::UintVector &getSmallestRoundTrips() const noexcept;
 
    private:
@@ -47,7 +45,6 @@ class Environment {
     DurationMatrix _dropoffToParking;
     DurationMatrix _parkingToDropoff;
     types::UintVector _availableParkingSpots;
-    types::DoubleVector _dropoffProbabilities;
     types::UintVector _smallestRoundTrips;
     Coordinates _dropoffCoords;
     Coordinates _parkingCoords;
@@ -66,8 +63,7 @@ struct glz::meta<palloc::Environment> {
     static constexpr auto value = glz::object(
         "dropoff_to_parking", &T::_dropoffToParking, "parking_to_dropoff", &T::_parkingToDropoff,
         "parking_capacities", &T::_availableParkingSpots, "dropoff_coords", &T::_dropoffCoords,
-        "parking_coords", &T::_parkingCoords, "dropoff_probabilities", &T::_dropoffProbabilities,
-        "smallest_round_trips", &T::_smallestRoundTrips);
+        "parking_coords", &T::_parkingCoords, "smallest_round_trips", &T::_smallestRoundTrips);
 };
 
 #endif
