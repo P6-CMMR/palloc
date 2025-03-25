@@ -49,6 +49,25 @@ class RequestGenerator {
 
    private:
     /**
+     * Sample count from poisson distribution with the rate member variable
+     * multiplied by time of day multiplier
+     *
+     * @param currentTimeOfDay time of day in minutes from midnight
+     */
+    uint64_t getCount(uint64_t currentTimeOfDay);
+
+    /**
+     * Uniformly sample one of the dropoffs
+     * (sample space is warped because they are not uniformly distributed on a map)
+     */
+    uint64_t getDropoff();
+
+    /**
+     * Uniformly sample duration from a random weighted bucket
+     */
+    uint64_t getDuration();
+
+    /**
      * Normally poisson is in interval [0, ∞]. When rate > 100 then it becomes a decent
      * approximation of the central limit theorem for gaussian distirbution so we limit it to r
      * ate + 3σ. When rate <= 100 we act like its 100 and limit it to 100 + 3σ
@@ -62,11 +81,6 @@ class RequestGenerator {
     static double getTimeMultiplier(uint64_t currentTimeOfDay);
 
     /**
-     * Uniformly sample duration from a random weighted bucket
-     */
-    uint64_t getDuration();
-
-    /**
      * Get viable duration buckets
      */
     static types::DoubleVector getDurationBuckets(uint64_t maxDuration);
@@ -75,9 +89,7 @@ class RequestGenerator {
     std::discrete_distribution<uint64_t> _durationDist;
     std::minstd_rand _rng;
 
-    /**
-     * Bucket intervals based on COWI
-     */
+    // Bucket intervals based on COWI
     static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{
         {{{0, 60}},                                         // 14%
          {{61, 120}},                                       // 13%
@@ -86,6 +98,9 @@ class RequestGenerator {
          {{481, 1440}},                                     // 21%
          {{1441, 2880}},                                    // 9%
          {{2881, std::numeric_limits<uint64_t>::max()}}}};  // 7%
+
+    // Weights based on COWI
+    static constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
 
     uint64_t _maxRequestDuration;
     double _requestRate;

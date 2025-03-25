@@ -16,18 +16,33 @@ void Request::incrementTimesDropped() noexcept { ++_timesDropped; }
 bool Request::isDead() const noexcept { return _requestDuration == 0; }
 
 Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
-    const auto multiplier = getTimeMultiplier(currentTimeOfDay);
-    const double adjustedRate = _requestRate * multiplier;
-    std::poisson_distribution<uint64_t> requestCountDist(adjustedRate);
-    const auto count = std::min(getPoissonUpperBound(_requestRate), requestCountDist(_rng));
-
+    const auto count = getCount(currentTimeOfDay);
     Requests requests;
     requests.reserve(count);
     for (uint64_t i = 0; i < count; ++i) {
-        requests.emplace_back(_dropoffDist(_rng), getDuration());
+        requests.emplace_back(getDropoff(), getDuration());
     }
 
     return requests;
+}
+
+uint64_t RequestGenerator::getCount(uint64_t currentTimeOfDay) {
+    const auto multiplier = getTimeMultiplier(currentTimeOfDay);
+    const double adjustedRate = _requestRate * multiplier;
+    std::poisson_distribution<uint64_t> requestCountDist(adjustedRate);
+    return std::min(getPoissonUpperBound(_requestRate), requestCountDist(_rng));
+}
+
+uint64_t RequestGenerator::getDropoff() { return _dropoffDist(_rng); }
+
+uint64_t RequestGenerator::getDuration() {
+    const uint64_t selectedBucket = _durationDist(_rng);
+    const uint64_t start = DURATION_BUCKETS[selectedBucket][0];
+    const uint64_t end = std::min(DURATION_BUCKETS[selectedBucket][1], _maxRequestDuration);
+
+    std::uniform_int_distribution<uint64_t> uniformDist(start, end);
+
+    return uniformDist(_rng);
 }
 
 uint64_t RequestGenerator::getPoissonUpperBound(double rate) {
@@ -74,20 +89,7 @@ double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
     return multiplier;
 }
 
-uint64_t RequestGenerator::getDuration() {
-    const uint64_t selectedBucket = _durationDist(_rng);
-    const uint64_t start = DURATION_BUCKETS[selectedBucket][0];
-    const uint64_t end = std::min(DURATION_BUCKETS[selectedBucket][1], _maxRequestDuration);
-
-    std::uniform_int_distribution<uint64_t> uniformDist(start, end);
-
-    return uniformDist(_rng);
-}
-
 DoubleVector RequestGenerator::getDurationBuckets(uint64_t maxDuration) {
-    // Weights based on COWI
-    constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
-
     DoubleVector weightBuckets;
     for (size_t i = 0; i < DURATION_BUCKETS.size(); ++i) {
         const uint64_t start = DURATION_BUCKETS[i][0];
