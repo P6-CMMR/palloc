@@ -37,6 +37,7 @@ MAX_DURATION=600
 DURATION_END=0
 REQUEST_RATE=10.0
 REQUEST_RATE_END=0
+AGGREGATIONS=3
 
 # Set fixed step sizes
 DURATION_STEP=10
@@ -186,6 +187,7 @@ fi
 total_configs=$((duration_count * rate_count))
 
 echo "Total configurations: ${total_configs}" >> "${exp_dir}/summary.txt"
+echo "Number of runs: ${AGGREGATIONS}" >> "${exp_dir}/summary.txt"
 echo "----------------------------------------" >> "${exp_dir}/summary.txt"
 
 echo "Running ${total_configs} simulations..."
@@ -222,7 +224,7 @@ while [ "$current_duration" -le "$DURATION_END" ] || [ "$DURATION_END" -eq 0 ]; 
         progress_bar $current_run $total_configs
         
         # Call engine
-        ./build/palloc -e data.json -o "$OUTPUT_FILE" -d "$current_duration" -r "$current_rate" -s "$SEED" > /dev/null 2>&1
+        ./build/palloc -e data.json -o "$OUTPUT_FILE" -d "$current_duration" -r "$current_rate" -s "$SEED" -a "$AGGREGATIONS"> /dev/null 2>&1
         
         echo "Duration: ${current_duration}, Rate: ${current_rate}, Seed: ${SEED}" >> "${exp_dir}/summary.txt"
         
