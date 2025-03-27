@@ -4,15 +4,27 @@ import json
 import sys
 import os
 import argparse
+import folium
+import os
+from folium.plugins import HeatMap
 from pathlib import Path
 
-def load_results(json_file):
+def load_results(result_file):
     """Load simulation results from a JSON file."""
     try:
-        with open(json_file, "r") as f:
+        with open(result_file, "r") as f:
             return json.load(f)
     except Exception as e:
         print(f"Error loading results: {e}", file=sys.stderr)
+        sys.exit(1)
+        
+def load_env(env_file):
+    """Load env file from a JSON file."""
+    try:
+        with open(env_file, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading environment: {e}", file=sys.stderr)
         sys.exit(1)
 
 def format_duration_min_sec(duration_in_minutes):
@@ -41,16 +53,101 @@ def format_minutes_to_time(minutes_raw):
     except (ValueError, TypeError):
         return "N/A"
 
-def create_html(data):
+def create_map_visualization(env, data, output_dir_path):
+    """Create an interactive map visualization of dropoff points, density, and parking spots."""
+    dropoff_points = [(point["latitude"], point["longitude"]) for point in env["dropoff_coords"]]
+    parking_points = [(point["latitude"], point["longitude"]) for point in env["parking_coords"]]
+
+    all_points = dropoff_points + parking_points
+    center_lat = sum(p[0] for p in all_points) / len(all_points)
+    center_lng = sum(p[1] for p in all_points) / len(all_points)
+
+    m = folium.Map(location=[center_lat, center_lng], zoom_start=14)
+    simple_heatmap = HeatMap(
+        dropoff_points,
+        gradient={"0.4": "blue", "0.65": "lime", "1": "red"}, 
+        radius=15,
+        name="Dropoff Points Distribution",
+        show=False
+    )
+    m.add_child(simple_heatmap)
+    
+    dropoff_assignment_points = []
+    parking_assignment_points = []
+    for trace in data["traces"]:
+        for assignment in trace["assignments"]:
+            dropoff_coord = assignment["dropoff_coordinate"]
+            dropoff_lat = dropoff_coord["latitude"]
+            dropoff_lon = dropoff_coord["longitude"]
+            dropoff_assignment_points.append([dropoff_lat, dropoff_lon, 1.0])
+            
+            parking_coord = assignment["parking_coordinate"]
+            parking_lat = parking_coord["latitude"]
+            parking_lon = parking_coord["longitude"]
+            parking_assignment_points.append([parking_lat, parking_lon, 1.0])
+    
+    dropoff_assignments_heatmap = HeatMap(
+        dropoff_assignment_points,
+        gradient={"0.4": "yellow", "0.65": "orange", "1": "red"}, 
+        radius=15,
+        name="Assigned Requests Dropoffs",
+        show=True 
+    )
+    m.add_child(dropoff_assignments_heatmap)
+
+    parking_assignments_heatmap = HeatMap(
+        parking_assignment_points,
+        gradient={"0.4": "purple", "0.65": "magenta", "1": "violet"},
+        radius=15, 
+        name="Assigned Parking Spots",
+        show=False
+    )
+    m.add_child(parking_assignments_heatmap)
+
+    # Parking layer
+    parking_layer = folium.FeatureGroup(name="Parking Spots")
+    for i, coords in enumerate(parking_points):
+        capacity = env["parking_capacities"][i]
+        folium.CircleMarker(
+            location=coords,
+            radius=5,
+            color="green",
+            fill=True,
+            fill_color="green",
+            tooltip=f"Parking Capacity: {capacity}"
+        ).add_to(parking_layer)
+    m.add_child(parking_layer)
+
+    folium.LayerControl().add_to(m)
+
+    map_path = os.path.join(output_dir_path, "density_map.html")
+
+    button_template_path = Path(__file__).parent / "button_template.html"
+    with open(button_template_path, "r") as f:
+        button_template = f.read()
+    
+    button_template = button_template.replace("left: 10px", "left: 60px")
+    
+    map_html = m.get_root().render()
+    map_html = map_html.replace("<body>", f"<body>{button_template}")
+    
+    with open(map_path, "w") as f:
+        f.write(map_html)
+
+    return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
+
+def create_html(env, data):
     """Create html from simulation data and save to directory."""
     output_dir_path = Path("plots")
-
+    os.makedirs(output_dir_path, exist_ok=True)
+    
+    map_html_link = create_map_visualization(env, data, output_dir_path)
+    
     traces = pd.DataFrame(data["traces"])
     traces["time_labels"] = traces.apply(
         lambda row: f"{row["timestep"]}: {format_minutes_to_time(row["current_time_of_day"])}", 
         axis=1
     )
-
 
     fig1 = px.line(traces, x="time_labels", y="available_parking_spots", 
                   title="Available Parking Spots Over Time")
@@ -77,8 +174,6 @@ def create_html(data):
             tickangle=45,
             title_text="time of day"
         )
-    
-    os.makedirs(output_dir_path, exist_ok=True)
     
     try:
         button_template_path = Path(__file__).parent / "button_template.html"
@@ -193,6 +288,7 @@ def create_html(data):
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
     html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
     html_content = html_content.replace("{{assignments_list}}", assignments_html)
+    html_content = html_content.replace("{{map_link}}", map_html_link)
     
     with open(os.path.join(output_dir_path, "index.html"), "w") as f:
         f.write(html_content)
@@ -202,11 +298,13 @@ def create_html(data):
 
 def main():
     parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
-    parser.add_argument("json_file", help="Path to the JSON results file")
+    parser.add_argument("env_file", help="Path to env file that generated results")
+    parser.add_argument("result_file", help="Path to the JSON results file")
     args = parser.parse_args()
     
-    data = load_results(args.json_file)
-    create_html(data)
+    env = load_env(args.env_file)
+    data = load_results(args.result_file)
+    create_html(env, data)
 
 if __name__ == "__main__":
     main()

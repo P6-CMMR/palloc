@@ -1,6 +1,7 @@
 #include "environment.hpp"
 
 using namespace palloc;
+using namespace types;
 
 const Environment::DurationMatrix &Environment::getDropoffToParking() const noexcept {
     return _dropoffToParking;
@@ -10,9 +11,7 @@ const Environment::DurationMatrix &Environment::getParkingToDropoff() const noex
     return _parkingToDropoff;
 }
 
-Environment::UintVector &Environment::getAvailableParkingSpots() noexcept {
-    return _availableParkingSpots;
-}
+UintVector &Environment::getAvailableParkingSpots() noexcept { return _availableParkingSpots; }
 
 const Environment::Coordinates &Environment::getDropoffCoordinates() const noexcept {
     return _dropoffCoords;
@@ -26,7 +25,7 @@ size_t Environment::getNumberOfDropoffs() const noexcept { return _dropoffToPark
 
 size_t Environment::getNumberOfParkings() const noexcept { return _parkingToDropoff.size(); }
 
-const Environment::UintVector &Environment::getSmallestRoundTrips() const noexcept {
+const UintVector &Environment::getSmallestRoundTrips() const noexcept {
     return _smallestRoundTrips;
 }
 

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "glaze/glaze.hpp"
+#include "types.hpp"
 
 namespace palloc {
 
@@ -16,8 +17,7 @@ struct Coordinate {
 
 class Environment {
    public:
-    using UintVector = std::vector<uint64_t>;
-    using DurationMatrix = std::vector<UintVector>;
+    using DurationMatrix = std::vector<types::UintVector>;
     using Coordinates = std::vector<Coordinate>;
 
     explicit Environment(const std::filesystem::path &environmentPath) {
@@ -27,7 +27,7 @@ class Environment {
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
     const Environment::DurationMatrix &getParkingToDropoff() const noexcept;
 
-    UintVector &getAvailableParkingSpots() noexcept;
+    types::UintVector &getAvailableParkingSpots() noexcept;
 
     const Environment::Coordinates &getDropoffCoordinates() const noexcept;
     const Environment::Coordinates &getParkingCoordinates() const noexcept;
@@ -35,7 +35,7 @@ class Environment {
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
 
-    const Environment::UintVector &getSmallestRoundTrips() const noexcept;
+    const types::UintVector &getSmallestRoundTrips() const noexcept;
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
@@ -44,8 +44,8 @@ class Environment {
 
     DurationMatrix _dropoffToParking;
     DurationMatrix _parkingToDropoff;
-    UintVector _availableParkingSpots;
-    UintVector _smallestRoundTrips;
+    types::UintVector _availableParkingSpots;
+    types::UintVector _smallestRoundTrips;
     Coordinates _dropoffCoords;
     Coordinates _parkingCoords;
 };

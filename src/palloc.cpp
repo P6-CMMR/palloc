@@ -8,23 +8,18 @@ int main(int argc, char **argv) {
 
         std::string environmentPathStr;
         std::string outputPathStr;
-        SimulatorSettings simSettings{.timesteps = 1000,
-                                      .startTime = 1,
-                                      .maxRequestDuration = 60,
-                                      .requestRate = 10,
-                                      .batchInterval = 2};
+        SimulatorSettings simSettings{
+            .timesteps = 1440, .maxRequestDuration = 600, .requestRate = 10, .batchInterval = 2};
 
         OutputSettings outputSettings{.prettify = false, .log = false};
 
         std::optional<uint64_t> seedOpt;
-        std::string startTimeStr = "00:00";
+        std::string startTimeStr = "08:00";
 
         argz::options opts{
             {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},
             {{"timesteps", 't'}, simSettings.timesteps, "timesteps in minutes to run simulation"},
-            {{"start-time", 'S'},
-             startTimeStr,
-             "time to start simulation where 0 represents 00:00 and 1439 represents 23:59"},
+            {{"start-time", 'S'}, startTimeStr, "time to start simulation"},
             {{"duration", 'd'},
              simSettings.maxRequestDuration,
              "max duration in minutes of requests"},
