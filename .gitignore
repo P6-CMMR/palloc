@@ -9,3 +9,6 @@ report
 flamegraph.html
 FlameGraph
 summary.txt
+.progress
+.progress_lock
+job_list.txt
