@@ -137,7 +137,7 @@ def create_map_visualization(env, data, output_dir_path):
 
     return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
 
-def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file=""):
+def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file="", single_file=False):
     """Create html from simulation data and save to experiment directory."""
     os.makedirs(output_dir_path, exist_ok=True)
     
@@ -222,10 +222,11 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
         print(f"Error loading template: {e}", file=sys.stderr)
         sys.exit(1)
     
-    parts = experiment_name.split(" / ")
-    exp_part = parts[0].replace("-", " ").title()
-    config_part = parts[1]
-    experiment_name = f"{exp_part} / {config_part}"
+    if not single_file:
+        parts = experiment_name.split(" / ")
+        exp_part = parts[0].replace("-", " ").title()
+        config_part = parts[1]
+        experiment_name = f"{exp_part} / {config_part}"
     
     assignments_html = ""
     if "traces" in data:
@@ -429,7 +430,7 @@ def process_single_file(env, result_file):
     
     # Load data and create HTML
     data = load_results(result_file)
-    create_experiment_html(env, data, output_dir, base_name, result_file)
+    create_experiment_html(env, data, output_dir, base_name, result_file, True)
     
     print(f"Created report for {base_name}")
     
