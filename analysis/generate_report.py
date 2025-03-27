@@ -301,7 +301,8 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{experiment_name}}", experiment_name)
     html_content = html_content.replace("{{result_file}}", os.path.basename(result_file) if result_file else "")
     
-    with open(os.path.join(output_dir_path, "experiment.html"), "w") as f:
+    report_file = os.path.join(output_dir_path, "experiment.html")
+    with open(report_file, "w") as f:
         f.write(html_content)
 
 def create_browser_index(experiments_root):
@@ -314,7 +315,7 @@ def create_browser_index(experiments_root):
     
     if not exp_dirs:
         print(f"No experiment directories found in {experiments_root}")
-        return
+        return None
     
     try:
         template_path = Path(__file__).parent / "browser_template.html"
@@ -380,11 +381,12 @@ def create_browser_index(experiments_root):
     
     browser_html = browser_template.replace("{{experiments}}", experiments_html)
     
-    with open(os.path.join(output_path, "index.html"), "w") as f:
+    index_path = os.path.join(output_path, "index.html")
+    with open(index_path, "w") as f:
         f.write(browser_html)
     
-    print(f"Experiments browser created at {os.path.join(output_path, "index.html")}")
-    return os.path.join(output_path, "index.html")
+    print(f"Experiments browser created at {index_path}")
+    return index_path
 
 def process_experiments(env, experiments_dir):
     """Process all experiments in the directory"""
@@ -401,6 +403,7 @@ def process_experiments(env, experiments_dir):
     # Process each experiment directory
     for exp_dir in exp_dirs:
         exp_name = os.path.basename(exp_dir)
+        exp_name_display = exp_name.replace("-", " ").title()
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
@@ -412,22 +415,48 @@ def process_experiments(env, experiments_dir):
             
             # Load data and create HTML
             data = load_results(json_file)
-            create_experiment_html(env, data, output_dir, f"{exp_name} / {config_name}", json_file)
+            create_experiment_html(env, data, output_dir, f"{exp_name_display} / {config_name}", json_file)
             
             print(f"Created report for {exp_name}/{config_name}")
+
+def process_single_file(env, result_file):
+    """Process a single result file"""
+    report_root = Path("report")
+    os.makedirs(report_root, exist_ok=True)
+    
+    base_name = os.path.basename(result_file).replace(".json", "")
+    output_dir = report_root / base_name
+    
+    # Load data and create HTML
+    data = load_results(result_file)
+    create_experiment_html(env, data, output_dir, base_name, result_file)
+    
+    print(f"Created report for {base_name}")
+    
+    return os.path.join(output_dir, "report.html")
 
 def main():
     parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
     parser.add_argument("env_file", help="Path to environment file")
-    parser.add_argument("experiments_dir", help="Path to experiments directory")
+    parser.add_argument("results", help="Path to experiment directory or a single JSON result file")
     args = parser.parse_args()
     
     env = load_env(args.env_file)
     
-    process_experiments(env, args.experiments_dir)
-    index_path = create_browser_index(args.experiments_dir)
-    
-    print(f"\nReport generated. Open {index_path} to browse experiments.")
+    # Check if the results argument is a directory or a file
+    if os.path.isdir(args.results):
+        # Process all experiments
+        process_experiments(env, args.results)
+        index_path = create_browser_index(args.results)
+        
+        if index_path:
+            print(f"\nAll reports generated. Open {index_path} to browse experiments.")
+        else:
+            print("\nNo experiments found.")
+    else:
+        # Process single file
+        report_path = process_single_file(env, args.results)
+        print(f"\nReport generated. Open {report_path} to view results.")
 
 if __name__ == "__main__":
     main()
