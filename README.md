@@ -25,11 +25,19 @@ cd build
 cmake ..; cmake --build .
 ```
 
-## Plotting Results
+## Run Experiments
+To run experiments use
+```bash
+./scripts/run_experiment.sh [options]
+```
+
+## Generating Report
 From project directory run:
 ```bash
-./build/palloc -e <env-file-name> -o <output-file-name> <OPTIONS>
 python3 analysis/generate_report.py <env-file-name> <output-file-name>
 ```
 
-now open `plots/index.html` in a browser
+or to generate a report of multiple simulations:
+```bash
+python3 analysis/generate_report.py <env-file-name> <output-folder>
+```
