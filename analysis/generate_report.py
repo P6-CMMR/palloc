@@ -162,6 +162,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     for metric_name, info in metrics.items():
         fig = px.line(title=info["title"])
         
+        all_timesteps = set()
+        timestep_data = {}
+        
         # For each run, add a line to the plot
         for run_idx, run_traces in enumerate(all_traces):
             if not run_traces:
@@ -174,12 +177,46 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                 axis=1
             )
             
+            for _, row in df.iterrows():
+                timestep = row["timestep"]
+                all_timesteps.add(timestep)
+                
+                if timestep not in timestep_data:
+                    timestep_data[timestep] = {
+                        "values": [],
+                        "time_label": row["time_labels"]
+                    }
+                
+                timestep_data[timestep]["values"].append(row[metric_name])
+            
             fig.add_scatter(
                 x=df["time_labels"],
                 y=df[metric_name],
                 name=f"Run {run_idx + 1}",
-                mode="lines+markers"
+                mode="lines"
             )
+        
+        if len(all_traces) > 1:
+            avg_x = []
+            avg_y = []
+            
+            # Calculate average for each timestep
+            for timestep in sorted(all_timesteps):
+                if timestep in timestep_data:
+                    values = timestep_data[timestep]["values"]
+                    if values:
+                        avg_x.append(timestep_data[timestep]["time_label"])
+                        avg_y.append(sum(values) / len(values))
+            
+            # Add average line
+            if avg_x:
+                fig.add_scatter(
+                    x=avg_x,
+                    y=avg_y,
+                    name="Average",
+                    mode="lines",
+                    line=dict(color="black", width=2, dash="dash")
+                )
         
         fig.update_layout(
             xaxis_title="time of day",
