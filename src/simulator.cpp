@@ -39,6 +39,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     assert(simSettings.timesteps > 0);
     assert(simSettings.requestRate > 0);
     assert(simSettings.startTime <= 1439);
+    assert(outputSettings.numberOfRunsToAggregate > 0);
 
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
     const auto numberOfParkings = env.getNumberOfParkings();
@@ -57,92 +58,104 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::println("Starting simulation from start time: {} ({:02d}:{:02d})", simSettings.startTime,
                  startHour, startMin);
 
-    std::println("Simulating {} timesteps...", simSettings.timesteps);
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed,
-                               simSettings.requestRate);
-    Requests requests;
-    requests.reserve(simSettings.timesteps *
-                     static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
+    uint64_t timesteps = simSettings.timesteps;
+    uint64_t numRuns = outputSettings.numberOfRunsToAggregate;
+    if (numRuns > 1) {
+        std::println("Simulating {} timesteps aggregating {} runs...", timesteps, numRuns);
+    } else {
+        std::println("Simulating {} timesteps...", timesteps);
+    }
 
-    Requests unassignedRequests;
-    size_t droppedRequests = 0;
-
-    Simulations simulations;
-
-    double globalCost = 0.0;
-    double globalDuration = 0.0;
-
-    Traces traces;
+    Results results;
     const auto start = std::chrono::high_resolution_clock::now();
-    for (uint64_t timestep = 1; timestep <= simSettings.timesteps; ++timestep) {
-        uint64_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
+    for (uint64_t run = 0; run < numRuns; ++run) {
+        env.resetEnvironment();
 
-        updateSimulations(simulations, env);
-        removeDeadRequests(unassignedRequests);
-        insertNewRequests(generator, currentTimeOfDay, requests);
-        cutImpossibleRequests(requests, env.getSmallestRoundTrips());
+        RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration, seed + run,
+                                   simSettings.requestRate);
 
-        double batchCost = 0.0;
-        double batchAverageDuration = 0.0;
-        Assignments assignments;
-        if (!requests.empty() && (timestep % simSettings.batchInterval == 0)) {
-            requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
-            unassignedRequests.clear();
+        Requests requests;
+        requests.reserve(timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
 
-            auto result = Scheduler::scheduleBatch(env, requests);
-            requests.clear();
+        Requests unassignedRequests;
+        Simulations simulations;
 
-            batchCost = result.cost;
-            batchAverageDuration = result.averageDurations;
+        TraceList traces;
 
-            unassignedRequests = result.unassignedRequests;
-            droppedRequests += unassignedRequests.size();
+        size_t droppedRequests = 0;
+        double runCost = 0.0;
+        double runDuration = 0.0;
 
-            const auto &newSimulations = result.simulations;
-            assignments.reserve(newSimulations.size());
-            for (const auto &simulation : newSimulations) {
-                assert(simulation.getRequestDuration() >= simulation.getRouteDuration());
-                assignments.emplace_back(env.getDropoffCoordinates()[simulation.getDropoffNode()],
-                                         env.getParkingCoordinates()[simulation.getParkingNode()],
-                                         simulation.getRequestDuration(),
-                                         simulation.getRouteDuration());
+        for (uint64_t timestep = 1; timestep <= timesteps; ++timestep) {
+            uint64_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
+
+            updateSimulations(simulations, env);
+            removeDeadRequests(unassignedRequests);
+            insertNewRequests(generator, currentTimeOfDay, requests);
+            cutImpossibleRequests(requests, env.getSmallestRoundTrips());
+
+            double batchCost = 0.0;
+            double batchAverageDuration = 0.0;
+            Assignments assignments;
+            if (!requests.empty() && (timestep % simSettings.batchInterval == 0)) {
+                requests.insert(requests.end(), unassignedRequests.begin(),
+                                unassignedRequests.end());
+                unassignedRequests.clear();
+
+                auto result = Scheduler::scheduleBatch(env, requests);
+                requests.clear();
+
+                batchCost = result.cost;
+                batchAverageDuration = result.averageDurations;
+
+                unassignedRequests = result.unassignedRequests;
+                droppedRequests += unassignedRequests.size();
+
+                const auto &newSimulations = result.simulations;
+                assignments.reserve(newSimulations.size());
+                for (const auto &simulation : newSimulations) {
+                    assert(simulation.getRequestDuration() >= simulation.getRouteDuration());
+                    assignments.emplace_back(
+                        env.getDropoffCoordinates()[simulation.getDropoffNode()],
+                        env.getParkingCoordinates()[simulation.getParkingNode()],
+                        simulation.getRequestDuration(), simulation.getRouteDuration());
+                }
+
+                simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
 
-            simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
+            const auto totalAvailableParkingSpots =
+                std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
+            traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
+                                totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                                droppedRequests, assignments);
+
+            runCost += batchCost;
+            runDuration += batchAverageDuration;
         }
 
-        const auto totalAvailableParkingSpots =
-            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
-        traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-                            totalAvailableParkingSpots, batchCost, batchAverageDuration,
-                            droppedRequests, assignments);
-
-        globalCost += batchCost;
-        globalDuration += batchAverageDuration;
+        const double runAvgDuration = runDuration / static_cast<double>(timesteps);
+        const double runAvgCost = runCost / static_cast<double>(timesteps);
+        results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost);
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
     const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    if (outputSettings.log) {
-        for (const auto &trace : traces) {
-            std::cout << trace << '\n';
-        }
-    }
-
     std::println("Finished after {}ms", time);
 
-    const double globalAvgDuration = globalDuration / static_cast<double>(simSettings.timesteps);
+    Result result = Result::aggregateResults(results);
+
+    const double globalAvgDuration = result.getGlobalAvgDuration();
     const int minutes = static_cast<int>(globalAvgDuration);
     const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    const double globalAvgCost = globalCost / static_cast<double>(simSettings.timesteps);
+    const double globalAvgCost = result.getGlobalAvgCost();
     std::println("Average objective cost: {}", globalAvgCost);
-    std::println("Total requests dropped: {}", droppedRequests);
+    std::println("Total requests dropped: {}", result.getDroppedRequests());
 
     if (!outputSettings.path.empty()) {
-        Result result(traces, simSettings, droppedRequests, globalAvgDuration, globalAvgCost);
         result.saveToFile(outputSettings.path, outputSettings.prettify);
     }
 }
