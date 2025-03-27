@@ -59,8 +59,8 @@ struct SimulatorSettings {
 
 struct OutputSettings {
     std::filesystem::path path;
+    uint64_t numberOfRunsToAggregate;
     bool prettify;
-    bool log;
 };
 
 class Simulator {

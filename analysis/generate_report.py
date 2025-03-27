@@ -75,17 +75,21 @@ def create_map_visualization(env, data, output_dir_path):
     
     dropoff_assignment_points = []
     parking_assignment_points = []
-    for trace in data["traces"]:
-        for assignment in trace["assignments"]:
-            dropoff_coord = assignment["dropoff_coordinate"]
-            dropoff_lat = dropoff_coord["latitude"]
-            dropoff_lon = dropoff_coord["longitude"]
-            dropoff_assignment_points.append([dropoff_lat, dropoff_lon, 1.0])
-            
-            parking_coord = assignment["parking_coordinate"]
-            parking_lat = parking_coord["latitude"]
-            parking_lon = parking_coord["longitude"]
-            parking_assignment_points.append([parking_lat, parking_lon, 1.0])
+    
+    # Go through all runs
+    for run_traces in data["traces"]:
+        # For each run, go through all traces
+        for trace in run_traces:
+            for assignment in trace["assignments"]:
+                dropoff_coord = assignment["dropoff_coordinate"]
+                dropoff_lat = dropoff_coord["latitude"]
+                dropoff_lon = dropoff_coord["longitude"]
+                dropoff_assignment_points.append([dropoff_lat, dropoff_lon, 1.0])
+                
+                parking_coord = assignment["parking_coordinate"]
+                parking_lat = parking_coord["latitude"]
+                parking_lon = parking_coord["longitude"]
+                parking_assignment_points.append([parking_lat, parking_lon, 1.0])
     
     dropoff_assignments_heatmap = HeatMap(
         dropoff_assignment_points,
@@ -143,55 +147,113 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     map_html_link = create_map_visualization(env, data, output_dir_path)
     
-    traces = pd.DataFrame(data["traces"])
-    traces["time_labels"] = traces.apply(
-        lambda row: f"{row["timestep"]}: {format_minutes_to_time(row["current_time_of_day"])}", 
-        axis=1
-    )
-
-    fig1 = px.line(traces, x="time_labels", y="available_parking_spots", 
-                  title="Available Parking Spots Over Time")
-    fig1.update_yaxes(title_text="# available parking spots")
-
-    fig2 = px.line(traces, x="time_labels", y="number_of_ongoing_simulations",
-                  title="Number of Ongoing Simulations Over Time")
-    fig2.update_yaxes(title_text="# simulations")
+    all_traces = data.get("traces", [])
+    num_runs = len(all_traces)
     
-    fig3 = px.line(traces, x="time_labels", y="cost",
-                  title="Cost Over Time")
+    metrics = {
+        "available_parking_spots": {"title": "Available Parking Spots Over Time", "y_label": "# available parking spots"},
+        "number_of_ongoing_simulations": {"title": "Number of Ongoing Simulations Over Time", "y_label": "# simulations"},
+        "cost": {"title": "Cost Over Time", "y_label": "cost"},
+        "average_duration": {"title": "Average Duration Over Time", "y_label": "average duration"},
+        "dropped_requests": {"title": "Dropped Requests Over Time", "y_label": "# dropped requests"}
+    }
     
-    fig4 = px.line(traces, x="time_labels", y="average_duration",
-                  title="Average Duration Over Time")
-    fig4.update_yaxes(title_text="average duration")
-    
-    fig5 = px.line(traces, x="time_labels", y="dropped_requests",
-                  title="Dropped Requests Over Time")
-    fig5.update_yaxes(title_text="# dropped requests")
-    
-    for fig in [fig1, fig2, fig3, fig4, fig5]:
-        fig.update_xaxes(
-            nticks=12,
-            tickangle=45,
-            title_text="time of day"
+    figures = {}
+    for metric_name, info in metrics.items():
+        fig = px.line(title=info["title"])
+        
+        all_timesteps = set()
+        timestep_data = {}
+        
+        # For each run, add a line to the plot
+        for run_idx, run_traces in enumerate(all_traces):
+            if not run_traces:
+                continue
+            
+            df = pd.DataFrame(run_traces)
+            
+            df["time_labels"] = df.apply(
+                lambda row: f'{row["timestep"]}: {format_minutes_to_time(row["current_time_of_day"])}', 
+                axis=1
+            )
+            
+            for _, row in df.iterrows():
+                timestep = row["timestep"]
+                all_timesteps.add(timestep)
+                
+                if timestep not in timestep_data:
+                    timestep_data[timestep] = {
+                        "values": [],
+                        "time_label": row["time_labels"]
+                    }
+                
+                timestep_data[timestep]["values"].append(row[metric_name])
+            
+            if metric_name == "average_duration":
+                df = df[df[metric_name] > 0]
+                
+            fig.add_scatter(
+                x=df["time_labels"],
+                y=df[metric_name],
+                name=f"Run {run_idx + 1}",
+                mode="lines"
+            )
+        
+        if len(all_traces) > 1:
+            avg_x = []
+            avg_y = []
+            
+            # Calculate average for each timestep
+            for timestep in sorted(all_timesteps):
+                if timestep in timestep_data:
+                    values = timestep_data[timestep]["values"]
+                    filtered_values = [v for v in values if v > 0]
+                    if filtered_values: 
+                        avg_x.append(timestep_data[timestep]["time_label"])
+                        avg_y.append(sum(filtered_values) / len(filtered_values))
+                
+            # Add average line
+            if avg_x:
+                fig.add_scatter(
+                    x=avg_x,
+                    y=avg_y,
+                    name="Average",
+                    mode="lines",
+                    line=dict(color="black", width=2, dash="dash")
+                )
+        
+        fig.update_layout(
+            xaxis_title="time of day",
+            yaxis_title=info["y_label"],
+            xaxis=dict(
+                tickangle=45,
+                nticks=12
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
         )
+
+        figures[metric_name] = fig
     
     try:
         button_template_path = Path(__file__).parent / "button_template.html"
         with open(button_template_path, "r") as f:
             button_template = f.read()
-            
-        # Add backlink to experiment
-        back_button = '<a href="../experiment.html" class="nav-button" style="right:10px;">Back to Experiments</a>'
-        button_template += back_button
+
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
         sys.exit(1)
     
-    write_html_with_button(fig1, "parking_spots.html", button_template, output_dir_path)
-    write_html_with_button(fig2, "simulations.html", button_template, output_dir_path)
-    write_html_with_button(fig3, "cost.html", button_template, output_dir_path)
-    write_html_with_button(fig4, "duration.html", button_template, output_dir_path)
-    write_html_with_button(fig5, "dropped_requests.html", button_template, output_dir_path)
+    write_html_with_button(figures["available_parking_spots"], "parking_spots.html", button_template, output_dir_path)
+    write_html_with_button(figures["number_of_ongoing_simulations"], "simulations.html", button_template, output_dir_path)
+    write_html_with_button(figures["cost"], "cost.html", button_template, output_dir_path)
+    write_html_with_button(figures["average_duration"], "duration.html", button_template, output_dir_path)
+    write_html_with_button(figures["dropped_requests"], "dropped_requests.html", button_template, output_dir_path)
     
     # Settings
     settings = data.get("settings", {})
@@ -228,17 +290,30 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
         config_part = parts[1]
         experiment_name = f"{exp_part} / {config_part}"
     
+    run_tabs_html = '<div class="run-tabs-controls">'
+    run_tabs_html += '<div class="tab-buttons">'
+
+    for run_idx in range(num_runs):
+        btn_class = "active" if run_idx == 0 else ""
+        run_tabs_html += f'<button class="tab-button {btn_class}" onclick="showTab({run_idx})" id="tab-btn-{run_idx}">Run {run_idx + 1}</button>'
+
+    run_tabs_html += "</div></div>"
+    
     assignments_html = ""
-    if "traces" in data:
-        for trace in data["traces"]:
+    for run_idx, run_traces in enumerate(all_traces):
+        display = "block" if run_idx == 0 else "none"
+        assignments_html += f'<div class="tab-content" id="tab-{run_idx}" style="display: {display};">'
+        
+        run_assignments_html = ""
+        for trace in run_traces:
             if "assignments" in trace and trace["assignments"]:
                 timestep = trace.get("timestep", "N/A")
-                assignments_html += f"<h3>Timestep {timestep}</h3>"
+                run_assignments_html += f"<h3>Timestep {timestep}</h3>"
                 
                 current_time_of_day_raw = trace.get("current_time_of_day", "N/A")
                 current_time_of_day = format_minutes_to_time(current_time_of_day_raw)
                     
-                assignments_html += f"<p>Time of day: {current_time_of_day}</p>"
+                run_assignments_html += f"<p>Time of day: {current_time_of_day}</p>"
                 
                 for idx, assignment in enumerate(trace["assignments"]):
                     dropoff = assignment.get("dropoff_coordinate", {})
@@ -262,7 +337,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                         center_lat = (float(dropoff_lat) + float(parking_lat)) / 2
                         center_lon = (float(dropoff_lon) + float(parking_lon)) / 2
                         
-                        # OSRM format: ?z=16&center=lat,lon&loc=lat,lon&loc=lat,lon&loc=lat,lon
+                        # OSRM format
                         osrm_url = (
                             f"https://map.project-osrm.org/?"
                             f"z=16&"
@@ -274,7 +349,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                         )
                         route_link = f'<a href="{osrm_url}" target="_blank" class="route-link-btn">View route on OSRM</a>'
                     
-                    assignments_html += f"""
+                    run_assignments_html += f"""
                     <div class="assignment-item">
                         <div><span class="assignment-label">Assignment {idx+1}:</span></div>
                         <div>Dropoff: (lat: {dropoff_lat}, lon: {dropoff_lon})</div>
@@ -284,9 +359,11 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                         <div class="route-link">{route_link}</div>
                     </div>
                     """
-
-    if not assignments_html:
-        assignments_html = "<p>No assignment data available.</p>"
+        
+        if not run_assignments_html:
+            run_assignments_html = "<p>No assignment data available for this run.</p>"
+            
+        assignments_html += run_assignments_html + "</div>"
     
     html_content = template.replace("{{timesteps}}", str(timesteps))
     html_content = html_content.replace("{{start_time}}", str(start_time))
@@ -297,10 +374,16 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
     html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
+    html_content = html_content.replace("{{run_tabs}}", run_tabs_html)
     html_content = html_content.replace("{{assignments_list}}", assignments_html)
     html_content = html_content.replace("{{map_link}}", map_html_link)
     html_content = html_content.replace("{{experiment_name}}", experiment_name)
     html_content = html_content.replace("{{result_file}}", os.path.basename(result_file) if result_file else "")
+    html_content = html_content.replace("{{num_runs}}", f"<p>Number of aggregated runs: <strong>{num_runs}</strong></p>")
+    
+    if single_file:
+        # Remove the back button for single file mode
+        html_content = html_content.replace('<a href="../index.html" class="back-button">Back to All Experiments</a>', '')
     
     report_file = os.path.join(output_dir_path, "experiment.html")
     with open(report_file, "w") as f:
@@ -368,7 +451,7 @@ def create_browser_index(experiments_root):
                         <div class="config-name">{config_name}</div>
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
-                            <div class="config-detail">Rate: {rate} req/min</div>
+                            <div class="config-detail">Rate: {rate}</div>
                         </div>
                     </a>
                 </div>
@@ -434,7 +517,7 @@ def process_single_file(env, result_file):
     
     print(f"Created report for {base_name}")
     
-    return os.path.join(output_dir, "report.html")
+    return os.path.join(output_dir, "experiment.html")
 
 def main():
     parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
