@@ -246,3 +246,7 @@ done
 
 echo -e "\n\nSimulations completed!"
 echo "Created experiment directory: $exp_dir"
+
+# Generate reports
+echo "Generating reports..."
+python analysis/generate_report.py data.json experiments/

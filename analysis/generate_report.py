@@ -180,8 +180,8 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
         with open(button_template_path, "r") as f:
             button_template = f.read()
             
-        # Add backlink to index
-        back_button = '<a href="../index.html" class="nav-button" style="right:10px;">Back to Experiments</a>'
+        # Add backlink to experiment
+        back_button = '<a href="../experiment.html" class="nav-button" style="right:10px;">Back to Experiments</a>'
         button_template += back_button
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
@@ -301,10 +301,8 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{experiment_name}}", experiment_name)
     html_content = html_content.replace("{{result_file}}", os.path.basename(result_file) if result_file else "")
     
-    with open(os.path.join(output_dir_path, "report.html"), "w") as f:
+    with open(os.path.join(output_dir_path, "experiment.html"), "w") as f:
         f.write(html_content)
-    
-    print(f"Plots saved to {output_dir_path}")
 
 def create_browser_index(experiments_root):
     """Create main index.html browser from template"""
@@ -332,7 +330,7 @@ def create_browser_index(experiments_root):
     for exp_dir in exp_dirs:
         exp_name = os.path.basename(exp_dir)
         exp_name_html = exp_name.replace("-", " ").title()
-        experiments_html += f'<div class="experiment-card"><h2 class="experiment-title">{exp_name_html}</h2>'
+        experiments_html += f'<h2 class="experiment-title">{exp_name_html}</h2><div class="experiment-card">'
         
         # Check for summary file
         summary_file = os.path.join(exp_dir, "summary.txt")
@@ -364,7 +362,7 @@ def create_browser_index(experiments_root):
                 
                 experiments_html += f"""
                 <div class="config-item">
-                    <a href="{exp_config_dir}/report.html" class="config-link">
+                    <a href="{exp_config_dir}/experiment.html" class="config-link">
                         <div class="config-name">{config_name}</div>
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
@@ -429,7 +427,7 @@ def main():
     process_experiments(env, args.experiments_dir)
     index_path = create_browser_index(args.experiments_dir)
     
-    print(f"\nAll reports generated. Open {index_path} to browse experiments.")
+    print(f"\nReport generated. Open {index_path} to browse experiments.")
 
 if __name__ == "__main__":
     main()
