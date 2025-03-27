@@ -4,7 +4,8 @@ build
 osrm-server
 .venv
 *.osm
-plots
+report
 *.data
 flamegraph.html
 FlameGraph
+summary.txt

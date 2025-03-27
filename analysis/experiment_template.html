@@ -70,10 +70,41 @@
         .route-link {
             margin-top: 5px;
         }
+        .back-button {
+            display: inline-block;
+            padding: 8px 15px;
+            margin-bottom: 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #2980b9;
+        }
+        .experiment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .result-file-info {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
-    <h1>Palloc Simulation Results</h1>
+    <div class="experiment-header">
+        <div>
+            <h1>Palloc Simulation Results</h1>
+            <h2>{{experiment_name}}</h2>
+        </div>
+        <a href="../index.html" class="back-button">Back to All Experiments</a>
+    </div>
+    
     <h2>Simulation Settings</h2>
     <div class="container settings-container">
         <div class="stat-item">

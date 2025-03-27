@@ -6,6 +6,7 @@ import os
 import argparse
 import folium
 import os
+import glob
 from folium.plugins import HeatMap
 from pathlib import Path
 
@@ -136,9 +137,8 @@ def create_map_visualization(env, data, output_dir_path):
 
     return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
 
-def create_html(env, data):
-    """Create html from simulation data and save to directory."""
-    output_dir_path = Path("plots")
+def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file=""):
+    """Create html from simulation data and save to experiment directory."""
     os.makedirs(output_dir_path, exist_ok=True)
     
     map_html_link = create_map_visualization(env, data, output_dir_path)
@@ -179,6 +179,10 @@ def create_html(env, data):
         button_template_path = Path(__file__).parent / "button_template.html"
         with open(button_template_path, "r") as f:
             button_template = f.read()
+            
+        # Add backlink to index
+        back_button = '<a href="../index.html" class="nav-button" style="right:10px;">Back to Experiments</a>'
+        button_template += back_button
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
         sys.exit(1)
@@ -211,12 +215,17 @@ def create_html(env, data):
     global_avg_cost = round(data.get("global_avg_cost", 0), 2)
     
     try:
-        template_path = Path(__file__).parent / "template.html"
+        template_path = Path(__file__).parent / "experiment_template.html"
         with open(template_path, "r") as f:
             template = f.read()
     except Exception as e:
         print(f"Error loading template: {e}", file=sys.stderr)
         sys.exit(1)
+    
+    parts = experiment_name.split(" / ")
+    exp_part = parts[0].replace("-", " ").title()
+    config_part = parts[1]
+    experiment_name = f"{exp_part} / {config_part}"
     
     assignments_html = ""
     if "traces" in data:
@@ -289,22 +298,138 @@ def create_html(env, data):
     html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
     html_content = html_content.replace("{{assignments_list}}", assignments_html)
     html_content = html_content.replace("{{map_link}}", map_html_link)
+    html_content = html_content.replace("{{experiment_name}}", experiment_name)
+    html_content = html_content.replace("{{result_file}}", os.path.basename(result_file) if result_file else "")
     
-    with open(os.path.join(output_dir_path, "index.html"), "w") as f:
+    with open(os.path.join(output_dir_path, "report.html"), "w") as f:
         f.write(html_content)
     
     print(f"Plots saved to {output_dir_path}")
-    print(f"Open {os.path.join(output_dir_path, "index.html")} to view all plots")
+
+def create_browser_index(experiments_root):
+    """Create main index.html browser from template"""
+    output_path = Path("report")
+    os.makedirs(output_path, exist_ok=True)
+    
+    # Find all experiment directories
+    exp_dirs = sorted(glob.glob(os.path.join(experiments_root, "experiment-*")))
+    
+    if not exp_dirs:
+        print(f"No experiment directories found in {experiments_root}")
+        return
+    
+    try:
+        template_path = Path(__file__).parent / "browser_template.html"
+        with open(template_path, "r") as f:
+            browser_template = f.read()
+    except Exception as e:
+        print(f"Error loading browser template: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    experiments_html = ""
+    
+    # Process each experiment directory
+    for exp_dir in exp_dirs:
+        exp_name = os.path.basename(exp_dir)
+        exp_name_html = exp_name.replace("-", " ").title()
+        experiments_html += f'<div class="experiment-card"><h2 class="experiment-title">{exp_name_html}</h2>'
+        
+        # Check for summary file
+        summary_file = os.path.join(exp_dir, "summary.txt")
+        if os.path.exists(summary_file):
+            with open(summary_file, "r") as f:
+                summary_lines = f.readlines()
+                experiments_html += '<div class="summary-info"><h3>Summary</h3><pre>'
+                for line in summary_lines[:15]:  # Show first 15 lines
+                    experiments_html += line
+                experiments_html += "</pre></div>"
+        
+        json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
+        
+        if json_files:
+            experiments_html += '<h3>Configurations</h3><div class="run-grid">'
+            
+            for json_file in json_files:
+                config_name = os.path.basename(json_file).replace(".json", "")
+                
+                duration = "Unknown"
+                rate = "Unknown"
+                if config_name.startswith("d") and "-r" in config_name:
+                    parts = config_name.split("-r")
+                    if len(parts) == 2:
+                        duration = parts[0][1:]  # Remove the "d" prefix
+                        rate = parts[1]
+                
+                exp_config_dir = f"{exp_name}_{config_name}"
+                
+                experiments_html += f"""
+                <div class="config-item">
+                    <a href="{exp_config_dir}/report.html" class="config-link">
+                        <div class="config-name">{config_name}</div>
+                        <div class="config-details">
+                            <div class="config-detail">Duration: {duration} min</div>
+                            <div class="config-detail">Rate: {rate} req/min</div>
+                        </div>
+                    </a>
+                </div>
+                """
+            
+            experiments_html += "</div>"
+        else:
+            experiments_html += '<p class="no-configs">No configuration files found in this experiment.</p>'
+        
+        experiments_html += "</div>"
+    
+    browser_html = browser_template.replace("{{experiments}}", experiments_html)
+    
+    with open(os.path.join(output_path, "index.html"), "w") as f:
+        f.write(browser_html)
+    
+    print(f"Experiments browser created at {os.path.join(output_path, "index.html")}")
+    return os.path.join(output_path, "index.html")
+
+def process_experiments(env, experiments_dir):
+    """Process all experiments in the directory"""
+    report_root = Path("report")
+    os.makedirs(report_root, exist_ok=True)
+    
+    # Get all experiment directories
+    exp_dirs = sorted(glob.glob(os.path.join(experiments_dir, "experiment-*")))
+    
+    if not exp_dirs:
+        print(f"No experiment directories found in {experiments_dir}")
+        return
+    
+    # Process each experiment directory
+    for exp_dir in exp_dirs:
+        exp_name = os.path.basename(exp_dir)
+        
+        json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
+        
+        for json_file in json_files:
+            config_name = os.path.basename(json_file).replace(".json", "")
+
+            exp_config_dir = f"{exp_name}_{config_name}"
+            output_dir = report_root / exp_config_dir
+            
+            # Load data and create HTML
+            data = load_results(json_file)
+            create_experiment_html(env, data, output_dir, f"{exp_name} / {config_name}", json_file)
+            
+            print(f"Created report for {exp_name}/{config_name}")
 
 def main():
     parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
-    parser.add_argument("env_file", help="Path to env file that generated results")
-    parser.add_argument("result_file", help="Path to the JSON results file")
+    parser.add_argument("env_file", help="Path to environment file")
+    parser.add_argument("experiments_dir", help="Path to experiments directory")
     args = parser.parse_args()
     
     env = load_env(args.env_file)
-    data = load_results(args.result_file)
-    create_html(env, data)
+    
+    process_experiments(env, args.experiments_dir)
+    index_path = create_browser_index(args.experiments_dir)
+    
+    print(f"\nAll reports generated. Open {index_path} to browse experiments.")
 
 if __name__ == "__main__":
     main()
