@@ -26,6 +26,7 @@ show_help() {
   echo "  -h, --help        Show help message"
   echo "  -d, --duration    Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
   echo "  -r, --requests    Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
+  echo "  -t, --timesteps   Number of timesteps to simulate, default: 1440"
   echo ""
   echo "Examples:"
   echo "  $0 -d 600-1200          # Run 1 simulations per step in the range 600-1200"
@@ -38,6 +39,7 @@ DURATION_END=0
 REQUEST_RATE=10.0
 REQUEST_RATE_END=0
 AGGREGATIONS=3
+TIMESTEPS=1440
 
 # Set fixed step sizes
 DURATION_STEP=10
@@ -81,6 +83,15 @@ while [[ $# -gt 0 ]]; do
             REQUEST_RATE="$2"
             REQUEST_RATE_END=0  # No range
             fi
+            shift 2
+            ;;
+        -t|--timesteps)
+            if [[ $# -lt 2 || $2 == -* ]]; then
+            echo "Error: Missing value for option $1"
+            show_help
+            exit 1
+            fi
+            TIMESTEPS="$2"
             shift 2
             ;;
         *)
@@ -204,6 +215,7 @@ else
     echo "  - Request rate: ${REQUEST_RATE}"
 fi
 
+echo "  - Timesteps: ${TIMESTEPS}"
 echo "  - Output directory: ${exp_dir}"
 echo "----------------------------------------"
 
@@ -224,7 +236,7 @@ while [ "$current_duration" -le "$DURATION_END" ] || [ "$DURATION_END" -eq 0 ]; 
         progress_bar $current_run $total_configs
         
         # Call engine
-        ./build/palloc -e data.json -o "$OUTPUT_FILE" -d "$current_duration" -r "$current_rate" -s "$SEED" -a "$AGGREGATIONS"> /dev/null 2>&1
+        ./build/palloc -e data.json -o "$OUTPUT_FILE" -d "$current_duration" -r "$current_rate" -s "$SEED" -a "$AGGREGATIONS" -t "$TIMESTEPS"> /dev/null 2>&1
         
         echo "Duration: ${current_duration}, Rate: ${current_rate}, Seed: ${SEED}" >> "${exp_dir}/summary.txt"
         

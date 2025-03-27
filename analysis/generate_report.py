@@ -173,7 +173,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
             df = pd.DataFrame(run_traces)
             
             df["time_labels"] = df.apply(
-                lambda row: f"{row["timestep"]}: {format_minutes_to_time(row["current_time_of_day"])}", 
+                lambda row: f'{row["timestep"]}: {format_minutes_to_time(row["current_time_of_day"])}', 
                 axis=1
             )
             

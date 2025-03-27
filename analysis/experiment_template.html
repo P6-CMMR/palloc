@@ -124,7 +124,7 @@
             border-radius: 0 5px 5px 5px;
         }
     </style>
-    <script>
+   <script>
         function showTab(tabIndex) {
             document.querySelectorAll(".tab-content").forEach(tab => {
                 tab.style.display = "none";
@@ -136,15 +136,21 @@
             
             document.getElementById("tab-" + tabIndex).style.display = "block";
             document.getElementById("tab-btn-" + tabIndex).classList.add("active");
+
+            if (document.querySelector(".assignments-container")) {
+                document.querySelector(".assignments-container").scrollTop = 0;
+            }
         }
         
         document.addEventListener("DOMContentLoaded", function() {
             if (document.querySelector(".tab-button")) {
                 document.querySelector(".tab-button").classList.add("active");
             }
+            
+            if (document.querySelector(".assignments-container")) {
+                document.querySelector(".assignments-container").scrollTop = 0;
+            }
         });
-
-        document.querySelector(".assignments-container").scrollTop = 0;
     </script>
 </head>
 <body>
