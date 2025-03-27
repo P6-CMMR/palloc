@@ -189,6 +189,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                 
                 timestep_data[timestep]["values"].append(row[metric_name])
             
+            if metric_name == "average_duration":
+                df = df[df[metric_name] > 0]
+                
             fig.add_scatter(
                 x=df["time_labels"],
                 y=df[metric_name],
@@ -204,10 +207,11 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
             for timestep in sorted(all_timesteps):
                 if timestep in timestep_data:
                     values = timestep_data[timestep]["values"]
-                    if values:
+                    filtered_values = [v for v in values if v > 0]
+                    if filtered_values: 
                         avg_x.append(timestep_data[timestep]["time_label"])
-                        avg_y.append(sum(values) / len(values))
-            
+                        avg_y.append(sum(filtered_values) / len(filtered_values))
+                
             # Add average line
             if avg_x:
                 fig.add_scatter(
@@ -233,17 +237,14 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                 x=1
             )
         )
-        
+
         figures[metric_name] = fig
     
     try:
         button_template_path = Path(__file__).parent / "button_template.html"
         with open(button_template_path, "r") as f:
             button_template = f.read()
-        
-        # Add backlink to experiment
-        back_button = '<a href="../experiment.html" class="nav-button" style="right:10px;">Back to Experiments</a>'
-        button_template += back_button
+
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
         sys.exit(1)
@@ -450,7 +451,7 @@ def create_browser_index(experiments_root):
                         <div class="config-name">{config_name}</div>
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
-                            <div class="config-detail">Rate: {rate} req/min</div>
+                            <div class="config-detail">Rate: {rate}</div>
                         </div>
                     </a>
                 </div>
