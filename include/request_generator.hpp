@@ -23,7 +23,7 @@ class Request {
     void incrementTimesDropped() noexcept;
 
     bool isDead() const noexcept;
-    bool isReserved() const noexcept;
+    bool isEarly() const noexcept;
 
    private:
     uint64_t _dropoffNode;

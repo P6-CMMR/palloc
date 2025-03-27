@@ -18,7 +18,7 @@ void Request::incrementTimesDropped() noexcept { ++_timesDropped; }
 
 bool Request::isDead() const noexcept { return _requestDuration == 0; }
 
-bool Request::isReserved() const noexcept { return _tillArrival > 0; }
+bool Request::isEarly() const noexcept { return _tillArrival > 0; }
 
 Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
     const auto multiplier = getTimeMultiplier(currentTimeOfDay);

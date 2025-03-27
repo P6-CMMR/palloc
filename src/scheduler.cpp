@@ -76,11 +76,13 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
 
     // min sum_{r in R} sum_{p in P} ((tau_P(r_d, p) + tau_D(p, r_d) * x_rp) + (u * penalty *
     // (timesDropped + 1)) minimize the cost of time for getting to parking based on time getting to
-    // parking and a large penalty for being unassigned
+    // parking and a large penalty for being unassigned. 
+    // Unassigned early request are not penalized.
     MPObjective *objective = solver->MutableObjective();
     for (size_t i = 0; i < requestCount; ++i) {
-        const double dropFactor = 1.0 + static_cast<double>(requests[i].getTimesDropped());
-        objective->SetCoefficient(unassignedVars[i], UNASSIGNED_PENALTY * dropFactor);
+        const double dropFactor = (1.0 + static_cast<double>(requests[i].getTimesDropped()));
+        const bool isEarly = requests[i].isEarly();
+        objective->SetCoefficient(unassignedVars[i], UNASSIGNED_PENALTY * dropFactor * !isEarly);
         const auto dropoffNode = requests[i].getDropoffNode();
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const double cost = static_cast<double>(dropoffToParking[dropoffNode][j] +
