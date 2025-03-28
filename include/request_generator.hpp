@@ -40,7 +40,7 @@ class RequestGenerator {
           _rng(seed),
           _maxRequestDuration(maxRequestDuration),
           _requestRate(requestRate) {
-        types::DoubleVector durationWeights = getDurationBuckets(maxRequestDuration);
+        DoubleVector durationWeights = getDurationBuckets(maxRequestDuration);
         _durationDist =
             std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
     }
@@ -83,7 +83,7 @@ class RequestGenerator {
     /**
      * Get viable duration buckets
      */
-    static types::DoubleVector getDurationBuckets(uint64_t maxDuration);
+    static DoubleVector getDurationBuckets(uint64_t maxDuration);
 
     std::uniform_int_distribution<uint64_t> _dropoffDist;
     std::discrete_distribution<uint64_t> _durationDist;

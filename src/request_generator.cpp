@@ -1,7 +1,6 @@
 #include "request_generator.hpp"
 
 using namespace palloc;
-using namespace types;
 
 size_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
 

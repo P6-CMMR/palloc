@@ -16,6 +16,8 @@ int main(int argc, char **argv) {
         std::optional<uint64_t> seedOpt;
         std::string startTimeStr = "08:00";
 
+        std::optional<uint64_t> numberOfThreadsOpt;
+
         argz::options opts{
             {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},
             {{"timesteps", 't'}, simSettings.timesteps, "timesteps in minutes to run simulation"},
@@ -36,7 +38,11 @@ int main(int argc, char **argv) {
             {{"prettify", 'p'}, outputSettings.prettify, "whether to prettify output or not"},
             {{"aggregate", 'a'},
              outputSettings.numberOfRunsToAggregate,
-             "number of runs to aggregate together"}};
+             "number of runs to aggregate together"},
+            {{"jobs", 'j'},
+             numberOfThreadsOpt,
+             "number of threads to use for aggregation, default: min(number of hardware threads, "
+             "number of aggregates)"}};
 
         argz::parse(about, opts, argc, argv);
         if (environmentPathStr.empty() && !about.printed_help) {
@@ -81,7 +87,12 @@ int main(int argc, char **argv) {
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
         outputSettings.path = outputPathStr;
 
-        Simulator::simulate(env, simSettings, outputSettings);
+        GeneralSettings generalSettings{
+            .numberOfThreads = numberOfThreadsOpt.value_or(
+                std::min(static_cast<uint64_t>(std::thread::hardware_concurrency()),
+                         outputSettings.numberOfRunsToAggregate))};
+
+        Simulator::simulate(env, simSettings, outputSettings, generalSettings);
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;
