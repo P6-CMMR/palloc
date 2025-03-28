@@ -185,7 +185,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const double runAvgDuration = runDuration / static_cast<double>(timesteps);
     const double runAvgCost = runCost / static_cast<double>(timesteps);
 
-    std::lock_guard<std::mutex> guard(resultsMutex);
+    const std::lock_guard<std::mutex> guard(resultsMutex);
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost);
 }
 
