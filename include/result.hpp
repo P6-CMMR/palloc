@@ -4,11 +4,12 @@
 #include <cstdint>
 #include <vector>
 
-#include "simulator.hpp"
+#include "settings.hpp"
 #include "trace.hpp"
 
 namespace palloc {
 class Result;  // forward
+
 using Results = std::vector<Result>;
 
 class Result {
