@@ -150,16 +150,16 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
             unassignedRequests.clear();
 
-            auto result = Scheduler::scheduleBatch(env, requests);
+            const auto batchResult = Scheduler::scheduleBatch(env, requests);
             requests.clear();
 
-            batchCost = result.cost;
-            batchAverageDuration = result.averageDurations;
+            batchCost = batchResult.cost;
+            batchAverageDuration = batchResult.averageDurations;
 
-            unassignedRequests = result.unassignedRequests;
+            unassignedRequests = batchResult.unassignedRequests;
             droppedRequests += unassignedRequests.size();
 
-            const auto &newSimulations = result.simulations;
+            const auto &newSimulations = batchResult.simulations;
             assignments.reserve(newSimulations.size());
             for (const auto &simulation : newSimulations) {
                 assert(simulation.getRequestDuration() >= simulation.getRouteDuration());
