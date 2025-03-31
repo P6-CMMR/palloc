@@ -28,8 +28,6 @@ const UintVector &Environment::getSmallestRoundTrips() const noexcept {
     return _smallestRoundTrips;
 }
 
-void Environment::resetEnvironment() { _availableParkingSpots = _parkingCapacities; }
-
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
     if (!std::filesystem::exists(environmentPath)) {
         throw std::runtime_error("Environment file does not exist: " + environmentPath.string());
@@ -41,6 +39,4 @@ void Environment::loadEnvironment(const std::filesystem::path &environmentPath) 
         throw std::runtime_error("Failed to read environment file: " + environmentPath.string() +
                                  "\nwith error: " + errorStr);
     }
-
-    _availableParkingSpots = _parkingCapacities;
 }
