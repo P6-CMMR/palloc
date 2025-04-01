@@ -6,6 +6,8 @@
 #include <random>
 #include <vector>
 
+#include "types.hpp"
+
 namespace palloc {
 
 class Request {
@@ -40,10 +42,10 @@ class RequestGenerator {
                               uint64_t seed, double requestRate)
         : _dropoffDist(0, dropoffNodes - 1),
           _rng(seed),
-          _requestRate(requestRate),
           _maxRequestDuration(maxRequestDuration), 
-          _arrivalDist(0, maxTimeTillArrival) {
-        std::vector<double> durationWeights = getDurationBuckets(maxRequestDuration);
+          _arrivalDist(0, maxTimeTillArrival),
+          _requestRate(requestRate) {
+        DoubleVector durationWeights = getDurationBuckets(maxRequestDuration);
         _durationDist =
             std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
     }
@@ -51,6 +53,30 @@ class RequestGenerator {
     Requests generate(uint64_t currentTimeOfDay);
 
    private:
+    /**
+     * Sample count from poisson distribution with the rate member variable
+     * multiplied by time of day multiplier
+     *
+     * @param currentTimeOfDay time of day in minutes from midnight
+     */
+    uint64_t getCount(uint64_t currentTimeOfDay);
+
+    /**
+     * Uniformly sample one of the dropoffs
+     * (sample space is warped because they are not uniformly distributed on a map)
+     */
+    uint64_t getDropoff();
+
+    /**
+     * Uniformly sample duration from a random weighted bucket
+     */
+    uint64_t getDuration();
+
+    /**
+     * Uniformly sample the time till arrival
+     */
+    uint64_t getArrival();
+
     /**
      * Normally poisson is in interval [0, ∞]. When rate > 100 then it becomes a decent
      * approximation of the central limit theorem for gaussian distirbution so we limit it to r
@@ -65,35 +91,30 @@ class RequestGenerator {
     static double getTimeMultiplier(uint64_t currentTimeOfDay);
 
     /**
-     * Uniformly sample duration from a random weighted bucket
-     */
-    uint64_t getDuration();
-
-    /**
      * Get viable duration buckets
      */
-    std::vector<double> getDurationBuckets(uint64_t maxDuration) const;
+    static DoubleVector getDurationBuckets(uint64_t maxDuration);
 
     std::uniform_int_distribution<uint64_t> _dropoffDist;
     std::discrete_distribution<uint64_t> _durationDist;
     std::uniform_int_distribution<uint64_t> _arrivalDist;
     std::minstd_rand _rng;
 
-    /**
-     * Bucket intervals based on COWI
-     */
-    static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{{
-        {{0, 60}},
-        {{61, 120}},
-        {{121, 240}},
-        {{241, 480}},
-        {{481, 1440}},
-        {{1441, 2880}},
-        {{2881, std::numeric_limits<uint64_t>::max()}}
-    }};
+    // Bucket intervals based on COWI
+    static constexpr std::array<std::array<uint64_t, 2>, 7> DURATION_BUCKETS{
+        {{{0, 60}},                                         // 14%
+         {{61, 120}},                                       // 13%
+         {{121, 240}},                                      // 10%
+         {{241, 480}},                                      // 16%
+         {{481, 1440}},                                     // 21%
+         {{1441, 2880}},                                    // 9%
+         {{2881, std::numeric_limits<uint64_t>::max()}}}};  // 7%
 
-    double _requestRate;
+    // Weights based on COWI
+    static constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
+
     uint64_t _maxRequestDuration;
+    double _requestRate;
 };
 }  // namespace palloc
 

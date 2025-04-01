@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "glaze/glaze.hpp"
+#include "types.hpp"
 
 namespace palloc {
 
@@ -16,7 +17,6 @@ struct Coordinate {
 
 class Environment {
    public:
-    using UintVector = std::vector<uint64_t>;
     using DurationMatrix = std::vector<UintVector>;
     using Coordinates = std::vector<Coordinate>;
 
@@ -35,7 +35,7 @@ class Environment {
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
 
-    const Environment::UintVector &getSmallestRoundTrips() const noexcept;
+    const UintVector &getSmallestRoundTrips() const noexcept;
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);

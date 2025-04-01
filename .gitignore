@@ -4,7 +4,11 @@ build
 osrm-server
 .venv
 *.osm
-plots
+report
 *.data
 flamegraph.html
 FlameGraph
+summary.txt
+.progress
+.progress_lock
+job_list.txt

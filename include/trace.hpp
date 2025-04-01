@@ -78,7 +78,8 @@ class Trace {
 
 std::ostream &operator<<(std::ostream &os, const Trace &trace);
 
-using Traces = std::list<Trace>;
+using TraceList = std::list<Trace>;
+using TraceLists = std::vector<TraceList>;
 }  // namespace palloc
 
 template <>

@@ -30,7 +30,10 @@ else()
 endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS}")
+if(CMAKE_BUILD_TYPE)
+    string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UPPER)
+    message(STATUS "${CMAKE_BUILD_TYPE} CXX Flags: ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}")
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
