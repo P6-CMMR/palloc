@@ -27,11 +27,10 @@ void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) 
     // write_file_json evaluated at compile time so we need both cases
     glz::error_ctx error;
     if (prettify) {
-        error = glz::write_file_json<glz::opts{.prettify = true}>(*this, outputPath.string(),
-                                                                  std::string{});
+        error = glz::write_file_json<glz::opts{.prettify = true, .indentation_width = 4}>(
+            *this, outputPath.string(), std::string{});
     } else {
-        error = glz::write_file_json<glz::opts{.prettify = false}>(*this, outputPath.string(),
-                                                                   std::string{});
+        error = glz::write_file_json<>(*this, outputPath.string(), std::string{});
     }
 
     if (error) {
