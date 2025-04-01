@@ -237,6 +237,8 @@ start_time=$(date +%s)
 progress_file="${exp_dir}/.progress"
 echo "0" > "$progress_file"
 
+progress_lock_file="${exp_dir}/.progress_lock" 
+
 # Function to update progress
 update_progress() {
     local completed=$1
@@ -288,14 +290,13 @@ for ((i=0; i<$PARALLEL_JOBS; i++)); do
 done
 
 increment_progress() {
-    local lock_file="${exp_dir}/.progress_lock"
     (
         flock -x 200
         local current=$(cat "$progress_file")
         local next=$((current + 1))
         echo $next > "$progress_file"
         update_progress $next $total_jobs
-    ) 200>"$lock_file"
+    ) 200>"$progress_lock_file"
 }
 
 # Process each job
@@ -309,7 +310,6 @@ while read job_info; do
     output=$(echo $job_info | cut -d'|' -f4)
     
     (
-
         ./build/palloc -e data.json -o "$output" -d "$duration" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
         
         # Log the run
@@ -329,10 +329,14 @@ exec 3>&-
 
 echo -e "\n\nSimulations completed!"
 
-rm -f "$progress_file" "$progress_lock" "$job_list_file"
+for tmp_file in "$progress_file" "$progress_lock_file" "$job_list_file"; do
+    if [[ -f "$tmp_file" ]]; then
+        rm -f "$tmp_file"
+    fi
+done
 
 echo "Created experiment directory: $exp_dir"
 
 # Generate reports
 echo "Generating reports..."
-python analysis/generate_report.py data.json experiments/
+python analysis/generate_report.py data.json "$exp_dir"
