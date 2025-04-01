@@ -11,10 +11,12 @@ int main(int argc, char **argv) {
         SimulatorSettings simSettings{
             .timesteps = 1440, .maxRequestDuration = 600, .requestRate = 10, .batchInterval = 2};
 
-        OutputSettings outputSettings{.prettify = false, .log = false};
+        OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
         std::optional<uint64_t> seedOpt;
         std::string startTimeStr = "08:00";
+
+        std::optional<uint64_t> numberOfThreadsOpt;
 
         argz::options opts{
             {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},
@@ -34,7 +36,13 @@ int main(int argc, char **argv) {
              outputPathStr,
              "the output file to store results in, default: no output"},
             {{"prettify", 'p'}, outputSettings.prettify, "whether to prettify output or not"},
-            {{"log", 'l'}, outputSettings.log, "log detailed execution to stdout"}};
+            {{"aggregate", 'a'},
+             outputSettings.numberOfRunsToAggregate,
+             "number of runs to aggregate together"},
+            {{"jobs", 'j'},
+             numberOfThreadsOpt,
+             "number of threads to use for aggregation, default: min(number of hardware threads, "
+             "number of aggregates)"}};
 
         argz::parse(about, opts, argc, argv);
         if (environmentPathStr.empty() && !about.printed_help) {
@@ -68,13 +76,23 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
+        if (outputSettings.numberOfRunsToAggregate < 1) {
+            std::println(stderr, "Error: Number of aggregates must be a natural number");
+            return EXIT_FAILURE;
+        }
+
         Environment env(environmentPathStr);
 
         simSettings.seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
         outputSettings.path = outputPathStr;
 
-        Simulator::simulate(env, simSettings, outputSettings);
+        GeneralSettings generalSettings{
+            .numberOfThreads = numberOfThreadsOpt.value_or(
+                std::min(static_cast<uint64_t>(std::thread::hardware_concurrency()),
+                         outputSettings.numberOfRunsToAggregate))};
+
+        Simulator::simulate(env, simSettings, outputSettings, generalSettings);
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
         return EXIT_FAILURE;

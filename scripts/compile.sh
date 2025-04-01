@@ -42,5 +42,5 @@ if [ $? -eq 0 ] && [ "$1" != "release" ] && [ "$1" != "perf" ]; then
     echo "Compilation successful. Running tests..."
     ctest --output-on-failure 
 else
-    "Compilation successful."
+    echo "Compilation successful."
 fi

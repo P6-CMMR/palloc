@@ -17,7 +17,7 @@ struct Coordinate {
 
 class Environment {
    public:
-    using DurationMatrix = std::vector<types::UintVector>;
+    using DurationMatrix = std::vector<UintVector>;
     using Coordinates = std::vector<Coordinate>;
 
     explicit Environment(const std::filesystem::path &environmentPath) {
@@ -27,7 +27,7 @@ class Environment {
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
     const Environment::DurationMatrix &getParkingToDropoff() const noexcept;
 
-    types::UintVector &getAvailableParkingSpots() noexcept;
+    UintVector &getAvailableParkingSpots() noexcept;
 
     const Environment::Coordinates &getDropoffCoordinates() const noexcept;
     const Environment::Coordinates &getParkingCoordinates() const noexcept;
@@ -35,7 +35,7 @@ class Environment {
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
 
-    const types::UintVector &getSmallestRoundTrips() const noexcept;
+    const UintVector &getSmallestRoundTrips() const noexcept;
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
@@ -44,8 +44,8 @@ class Environment {
 
     DurationMatrix _dropoffToParking;
     DurationMatrix _parkingToDropoff;
-    types::UintVector _availableParkingSpots;
-    types::UintVector _smallestRoundTrips;
+    UintVector _availableParkingSpots;
+    UintVector _smallestRoundTrips;
     Coordinates _dropoffCoords;
     Coordinates _parkingCoords;
 };

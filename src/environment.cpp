@@ -1,7 +1,6 @@
 #include "environment.hpp"
 
 using namespace palloc;
-using namespace types;
 
 const Environment::DurationMatrix &Environment::getDropoffToParking() const noexcept {
     return _dropoffToParking;

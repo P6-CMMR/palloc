@@ -19,7 +19,7 @@
         }
         .assignments-container {
             border-left: 5px solid #9b59b6;  
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
         .stat-item { 
@@ -70,10 +70,98 @@
         .route-link {
             margin-top: 5px;
         }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            background-color: #2c3e50;
+            color: white; 
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #1a252f;
+        }
+        .experiment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .result-file-info {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .run-tabs {
+            margin-top: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .tab-button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .tab-button.active {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .tab-content {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 0 5px 5px 5px;
+        }
     </style>
+   <script>
+        function showTab(tabIndex) {
+            document.querySelectorAll(".tab-content").forEach(tab => {
+                tab.style.display = "none";
+            });
+            
+            document.querySelectorAll(".tab-button").forEach(button => {
+                button.classList.remove("active");
+            });
+            
+            document.getElementById("tab-" + tabIndex).style.display = "block";
+            document.getElementById("tab-btn-" + tabIndex).classList.add("active");
+
+            if (document.querySelector(".assignments-container")) {
+                document.querySelector(".assignments-container").scrollTop = 0;
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            if (document.querySelector(".tab-button")) {
+                document.querySelector(".tab-button").classList.add("active");
+            }
+            
+            if (document.querySelector(".assignments-container")) {
+                document.querySelector(".assignments-container").scrollTop = 0;
+            }
+        });
+    </script>
 </head>
 <body>
-    <h1>Palloc Simulation Results</h1>
+    <div class="experiment-header">
+        <div>
+            <h1>Palloc Simulation Results</h1>
+            <h2>{{experiment_name}}</h2>
+            {{num_runs}}
+        </div>
+        <a href="../index.html" class="back-button">Back to All Experiments</a>
+    </div>
     <h2>Simulation Settings</h2>
     <div class="container settings-container">
         <div class="stat-item">
@@ -129,6 +217,7 @@
         <a href="dropped_requests.html">Dropped Requests Over Time</a>
     </div>
     <h2>Assignments</h2>
+    {{run_tabs}}
     <div class="container assignments-container">
         {{assignments_list}}
     </div>

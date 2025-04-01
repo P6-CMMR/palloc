@@ -4,10 +4,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <list>
+#include <mutex>
 
 #include "environment.hpp"
 #include "glaze/glaze.hpp"
 #include "request_generator.hpp"
+#include "result.hpp"
+#include "settings.hpp"
 #include "trace.hpp"
 
 namespace palloc {
@@ -48,33 +51,21 @@ class Simulation {
 
 using Simulations = std::list<Simulation>;
 
-struct SimulatorSettings {
-    uint64_t timesteps;
-    uint64_t startTime;
-    uint64_t maxRequestDuration;
-    double requestRate;
-    uint64_t batchInterval;
-    uint64_t seed;
-};
-
-struct OutputSettings {
-    std::filesystem::path path;
-    bool prettify;
-    bool log;
-};
-
 class Simulator {
    public:
     static void simulate(Environment &env, const SimulatorSettings &simSettings,
-                         const OutputSettings &outputSettings);
+                         const OutputSettings &outputSettings,
+                         const GeneralSettings &generalSettings);
 
    private:
+    static void simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
+                            std::mutex &resultsMutex, uint64_t runNumber);
+
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
                                   Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
-    static void cutImpossibleRequests(Requests &requests,
-                                      const types::UintVector &smallestRoundTrips);
+    static void cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips);
 };
 }  // namespace palloc
 
