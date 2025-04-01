@@ -25,19 +25,23 @@ show_help() {
   echo "Options:"
   echo "  -h, --help        Show help message"
   echo "  -d, --duration    Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
+  echo "  -a, --arrival     Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60"
   echo "  -r, --requests    Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
   echo "  -t, --timesteps   Number of timesteps to simulate, default: 1440"
   echo "  -j, --jobs        Number of parallel jobs to run (default: number of CPU cores)"
   echo ""
   echo "Examples:"
-  echo "  $0 -d 600-1200          # Run simulations in the range 600-1200"
-  echo "  $0 -r 5.0-15.0          # Run simulations in the range 5.0-15.0"
+  echo "  $0 -d 600-1200          # Run simulations in the range 600-1200 max durration"
+  echo "  $0 -r 5.0-15.0          # Run simulations in the range 5.0-15.0 request rate"
+  echo "  $0 -r 10-60             # Run simulations in the range 10-60 max time till arrival"
   echo "  $0 -j 4                 # Run 4 simulations in parallel"
 }
 
 # Default values
 MAX_DURATION=600
 DURATION_END=0
+MAX_ARRIVAL=60
+ARRIVAL_END=0
 REQUEST_RATE=10.0
 REQUEST_RATE_END=0
 AGGREGATIONS=3
@@ -46,6 +50,7 @@ PARALLEL_JOBS=$(nproc)
 
 # Set fixed step sizes
 DURATION_STEP=10
+ARRIVAL_STEP=10
 REQUEST_RATE_STEP=0.5
 
 while [[ $# -gt 0 ]]; do
@@ -68,6 +73,23 @@ while [[ $# -gt 0 ]]; do
             else
             MAX_DURATION="$2"
             DURATION_END=0  # No range
+            fi
+            shift 2
+            ;;
+        -a|--arrival)
+            if [[ $# -lt 2 || $2 == -* ]]; then
+            echo "Error: Missing value for option $1"
+            show_help
+            exit 1
+            fi
+            
+            # Check if arrival is a range
+            if [[ "$2" == *-* ]]; then
+            MAX_ARRIVAL="${2%%-*}" 
+            ARRIVAL_END="${2##*-}"
+            else
+            MAX_ARRIVAL="$2"
+            ARRIVAL_END=0  # No range
             fi
             shift 2
             ;;
@@ -156,6 +178,20 @@ else
     echo "Duration: ${MAX_DURATION}" >> "${exp_dir}/summary.txt"
 fi
 
+arrival_count=1
+if [ "$ARRIVAL_END" -gt 0 ]; then
+    # Count durations in range
+    arrival_count=0
+    current_arv=$MAX_ARRIVAL
+    while [ "$current_arv" -le "$ARRIVAL_END" ]; do
+        ((arrival_count++))
+        current_dur=$((current_arv + ARRIVAL_STEP))
+    done
+    echo "Arrival range: ${MAX_ARRIVAL}-${ARRIVAL_END} (step: ${ARRIVAL_STEP})" >> "${exp_dir}/summary.txt"
+else
+    echo "Arrival: ${MAX_ARRIVAL}" >> "${exp_dir}/summary.txt"
+fi
+
 rate_count=1
 if [ "$REQUEST_RATE_END" != "0" ]; then
     # Count rates in range
@@ -186,6 +222,12 @@ else
     echo "  - Duration: ${MAX_DURATION}"
 fi
 
+if [ "$ARRIVAL_END" -gt 0 ]; then
+    echo "  - Arrival range: ${MAX_ARRIVAL}-${ARRIVAL_END} (step: ${ARRIVAL_STEP})"
+else
+    echo "  - Arrival: ${MAX_ARRIVAL}"
+fi
+
 if [ "$REQUEST_RATE_END" != "0" ]; then
     echo "  - Request rate range: ${REQUEST_RATE}-${REQUEST_RATE_END} (step: ${REQUEST_RATE_STEP})"
 else
@@ -203,21 +245,32 @@ job_list_file="${exp_dir}/job_list.txt"
 # Build the job list
 current_duration=$MAX_DURATION
 while [ "$current_duration" -le "$DURATION_END" ] || [ "$DURATION_END" -eq 0 ]; do
-    current_rate=$REQUEST_RATE
-    while (( $(echo "$current_rate <= $REQUEST_RATE_END" | bc -l) )) || [ "$REQUEST_RATE_END" = "0" ]; do
-        config_name="d${current_duration}-r${current_rate}"
-        SEED=$(date +%s)$RANDOM  # Add more randomness
-        OUTPUT_FILE="${exp_dir}/${config_name}.json"
-        
-        echo "${current_duration}|${current_rate}|${SEED}|${OUTPUT_FILE}" >> "$job_list_file"
-        
-        # Break if not ranging through rates
-        if [ "$REQUEST_RATE_END" = "0" ]; then
+    current_arrival=$MAX_ARRIVAL
+    while [ "$current_arrival" -le "$ARRIVAL_END" ] || [ "$ARRIVAL_END" -eq 0 ]; do
+        current_rate=$REQUEST_RATE
+        while (( $(echo "$current_rate <= $REQUEST_RATE_END" | bc -l) )) || [ "$REQUEST_RATE_END" = "0" ]; do
+            config_name="d${current_duration}-a${current_arrival}-r${current_rate}"
+            SEED=$(date +%s)$RANDOM  # Add more randomness
+            OUTPUT_FILE="${exp_dir}/${config_name}.json"
+            
+            echo "${current_duration}|${current_arrival}|${current_rate}|${SEED}|${OUTPUT_FILE}" >> "$job_list_file"
+            
+            # Break if not ranging through rates
+            if [ "$REQUEST_RATE_END" = "0" ]; then
+                break
+            fi
+            
+            # Increment rate
+            current_rate=$(echo "$current_rate + $REQUEST_RATE_STEP" | bc)
+        done
+
+        # Break if not ranging through durations
+        if [ "$ARRIVAL_END" -eq 0 ]; then
             break
         fi
         
-        # Increment rate
-        current_rate=$(echo "$current_rate + $REQUEST_RATE_STEP" | bc)
+        # Increment duration
+        current_arrival=$((current_arrival + ARRIVAL_STEP))
     done
     
     # Break if not ranging through durations
@@ -304,16 +357,17 @@ while read job_info; do
     read -u3
 
     duration=$(echo $job_info | cut -d'|' -f1)
-    rate=$(echo $job_info | cut -d'|' -f2)
-    seed=$(echo $job_info | cut -d'|' -f3)
-    output=$(echo $job_info | cut -d'|' -f4)
+    arrival=$(echo $job_info | cut -d'|' -f2)
+    rate=$(echo $job_info | cut -d'|' -f3)
+    seed=$(echo $job_info | cut -d'|' -f4)
+    output=$(echo $job_info | cut -d'|' -f5)
     
     (
 
-        ./build/palloc -e data.json -o "$output" -d "$duration" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
+        ./build/palloc -e data.json -o "$output" -d "$duration" -a "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
         
         # Log the run
-        echo "Duration: ${duration}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
+        echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
         
         increment_progress
         
