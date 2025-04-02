@@ -1,10 +1,12 @@
 #include "date_parser.hpp"
 
+#include <spanstream>
+
 using namespace palloc;
 
-uint64_t DateParser::parseTimeToMinutes(std::string &startTimeStr) {
-    std::istringstream is{startTimeStr};
+uint64_t DateParser::parseTimeToMinutes(const std::string_view &startTimeStr) {
+    std::ispanstream iss{startTimeStr};
     std::chrono::minutes minutes;
-    is >> std::chrono::parse("%R", minutes);
+    iss >> std::chrono::parse("%R", minutes);
     return static_cast<uint64_t>(minutes.count());
 }

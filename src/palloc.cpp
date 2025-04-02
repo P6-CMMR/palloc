@@ -8,9 +8,11 @@ int main(int argc, char **argv) {
 
         std::string environmentPathStr;
         std::string outputPathStr;
-        SimulatorSettings simSettings{
-            .timesteps = 1440, .maxRequestDuration = 600, .requestRate = 10, .maxTimeTillArrival = 60, .batchInterval = 2};
-
+        SimulatorSettings simSettings{.timesteps = 1440,
+                                      .maxRequestDuration = 600,
+                                      .requestRate = 10,
+                                      .maxTimeTillArrival = 60,
+                                      .batchInterval = 2};
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
@@ -26,7 +28,9 @@ int main(int argc, char **argv) {
             {{"duration", 'd'},
              simSettings.maxRequestDuration,
              "max duration in minutes of requests"},
-            {{"arrival", 'A'}, simSettings.maxTimeTillArrival, "max duration of early requests in minutes"},
+            {{"arrival", 'A'},
+             simSettings.maxTimeTillArrival,
+             "max duration of early requests in minutes"},
             {{"requests", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
@@ -97,6 +101,9 @@ int main(int argc, char **argv) {
         Simulator::simulate(env, simSettings, outputSettings, generalSettings);
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
+        return EXIT_FAILURE;
+    } catch (...) {
+        std::println(stderr, "Error: Unknown exception occurred");
         return EXIT_FAILURE;
     }
 

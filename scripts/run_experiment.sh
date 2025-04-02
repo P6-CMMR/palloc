@@ -34,7 +34,7 @@ show_help() {
   echo "Examples:"
   echo "  $0 -d 600-1200          # Run simulations in the range 600-1200 max durration"
   echo "  $0 -r 5.0-15.0          # Run simulations in the range 5.0-15.0 request rate"
-  echo "  $0 -r 10-60             # Run simulations in the range 10-60 max time till arrival"
+  echo "  $0 -A 10-60             # Run simulations in the range 10-60 max time till arrival"
   echo "  $0 -j 4                 # Run 4 simulations in parallel"
 }
 
@@ -368,7 +368,6 @@ while read job_info; do
     output=$(echo $job_info | cut -d'|' -f5)
     
     (
-
         ./build/palloc -e data.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
         
         # Log the run
