@@ -204,7 +204,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
-            
         }
 
         const auto totalAvailableParkingSpots =
