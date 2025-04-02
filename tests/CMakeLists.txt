@@ -15,7 +15,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if (TEST_SOURCES)
         message(STATUS "Found test sources: ${TEST_SOURCES}")
         add_executable(palloc_tests ${TEST_SOURCES})
-        message(STATUS "Adding tests: ${TEST_SOURCES}")
         target_link_libraries(palloc_tests PRIVATE palloclib Catch2::Catch2WithMain)
 
         include(CTest)
