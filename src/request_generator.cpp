@@ -2,13 +2,13 @@
 
 using namespace palloc;
 
-size_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
+uint32_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
 
-uint64_t Request::getRequestDuration() const noexcept { return _requestDuration; }
+uint32_t Request::getRequestDuration() const noexcept { return _requestDuration; }
 
-uint64_t Request::getArrival() const noexcept { return _tillArrival; }
+uint32_t Request::getArrival() const noexcept { return _tillArrival; }
 
-uint64_t Request::getTimesDropped() const noexcept { return _timesDropped; }
+uint32_t Request::getTimesDropped() const noexcept { return _timesDropped; }
 
 void Request::decrementDuration() noexcept { --_requestDuration; }
 
@@ -20,49 +20,49 @@ bool Request::isDead() const noexcept { return _requestDuration == 0; }
 
 bool Request::isEarly() const noexcept { return _tillArrival > 0; }
 
-Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
+Requests RequestGenerator::generate(uint32_t currentTimeOfDay) {
     const auto count = getCount(currentTimeOfDay);
     Requests requests;
     requests.reserve(count);
-    for (uint64_t i = 0; i < count; ++i) {
+    for (uint32_t i = 0; i < count; ++i) {
         requests.emplace_back(getDropoff(), getDuration(), getArrival());
     }
 
     return requests;
 }
 
-uint64_t RequestGenerator::getCount(uint64_t currentTimeOfDay) {
+uint32_t RequestGenerator::getCount(uint32_t currentTimeOfDay) {
     const auto multiplier = getTimeMultiplier(currentTimeOfDay);
     const double adjustedRate = _requestRate * multiplier;
-    std::poisson_distribution<uint64_t> requestCountDist(adjustedRate);
+    std::poisson_distribution<uint32_t> requestCountDist(adjustedRate);
     return std::min(getPoissonUpperBound(_requestRate), requestCountDist(_rng));
 }
 
-uint64_t RequestGenerator::getDropoff() { return _dropoffDist(_rng); }
+size_t RequestGenerator::getDropoff() { return _dropoffDist(_rng); }
 
-uint64_t RequestGenerator::getArrival() { return _arrivalDist(_rng); }
+uint32_t RequestGenerator::getArrival() { return _arrivalDist(_rng); }
 
-uint64_t RequestGenerator::getDuration() {
-    const uint64_t selectedBucket = _durationDist(_rng);
-    const uint64_t start = DURATION_BUCKETS[selectedBucket][0];
-    const uint64_t end = std::min(DURATION_BUCKETS[selectedBucket][1], _maxRequestDuration);
+uint32_t RequestGenerator::getDuration() {
+    const uint32_t selectedBucket = _durationDist(_rng);
+    const uint32_t start = DURATION_BUCKETS[selectedBucket][0];
+    const uint32_t end = std::min(DURATION_BUCKETS[selectedBucket][1], _maxRequestDuration);
 
-    std::uniform_int_distribution<uint64_t> uniformDist(start, end);
+    std::uniform_int_distribution<uint32_t> uniformDist(start, end);
 
     return uniformDist(_rng);
 }
 
-uint64_t RequestGenerator::getPoissonUpperBound(double rate) {
+uint32_t RequestGenerator::getPoissonUpperBound(double rate) {
     constexpr double rateThreshold = 100;
     constexpr double rateThresholdStddev = 10;
     constexpr double numStddevs = 3.0;
     constexpr double defaultUpperBound = rateThreshold + numStddevs * rateThresholdStddev;
-    return static_cast<uint64_t>((rate > rateThreshold)
+    return static_cast<uint32_t>((rate > rateThreshold)
                                      ? std::ceil(rate + numStddevs * std::sqrt(rate))
                                      : defaultUpperBound);
 }
 
-double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
+double RequestGenerator::getTimeMultiplier(uint32_t currentTimeOfDay) {
     double timeInHours = static_cast<double>(currentTimeOfDay % 1440) / 60.0;
 
     constexpr double baseline = 0.4;
@@ -96,11 +96,11 @@ double RequestGenerator::getTimeMultiplier(uint64_t currentTimeOfDay) {
     return multiplier;
 }
 
-DoubleVector RequestGenerator::getDurationBuckets(uint64_t maxDuration) {
+DoubleVector RequestGenerator::getDurationBuckets(uint32_t maxDuration) {
     DoubleVector weightBuckets;
     for (size_t i = 0; i < DURATION_BUCKETS.size(); ++i) {
-        const uint64_t start = DURATION_BUCKETS[i][0];
-        const uint64_t end = DURATION_BUCKETS[i][1];
+        const uint32_t start = DURATION_BUCKETS[i][0];
+        const uint32_t end = DURATION_BUCKETS[i][1];
 
         if (start > maxDuration) {
             break;

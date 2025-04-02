@@ -21,7 +21,7 @@ class Scheduler {
    private:
     static constexpr int MAX_SEARCH_TIME = 60000;
     static constexpr int PARKING_NODES_TO_VISIT = 1;
-    static constexpr double UNASSIGNED_PENALTY = 10000.0;
+    static constexpr int UNASSIGNED_PENALTY = 100;
 };
 }  // namespace palloc
 

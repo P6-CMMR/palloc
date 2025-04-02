@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace palloc {
-using UintVector = std::vector<uint64_t>;
+using UintVector = std::vector<uint32_t>;
 using DoubleVector = std::vector<double>;
 }  // namespace palloc
 
