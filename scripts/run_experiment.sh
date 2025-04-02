@@ -23,6 +23,7 @@ fi
 show_help() {
   echo "Usage: $0 [options]"
   echo "Options:"
+
   echo "  -h, --help              Show help message"
   echo "  -d, --duration          Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
   echo "  -A, --arrival           Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60"
@@ -178,6 +179,7 @@ else
     echo "Duration: ${MAX_DURATION}" >> "${exp_dir}/summary.txt"
 fi
 
+
 arrival_count=1
 if [ "$ARRIVAL_END" -gt 0 ]; then
     # Count durations in range
@@ -222,6 +224,7 @@ else
     echo "  - Duration: ${MAX_DURATION}"
 fi
 
+
 if [ "$ARRIVAL_END" -gt 0 ]; then
     echo "  - Arrival range: ${MAX_ARRIVAL}-${ARRIVAL_END} (step: ${ARRIVAL_STEP})"
 else
@@ -245,6 +248,7 @@ job_list_file="${exp_dir}/job_list.txt"
 # Build the job list
 current_duration=$MAX_DURATION
 while [ "$current_duration" -le "$DURATION_END" ] || [ "$DURATION_END" -eq 0 ]; do
+
     current_arrival=$MAX_ARRIVAL
     while [ "$current_arrival" -le "$ARRIVAL_END" ] || [ "$ARRIVAL_END" -eq 0 ]; do
         current_rate=$REQUEST_RATE
@@ -369,6 +373,7 @@ while read job_info; do
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
+
         
         increment_progress
         
@@ -395,3 +400,4 @@ echo "Created experiment directory: $exp_dir"
 # Generate reports
 echo "Generating reports..."
 python analysis/generate_report.py data.json experiments/
+

@@ -18,6 +18,7 @@ void Request::incrementTimesDropped() noexcept { ++_timesDropped; }
 
 bool Request::isDead() const noexcept { return _requestDuration == 0; }
 
+
 bool Request::isEarly() const noexcept { return _tillArrival > 0; }
 
 Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
@@ -26,6 +27,7 @@ Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
     requests.reserve(count);
     for (uint64_t i = 0; i < count; ++i) {
         requests.emplace_back(getDropoff(), getDuration(), getArrival());
+
     }
 
     return requests;

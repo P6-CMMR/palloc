@@ -122,10 +122,12 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                                simSettings.maxTimeTillArrival, simSettings.seed + runNumber, 
                                simSettings.requestRate);
 
+
     uint64_t timesteps = simSettings.timesteps;
 
     Requests requests;
     Requests unassignedRequests;
+
     Requests earlyRequests;
     
     requests.reserve(timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
