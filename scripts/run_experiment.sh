@@ -23,12 +23,12 @@ fi
 show_help() {
   echo "Usage: $0 [options]"
   echo "Options:"
-  echo "  -h, --help        Show help message"
-  echo "  -d, --duration    Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
-  echo "  -a, --arrival     Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60"
-  echo "  -r, --requests    Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
-  echo "  -t, --timesteps   Number of timesteps to simulate, default: 1440"
-  echo "  -j, --jobs        Number of parallel jobs to run (default: number of CPU cores)"
+  echo "  -h, --help              Show help message"
+  echo "  -d, --duration          Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
+  echo "  -A, --arrival           Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60"
+  echo "  -r, --requests          Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
+  echo "  -t, --timesteps         Number of timesteps to simulate, default: 1440"
+  echo "  -j, --jobs              Number of parallel jobs to run (default: number of CPU cores)"
   echo ""
   echo "Examples:"
   echo "  $0 -d 600-1200          # Run simulations in the range 600-1200 max durration"
@@ -76,7 +76,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift 2
             ;;
-        -a|--arrival)
+        -A|--arrival)
             if [[ $# -lt 2 || $2 == -* ]]; then
             echo "Error: Missing value for option $1"
             show_help
@@ -290,6 +290,8 @@ start_time=$(date +%s)
 progress_file="${exp_dir}/.progress"
 echo "0" > "$progress_file"
 
+progress_lock_file="${exp_dir}/.progress_lock" 
+
 # Function to update progress
 update_progress() {
     local completed=$1
@@ -341,14 +343,13 @@ for ((i=0; i<$PARALLEL_JOBS; i++)); do
 done
 
 increment_progress() {
-    local lock_file="${exp_dir}/.progress_lock"
     (
         flock -x 200
         local current=$(cat "$progress_file")
         local next=$((current + 1))
         echo $next > "$progress_file"
         update_progress $next $total_jobs
-    ) 200>"$lock_file"
+    ) 200>"$progress_lock_file"
 }
 
 # Process each job
@@ -364,7 +365,7 @@ while read job_info; do
     
     (
 
-        ./build/palloc -e data.json -o "$output" -d "$duration" -a "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
+        ./build/palloc -e data.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
@@ -383,10 +384,14 @@ exec 3>&-
 
 echo -e "\n\nSimulations completed!"
 
-rm -f "$progress_file" "$progress_lock" "$job_list_file"
+for tmp_file in "$progress_file" "$progress_lock_file" "$job_list_file"; do
+    if [[ -f "$tmp_file" ]]; then
+        rm -f "$tmp_file"
+    fi
+done
 
 echo "Created experiment directory: $exp_dir"
 
 # Generate reports
 echo "Generating reports..."
-python analysis/generate_report.py data.json experiments/
+python analysis/generate_report.py data.json "$exp_dir"

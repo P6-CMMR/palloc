@@ -191,7 +191,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
         }
-
+        
         const auto totalAvailableParkingSpots =
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
         traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),

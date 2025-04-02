@@ -59,7 +59,7 @@ class Simulator {
 
    private:
     static void simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
-                            std::mutex &resultsMutex, uint64_t runNumber);
+                           std::mutex &resultsMutex, uint64_t runNumber);
 
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
@@ -67,7 +67,8 @@ class Simulator {
     static void removeDeadRequests(Requests &unassignedRequests);
     static void decrementArrivalTime(Requests &earlyRequests);
     static void seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration, Requests &earlyRequests);
-    static void cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips);
+    static void cutImpossibleRequests(Requests &requests,
+                                        const UintVector &smallestRoundTrips);
 };
 }  // namespace palloc
 

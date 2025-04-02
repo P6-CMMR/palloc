@@ -123,6 +123,25 @@ def create_map_visualization(env, data, output_dir_path):
         ).add_to(parking_layer)
     m.add_child(parking_layer)
 
+    # Bounding box
+    bounds = [
+        [min(p[0] for p in all_points), min(p[1] for p in all_points)],
+        [max(p[0] for p in all_points), max(p[1] for p in all_points)]
+    ]
+    
+    bounds_layer = folium.FeatureGroup(name="Bounding Box", show=False)
+    folium.Rectangle(
+        bounds=bounds,
+        color="blue",
+        fill=True,
+        fill_opacity=0.1,
+        tooltip="Bounding Box"
+    ).add_to(bounds_layer)
+    m.add_child(bounds_layer)
+    
+    # Lat/lon tooltip
+    m.add_child(folium.LatLngPopup())
+    
     folium.LayerControl().add_to(m)
 
     map_path = os.path.join(output_dir_path, "density_map.html")

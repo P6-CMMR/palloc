@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
             {{"duration", 'd'},
              simSettings.maxRequestDuration,
              "max duration in minutes of requests"},
-            {{"arrival", 'a'}, simSettings.maxTimeTillArrival, "max duration of early requests in minutes"},
+            {{"arrival", 'A'}, simSettings.maxTimeTillArrival, "max duration of early requests in minutes"},
             {{"requests", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
