@@ -66,19 +66,19 @@ class Simulator {
                                   Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void decrementArrivalTime(Requests &earlyRequests);
-    static void seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration, Requests &earlyRequests);
+    static void seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration,
+                                         Requests &earlyRequests);
     static void cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips);
-
 };
 }  // namespace palloc
 
 template <>
 struct glz::meta<palloc::SimulatorSettings> {
     using T = palloc::SimulatorSettings;
-    static constexpr auto value =
-        glz::object("timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration", &T::maxRequestDuration,
-                    "max_time_till_arrival", &T::maxTimeTillArrival, 
-                    "request_rate", &T::requestRate, "batch_interval", &T::batchInterval, "seed", &T::seed);
+    static constexpr auto value = glz::object(
+        "timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
+        &T::maxRequestDuration, "max_time_till_arrival", &T::maxTimeTillArrival, "request_rate",
+        &T::requestRate, "batch_interval", &T::batchInterval, "seed", &T::seed);
 };
 
 #endif
