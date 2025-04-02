@@ -282,6 +282,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     max_request_duration_raw = settings.get("max_request_duration", "N/A")
     max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
+
+    max_request_arrival_raw = settings.get("max_request_arrival", "N/A")
+    max_request_arrival = f"{max_request_arrival_raw}m" if max_request_arrival_raw != "N/A" else "N/A"
     
     request_rate = settings.get("request_rate", "N/A")
     
@@ -387,6 +390,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = template.replace("{{timesteps}}", str(timesteps))
     html_content = html_content.replace("{{start_time}}", str(start_time))
     html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
+    html_content = html_content.replace("{{max_request_arrival}}", str(max_request_arrival))
     html_content = html_content.replace("{{request_rate}}", str(request_rate))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{seed}}", str(seed))

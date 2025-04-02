@@ -394,4 +394,4 @@ echo "Created experiment directory: $exp_dir"
 
 # Generate reports
 echo "Generating reports..."
-python analysis/generate_report.py data.json "$exp_dir"
+python analysis/generate_report.py data.json experiments/
