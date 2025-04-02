@@ -97,7 +97,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::println("Finished after {}ms", time);
 
-    Result result = Result::aggregateResults(results);
+    const Result result = Result::aggregateResults(results);
 
     const double globalAvgDuration = result.getGlobalAvgDuration();
     const int minutes = static_cast<int>(globalAvgDuration);
@@ -123,7 +123,7 @@ static uint64_t calculateMaxDuration(const Requests &requests) {
     return maxDuration;
 }
 
-static Assignments createAssignments(const Simulations& newSimulations, const Environment &env) {
+static Assignments createAssignments(const Simulations &newSimulations, const Environment &env) {
     Assignments assignments;
     assignments.reserve(newSimulations.size());
     for (const auto &simulation : newSimulations) {
@@ -132,24 +132,27 @@ static Assignments createAssignments(const Simulations& newSimulations, const En
                                  env.getParkingCoordinates()[simulation.getParkingNode()],
                                  simulation.getRequestDuration(), simulation.getRouteDuration());
     }
+
     return assignments;
 }
 
 void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
                             std::mutex &resultsMutex, uint64_t runNumber) {
-    auto &availableParkingSpots = env.getAvailableParkingSpots();
+    const auto &availableParkingSpots = env.getAvailableParkingSpots();
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
 
-    RequestGenerator generator(numberOfDropoffs, simSettings.maxRequestDuration,
-                               simSettings.maxTimeTillArrival, simSettings.seed + runNumber,
-                               simSettings.requestRate);
+    RequestGenerator generator({.dropoffNodes = numberOfDropoffs,
+                                .maxTimeTillArrival = simSettings.maxTimeTillArrival,
+                                .maxRequestDuration = simSettings.maxRequestDuration,
+                                .seed = simSettings.seed + runNumber,
+                                .requestRate = simSettings.requestRate});
 
-
-    uint64_t timesteps = simSettings.timesteps;
+    const uint64_t timesteps = simSettings.timesteps;
 
     Requests requests;
-    Requests unassignedRequests;
+    requests.reserve(timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
 
+    Requests unassignedRequests;
     Requests earlyRequests;
 
     requests.reserve(timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
@@ -161,7 +164,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     size_t droppedRequests = 0;
     double runCost = 0.0;
     double runDuration = 0.0;
-
     for (uint64_t timestep = 1; timestep <= timesteps; ++timestep) {
         uint64_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
 
@@ -176,41 +178,41 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
         Assignments assignments;
 
         bool isBatchingStep = timestep % simSettings.batchInterval == 0;
-
         if (isBatchingStep) {
             requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
             requests.insert(requests.end(), earlyRequests.begin(), earlyRequests.end());
+
             unassignedRequests.clear();
             earlyRequests.clear();
 
             uint64_t maxDuration = calculateMaxDuration(requests);
             seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
-            
+
             if (!requests.empty()) {
                 const auto batchResult = Scheduler::scheduleBatch(env, requests);
                 requests.clear();
-    
+
                 batchCost = batchResult.cost;
                 batchAverageDuration = batchResult.averageDurations;
-    
+
                 unassignedRequests = batchResult.unassignedRequests;
                 droppedRequests += unassignedRequests.size();
-    
+
                 earlyRequests = batchResult.earlyRequests;
-    
+
                 const auto &newSimulations = batchResult.simulations;
                 assignments = createAssignments(newSimulations, env);
-    
+
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
             }
-            
         }
+
         const auto totalAvailableParkingSpots =
-                    std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
-        traces.emplace_back(timestep, currentTimeOfDay,  requests.size(), simulations.size(),
-                        totalAvailableParkingSpots, batchCost, batchAverageDuration,
-                        droppedRequests, assignments);
-  
+            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
+        traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
+                            totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                            droppedRequests, assignments);
+
         runCost += batchCost;
         runDuration += batchAverageDuration;
     }
@@ -221,7 +223,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const std::lock_guard<std::mutex> guard(resultsMutex);
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost);
 }
-
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     const auto &dropoffToParking = env.getDropoffToParking();
@@ -265,11 +266,16 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
 
 void Simulator::seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration,
                                          Requests &earlyRequests) {
-    if (requests.empty()) { return; }
-    auto end = requests.rend();
+    const auto end = requests.rend();
     for (auto it = requests.rbegin(); it != end; ++it) {
-        if (it->getArrival() > 0) { earlyRequests.push_back(std::move(*it)); }
-        if (maxDuration >= it->getArrival()) { continue; }
+        if (it->getArrival() > 0) {
+            earlyRequests.push_back(*it);
+        }
+
+        if (maxDuration >= it->getArrival()) {
+            continue;
+        }
+
         requests.erase(std::next(it).base());
     }
 }
@@ -289,8 +295,10 @@ void Simulator::removeDeadRequests(Requests &unassignedRequests) {
 
 void Simulator::decrementArrivalTime(Requests &earlyRequests) {
     for (auto &request : earlyRequests) {
-        if (request.getArrival() == 0) { continue;
-}
+        if (request.getArrival() == 0) {
+            continue;
+        }
+
         request.decrementTillArrival();
     }
 }

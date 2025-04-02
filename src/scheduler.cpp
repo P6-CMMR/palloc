@@ -27,7 +27,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    // sum_{p in P} x_{rp} in {1, 0}: All request have at most 1 parking spot
+    // All request have at most 1 parking spot
     for (size_t i = 0; i < requestCount; ++i) {
         MPConstraint *parkingVisitedConstraint =
             solver->MakeRowConstraint(0, PARKING_NODES_TO_VISIT);
@@ -36,8 +36,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    // sum_{r in R} x_{rp} <= c_p: number of requests in a parking node must be less or equal to its
-    // capacity
+    // Respect parking lot capacity
     auto &availableParkingSpots = env.getAvailableParkingSpots();
     for (size_t j = 0; j < numberOfParkings; ++j) {
         MPConstraint *capacityConstraint =
@@ -47,9 +46,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    // sum_{r in R} sum_{p in P} (tau_P(r_d, p) + tau_D(p, r_d) < r_tau) -> (x_rp = 0):
-    // if a duration to a parking spot is longer than the time request duration then the constrain
-    // x_rp is 0
+    // If travel time longer than request duration it cannot be assigned from r -> p
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].getDropoffNode();
         const auto requestDuration = requests[i].getRequestDuration();
@@ -63,7 +60,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    // (u + sum_{p in P} x_{rp}) = 1: All request have at most 1 parking spot or are unassigned
+    // All request have at most 1 parking spot or are unassigned
     std::vector<MPVariable *> unassignedVars(requestCount);
     for (size_t i = 0; i < requestCount; ++i) {
         unassignedVars[i] = solver->MakeBoolVar("u" + std::to_string(i));
@@ -74,15 +71,13 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    // min sum_{r in R} sum_{p in P} ((tau_P(r_d, p) + tau_D(p, r_d) * x_rp) + (u * penalty *
-    // (timesDropped + 1)) minimize the cost of time for getting to parking based on time getting to
-    // parking and a large penalty for being unassigned.
-    // Unassigned early request are not penalized.
+    // Minimize global cost of all requests
     MPObjective *objective = solver->MutableObjective();
     for (size_t i = 0; i < requestCount; ++i) {
         const double dropFactor = (1.0 + static_cast<double>(requests[i].getTimesDropped()));
         const bool isEarly = requests[i].isEarly();
-        objective->SetCoefficient(unassignedVars[i], UNASSIGNED_PENALTY * dropFactor * static_cast<double>(!isEarly));
+        objective->SetCoefficient(unassignedVars[i],
+                                  UNASSIGNED_PENALTY * dropFactor * static_cast<double>(!isEarly));
         const auto dropoffNode = requests[i].getDropoffNode();
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const double cost = static_cast<double>(dropoffToParking[dropoffNode][j] +
@@ -99,7 +94,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     Requests unassignedRequests;
     Requests earlyRequests;
 
-    double sumDuration = 0.0;
+    uint64_t sumDuration = 0;
     double averageDuration = 0.0;
     double cost = objective->Value();
     if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
@@ -110,14 +105,13 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
             const auto dropoffNode = request.getDropoffNode();
             const auto requestDuration = request.getRequestDuration();
             const auto tillArrival = request.getArrival();
-            double routeDuration = 0.0;
+            uint64_t routeDuration = 0.0;
             for (size_t j = 0; j < numberOfParkings; ++j) {
                 if (var[i][j]->solution_value() > 0.5) {
                     parkingNode = j;
                     assigned = true;
-                    routeDuration =
-                        static_cast<double>(dropoffToParking[dropoffNode][parkingNode]) +
-                        static_cast<double>(parkingToDropoff[parkingNode][dropoffNode]);
+                    routeDuration = dropoffToParking[dropoffNode][parkingNode] +
+                                    parkingToDropoff[parkingNode][dropoffNode];
                     break;
                 }
             }
@@ -136,8 +130,9 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         }
     }
 
-    averageDuration =
-        simulations.empty() ? 0 : sumDuration / static_cast<double>(simulations.size());
+    averageDuration = simulations.empty() ? 0.0
+                                          : static_cast<double>(sumDuration) /
+                                                static_cast<double>(simulations.size());
 
     return {simulations, unassignedRequests, earlyRequests, averageDuration, cost};
 }

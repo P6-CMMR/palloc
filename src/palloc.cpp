@@ -14,7 +14,6 @@ int main(int argc, char **argv) {
                                       .maxTimeTillArrival = 60,
                                       .batchInterval = 2};
 
-
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
         std::optional<uint64_t> seedOpt;
@@ -102,6 +101,9 @@ int main(int argc, char **argv) {
         Simulator::simulate(env, simSettings, outputSettings, generalSettings);
     } catch (std::exception &e) {
         std::println(stderr, "Error: {}", e.what());
+        return EXIT_FAILURE;
+    } catch (...) {
+        std::println(stderr, "Error: Unknown exception occurred");
         return EXIT_FAILURE;
     }
 

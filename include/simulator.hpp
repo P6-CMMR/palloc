@@ -60,7 +60,7 @@ class Simulator {
    private:
     static void simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
                             std::mutex &resultsMutex, uint64_t runNumber);
-  
+
     static void updateSimulations(Simulations &simulations, Environment &env);
     static void insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
                                   Requests &requests);

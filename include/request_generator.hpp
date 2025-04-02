@@ -38,14 +38,21 @@ using Requests = std::vector<Request>;
 
 class RequestGenerator {
    public:
-    explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxRequestDuration,
-                              uint64_t maxTimeTillArrival, uint64_t seed, double requestRate)
-        : _dropoffDist(0, dropoffNodes - 1),
-          _arrivalDist(0, maxTimeTillArrival),
-          _rng(seed),
-          _maxRequestDuration(maxRequestDuration),
-          _requestRate(requestRate) {
-        DoubleVector durationWeights = getDurationBuckets(maxRequestDuration);
+    struct Options {
+        uint64_t dropoffNodes;
+        uint64_t maxTimeTillArrival;
+        uint64_t maxRequestDuration;
+        uint64_t seed;
+        double requestRate;
+    };
+
+    explicit RequestGenerator(const RequestGenerator::Options &options)
+        : _dropoffDist(0, options.dropoffNodes - 1),
+          _arrivalDist(0, options.maxTimeTillArrival),
+          _rng(options.seed),
+          _maxRequestDuration(options.maxRequestDuration),
+          _requestRate(options.requestRate) {
+        DoubleVector durationWeights = getDurationBuckets(options.maxRequestDuration);
         _durationDist =
             std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
     }
