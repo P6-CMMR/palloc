@@ -224,7 +224,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost);
 }
 
-
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     const auto &dropoffToParking = env.getDropoffToParking();
     const auto &parkingToDropoff = env.getParkingToDropoff();
@@ -299,7 +298,7 @@ void Simulator::decrementArrivalTime(Requests &earlyRequests) {
         if (request.getArrival() == 0) { 
             continue;
         }
-        
+
         request.decrementTillArrival();
     }
 }
