@@ -1,10 +1,25 @@
-include(AddCatch2)
+# Catch2
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    enable_testing()
+    
+    FetchContent_Declare(
+        Catch2 
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.8.0
+    )
 
-file(GLOB_RECURSE TEST_SOURCES "*.cpp")
-add_executable(palloc_tests ${TEST_SOURCES})
+    FetchContent_MakeAvailable(Catch2)
+    list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
-target_link_libraries(palloc_tests PRIVATE dpllib Catch2::Catch2WithMain)
+    file(GLOB_RECURSE TEST_SOURCES "*.cpp")
+    if (TEST_SOURCES)
+        message(STATUS "Found test sources: ${TEST_SOURCES}")
+        add_executable(palloc_tests ${TEST_SOURCES})
+        message(STATUS "Adding tests: ${TEST_SOURCES}")
+        target_link_libraries(palloc_tests PRIVATE palloclib Catch2::Catch2WithMain)
 
-include(CTest)
-include(Catch)
-catch_discover_tests(palloc_tests)
+        include(CTest)
+        include(Catch)
+        catch_discover_tests(palloc_tests)
+    endif()
+endif()

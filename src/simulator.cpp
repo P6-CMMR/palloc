@@ -155,8 +155,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     Requests unassignedRequests;
     Requests earlyRequests;
 
-    requests.reserve(timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
-
     Simulations simulations;
 
     TraceList traces;
