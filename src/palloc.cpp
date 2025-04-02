@@ -14,7 +14,6 @@ int main(int argc, char **argv) {
                                       .maxTimeTillArrival = 60,
                                       .batchInterval = 2};
 
-
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
         std::optional<uint64_t> seedOpt;

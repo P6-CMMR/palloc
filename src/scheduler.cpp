@@ -118,7 +118,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
 
             sumDuration += routeDuration;
 
-            if (tillArrival > 0) { 
+            if (tillArrival > 0) {
                 earlyRequests.push_back(request);
             } else if (assigned) {
                 --availableParkingSpots[parkingNode];
