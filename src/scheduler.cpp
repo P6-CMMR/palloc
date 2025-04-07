@@ -79,6 +79,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         objective->SetCoefficient(unassignedVars[i],
                                   UNASSIGNED_PENALTY * dropFactor * static_cast<double>(!isEarly));
         const auto dropoffNode = requests[i].getDropoffNode();
+        assert(dropoffNode < parkingToDropoff.size());
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const double cost = static_cast<double>(dropoffToParking[dropoffNode][j] +
                                                     parkingToDropoff[j][dropoffNode]);
