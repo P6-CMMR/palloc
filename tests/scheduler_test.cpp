@@ -5,7 +5,15 @@
 
 using namespace palloc;
 
-TEST_CASE("Base case") {
+
+/*
+ * TODO
+ * - Check multiple requests
+ * - Check errors
+ *
+*/
+
+TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
     
     SECTION("Request being simulated") {
