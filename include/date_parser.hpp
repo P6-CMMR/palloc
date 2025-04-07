@@ -4,12 +4,12 @@
 #include <chrono>
 #include <cstdint>
 #include <sstream>
-#include <string>
+#include <string_view>
 
 namespace palloc {
 class DateParser {
    public:
-    static uint64_t parseTimeToMinutes(std::string &startTimeStr);
+    static uint64_t parseTimeToMinutes(const std::string_view &startTimeStr);
 };
 }  // namespace palloc
 

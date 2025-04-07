@@ -6,20 +6,26 @@ size_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
 
 uint64_t Request::getRequestDuration() const noexcept { return _requestDuration; }
 
+uint64_t Request::getArrival() const noexcept { return _tillArrival; }
+
 uint64_t Request::getTimesDropped() const noexcept { return _timesDropped; }
 
 void Request::decrementDuration() noexcept { --_requestDuration; }
 
+void Request::decrementTillArrival() noexcept { --_tillArrival; }
+
 void Request::incrementTimesDropped() noexcept { ++_timesDropped; }
 
 bool Request::isDead() const noexcept { return _requestDuration == 0; }
+
+bool Request::isEarly() const noexcept { return _tillArrival > 0; }
 
 Requests RequestGenerator::generate(uint64_t currentTimeOfDay) {
     const auto count = getCount(currentTimeOfDay);
     Requests requests;
     requests.reserve(count);
     for (uint64_t i = 0; i < count; ++i) {
-        requests.emplace_back(getDropoff(), getDuration());
+        requests.emplace_back(getDropoff(), getDuration(), getArrival());
     }
 
     return requests;
@@ -33,6 +39,8 @@ uint64_t RequestGenerator::getCount(uint64_t currentTimeOfDay) {
 }
 
 uint64_t RequestGenerator::getDropoff() { return _dropoffDist(_rng); }
+
+uint64_t RequestGenerator::getArrival() { return _arrivalDist(_rng); }
 
 uint64_t RequestGenerator::getDuration() {
     const uint64_t selectedBucket = _durationDist(_rng);

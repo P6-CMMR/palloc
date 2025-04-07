@@ -12,35 +12,47 @@ namespace palloc {
 
 class Request {
    public:
-    explicit Request(uint64_t dropoffNode, uint64_t requestDuration)
-        : _dropoffNode(dropoffNode), _requestDuration(requestDuration) {}
+    explicit Request(uint64_t dropoffNode, uint64_t requestDuration, uint64_t tillArrival)
+        : _dropoffNode(dropoffNode), _requestDuration(requestDuration), _tillArrival(tillArrival) {}
 
     uint64_t getDropoffNode() const noexcept;
     uint64_t getRequestDuration() const noexcept;
     uint64_t getTimesDropped() const noexcept;
+    uint64_t getArrival() const noexcept;
 
     void decrementDuration() noexcept;
+    void decrementTillArrival() noexcept;
     void incrementTimesDropped() noexcept;
 
     bool isDead() const noexcept;
+    bool isEarly() const noexcept;
 
    private:
     uint64_t _dropoffNode;
     uint64_t _requestDuration;
     uint64_t _timesDropped = 0;
+    uint64_t _tillArrival;
 };
 
 using Requests = std::vector<Request>;
 
 class RequestGenerator {
    public:
-    explicit RequestGenerator(uint64_t dropoffNodes, uint64_t maxRequestDuration, uint64_t seed,
-                              double requestRate)
-        : _dropoffDist(0, dropoffNodes - 1),
-          _rng(seed),
-          _maxRequestDuration(maxRequestDuration),
-          _requestRate(requestRate) {
-        DoubleVector durationWeights = getDurationBuckets(maxRequestDuration);
+    struct Options {
+        uint64_t dropoffNodes;
+        uint64_t maxTimeTillArrival;
+        uint64_t maxRequestDuration;
+        uint64_t seed;
+        double requestRate;
+    };
+
+    explicit RequestGenerator(const RequestGenerator::Options &options)
+        : _dropoffDist(0, options.dropoffNodes - 1),
+          _arrivalDist(0, options.maxTimeTillArrival),
+          _rng(options.seed),
+          _maxRequestDuration(options.maxRequestDuration),
+          _requestRate(options.requestRate) {
+        DoubleVector durationWeights = getDurationBuckets(options.maxRequestDuration);
         _durationDist =
             std::discrete_distribution<uint64_t>(durationWeights.begin(), durationWeights.end());
     }
@@ -68,6 +80,11 @@ class RequestGenerator {
     uint64_t getDuration();
 
     /**
+     * Uniformly sample the time till arrival
+     */
+    uint64_t getArrival();
+
+    /**
      * Normally poisson is in interval [0, ∞]. When rate > 100 then it becomes a decent
      * approximation of the central limit theorem for gaussian distirbution so we limit it to r
      * ate + 3σ. When rate <= 100 we act like its 100 and limit it to 100 + 3σ
@@ -87,6 +104,7 @@ class RequestGenerator {
 
     std::uniform_int_distribution<uint64_t> _dropoffDist;
     std::discrete_distribution<uint64_t> _durationDist;
+    std::uniform_int_distribution<uint64_t> _arrivalDist;
     std::minstd_rand _rng;
 
     // Bucket intervals based on COWI

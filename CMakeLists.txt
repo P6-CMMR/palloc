@@ -11,8 +11,6 @@ endif()
 
 project(palloc)
 
-enable_testing()
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -49,20 +47,6 @@ if(NOT EXISTS "${ARGZ_HEADER_PATH}")
 endif()
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
-
-# Catch2
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    enable_testing()
-    
-    FetchContent_Declare(
-        Catch2 
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.8.0
-    )
-
-    FetchContent_MakeAvailable(Catch2)
-    list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
-endif()
 
 # Glaze
 FetchContent_Declare(
@@ -112,3 +96,4 @@ list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
 find_package(ortools REQUIRED)
 
 add_subdirectory(src)
+add_subdirectory(tests)

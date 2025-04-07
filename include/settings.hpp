@@ -10,6 +10,7 @@ struct SimulatorSettings {
     uint64_t startTime;
     uint64_t maxRequestDuration;
     double requestRate;
+    uint64_t maxTimeTillArrival;
     uint64_t batchInterval;
     uint64_t seed;
 };
