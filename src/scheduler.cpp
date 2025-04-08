@@ -70,7 +70,6 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     sat::LinearExpr objective;
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].getDropoffNode();
-        
         const auto dropFactor = 1 + requests[i].getTimesDropped();
         const auto penalty = UNASSIGNED_PENALTY * dropFactor : 
 
