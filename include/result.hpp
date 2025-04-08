@@ -30,9 +30,14 @@ class Result {
           _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost) {}
 
+    explicit Result(const std::filesystem::path &inputPath) {
+      loadResult(inputPath);
+    };
+
     static Result aggregateResults(const Results &results);
 
     void saveToFile(const std::filesystem::path &outputPath, bool prettify) const;
+    void loadResult(const std::filesystem::path &inputPath) const;
 
     TraceLists getTraceLists() const noexcept;
     SimulatorSettings getSimSettings() const noexcept;

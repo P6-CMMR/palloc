@@ -40,6 +40,19 @@ void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) 
     }
 }
 
+void Result::loadResult(const std::filesystem::path &inputPath) const {
+    if (!std::filesystem::exists(inputPath)) {
+        throw std::runtime_error("Result file does not exist: " + inputPath.string());
+    }
+
+    const auto error = glz::read_file_json(*this, inputPath.string(), std::string{});
+    if (error) {
+        const auto errorStr = glz::format_error(error, std::string{});
+        throw std::runtime_error("Failed to read result file: " + inputPath.string() +
+                                 "\nwith error: " + errorStr);
+    }
+}
+
 TraceLists Result::getTraceLists() const noexcept { return _traceLists; }
 
 SimulatorSettings Result::getSimSettings() const noexcept { return _simSettings; }
