@@ -16,10 +16,10 @@ int main(int argc, char **argv) {
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
-        std::optional<uint64_t> seedOpt;
+        std::optional<uint32_t> seedOpt;
         std::string startTimeStr = "08:00";
 
-        std::optional<uint64_t> numberOfThreadsOpt;
+        std::optional<uint32_t> numberOfThreadsOpt;
 
         argz::options opts{
             {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
         GeneralSettings generalSettings{
             .numberOfThreads = numberOfThreadsOpt.value_or(
-                std::min(static_cast<uint64_t>(std::thread::hardware_concurrency()),
+                std::min(std::thread::hardware_concurrency(),
                          outputSettings.numberOfRunsToAggregate))};
 
         Simulator::simulate(env, simSettings, outputSettings, generalSettings);

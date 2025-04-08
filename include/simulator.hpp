@@ -16,19 +16,19 @@
 namespace palloc {
 class Simulation {
    public:
-    explicit Simulation(uint64_t dropoffNode, uint64_t parkingNode, uint64_t requestDuration,
-                        uint64_t routeDuration)
+    explicit Simulation(uint32_t dropoffNode, uint32_t parkingNode, uint32_t requestDuration,
+                        uint32_t routeDuration)
         : _dropoffNode(dropoffNode),
           _parkingNode(parkingNode),
           _requestDuration(requestDuration),
           _durationLeft(requestDuration),
           _routeDuration(routeDuration) {}
 
-    uint64_t getDropoffNode() const noexcept;
-    uint64_t getParkingNode() const noexcept;
-    uint64_t getRequestDuration() const noexcept;
-    uint64_t getDurationLeft() const noexcept;
-    uint64_t getRouteDuration() const noexcept;
+    uint32_t getDropoffNode() const noexcept;
+    uint32_t getParkingNode() const noexcept;
+    uint32_t getRequestDuration() const noexcept;
+    uint32_t getDurationLeft() const noexcept;
+    uint32_t getRouteDuration() const noexcept;
 
     bool isInDropoff() const noexcept;
     bool hasVisitedParking() const noexcept;
@@ -39,11 +39,11 @@ class Simulation {
     void decrementDuration() noexcept;
 
    private:
-    uint64_t _dropoffNode;
-    uint64_t _parkingNode;
-    uint64_t _requestDuration;
-    uint64_t _durationLeft;
-    uint64_t _routeDuration;
+    uint32_t _dropoffNode;
+    uint32_t _parkingNode;
+    uint32_t _requestDuration;
+    uint32_t _durationLeft;
+    uint32_t _routeDuration;
 
     bool _inDropoff{true};
     bool _visitedParking{false};
@@ -59,14 +59,14 @@ class Simulator {
 
    private:
     static void simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
-                            std::mutex &resultsMutex, uint64_t runNumber);
+                            std::mutex &resultsMutex, uint32_t runNumber);
 
     static void updateSimulations(Simulations &simulations, Environment &env);
-    static void insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
+    static void insertNewRequests(RequestGenerator &generator, uint32_t currentTimeOfDay,
                                   Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void decrementArrivalTime(Requests &earlyRequests);
-    static void seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration,
+    static void seperateTooEarlyRequests(Requests &requests, uint32_t maxDuration,
                                          Requests &earlyRequests);
     static void cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips);
 };

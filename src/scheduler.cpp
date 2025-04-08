@@ -2,48 +2,40 @@
 
 #include <memory>
 
-#include "ortools/linear_solver/linear_solver.h"
+#include "ortools/sat/cp_model.h"
 
 using namespace palloc;
 using namespace operations_research;
 
 SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     assert(!requests.empty());
-
-    std::unique_ptr<MPSolver> solver(MPSolver::CreateSolver("SCIP"));
-    solver->set_time_limit(MAX_SEARCH_TIME);
+    
+    sat::CpModelBuilder cpModel;
 
     const auto &parkingToDropoff = env.getParkingToDropoff();
     const auto &dropoffToParking = env.getDropoffToParking();
     const auto numberOfParkings = env.getNumberOfParkings();
     const auto requestCount = requests.size();
+    auto &availableParkingSpots = env.getAvailableParkingSpots();
 
-    // x_{rp} in {0, 1}: Binary varables from request to parkings
-    std::vector<std::vector<MPVariable *>> var(requestCount);
+    // Binary variables from request to parkings
+    std::vector<std::vector<sat::BoolVar>> var(requestCount);
     for (size_t i = 0; i < requestCount; ++i) {
         var[i].reserve(numberOfParkings);
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            var[i].push_back(solver->MakeBoolVar(std::to_string(i) + std::to_string(j)));
-        }
-    }
-
-    // All request have at most 1 parking spot
-    for (size_t i = 0; i < requestCount; ++i) {
-        MPConstraint *parkingVisitedConstraint =
-            solver->MakeRowConstraint(0, PARKING_NODES_TO_VISIT);
-        for (size_t j = 0; j < numberOfParkings; ++j) {
-            parkingVisitedConstraint->SetCoefficient(var[i][j], 1.0);
+            var[i].push_back(cpModel.NewBoolVar());
         }
     }
 
     // Respect parking lot capacity
-    auto &availableParkingSpots = env.getAvailableParkingSpots();
     for (size_t j = 0; j < numberOfParkings; ++j) {
-        MPConstraint *capacityConstraint =
-            solver->MakeRowConstraint(0, static_cast<double>(availableParkingSpots[j]));
+        std::vector<sat::BoolVar> colVars;
+        colVars.reserve(requestCount);
         for (size_t i = 0; i < requestCount; ++i) {
-            capacityConstraint->SetCoefficient(var[i][j], 1.0);
+            colVars.push_back(var[i][j]);
         }
+    
+        cpModel.AddLessOrEqual(sat::LinearExpr::Sum(colVars), availableParkingSpots[j]);
     }
 
     // If travel time longer than request duration it cannot be assigned from r -> p
@@ -54,50 +46,61 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
             const auto travelTime =
                 (parkingToDropoff[j][dropoffNode] + dropoffToParking[dropoffNode][j]);
             if (travelTime > requestDuration) {
-                MPConstraint *durationConstraint = solver->MakeRowConstraint(0, 0);
-                durationConstraint->SetCoefficient(var[i][j], 1.0);
+                cpModel.AddEquality(var[i][j], 0);
             }
         }
     }
 
     // All request have at most 1 parking spot or are unassigned
-    std::vector<MPVariable *> unassignedVars(requestCount);
+    std::vector<sat::BoolVar> unassignedVars(requestCount); 
     for (size_t i = 0; i < requestCount; ++i) {
-        unassignedVars[i] = solver->MakeBoolVar("u" + std::to_string(i));
-        MPConstraint *unassignedConstraint = solver->MakeRowConstraint(1.0, 1.0);
-        unassignedConstraint->SetCoefficient(unassignedVars[i], 1.0);
+        unassignedVars[i] = cpModel.NewBoolVar();
+        
+        std::vector<sat::BoolVar> combinedVars;
+        combinedVars.reserve(numberOfParkings + 1);
+        combinedVars.push_back(unassignedVars[i]);
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            unassignedConstraint->SetCoefficient(var[i][j], 1.0);
+            combinedVars.push_back(var[i][j]);
         }
+        
+        cpModel.AddEquality(sat::LinearExpr::Sum(combinedVars), 1);
     }
 
     // Minimize global cost of all requests
-    MPObjective *objective = solver->MutableObjective();
+    sat::LinearExpr objective;
     for (size_t i = 0; i < requestCount; ++i) {
-        const double dropFactor = (1.0 + static_cast<double>(requests[i].getTimesDropped()));
-        const bool isEarly = requests[i].isEarly();
-        objective->SetCoefficient(unassignedVars[i],
-                                  UNASSIGNED_PENALTY * dropFactor * static_cast<double>(!isEarly));
         const auto dropoffNode = requests[i].getDropoffNode();
+        const auto dropFactor = 1 + requests[i].getTimesDropped();
+        const auto penalty = UNASSIGNED_PENALTY * dropFactor : 
+
+        objective += penalty * sat::LinearExpr(unassignedVars[i]);
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            const double cost = static_cast<double>(dropoffToParking[dropoffNode][j] +
-                                                    parkingToDropoff[j][dropoffNode]);
-            objective->SetCoefficient(var[i][j], cost);
+            const auto cost = dropoffToParking[dropoffNode][j] + 
+                                parkingToDropoff[j][dropoffNode];
+            objective += cost * sat::LinearExpr(var[i][j]);
         }
     }
+    
+    cpModel.Minimize(objective);
 
-    objective->SetMinimization();
-    const MPSolver::ResultStatus result = solver->Solve();
-    assert(result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE);
-
+    sat::Model model;
+    sat::SatParameters parameters;
+    parameters.set_max_time_in_seconds(MAX_SEARCH_TIME);
+    model.Add(sat::NewSatParameters(parameters));
+    
+    const sat::CpSolverResponse response = sat::SolveCpModel(cpModel.Build(), &model);
+    
     Simulations simulations;
     Requests unassignedRequests;
     Requests earlyRequests;
 
-    uint64_t sumDuration = 0;
+    uint32_t sumDuration = 0;
     double averageDuration = 0.0;
-    double cost = objective->Value();
-    if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE) {
+    double cost = 0.0;
+    
+    if (response.status() == sat::CpSolverStatus::OPTIMAL || 
+        response.status() == sat::CpSolverStatus::FEASIBLE) {
+        cost = response.objective_value();
         for (size_t i = 0; i < requestCount; ++i) {
             auto &request = requests[i];
             size_t parkingNode = 0;
@@ -105,19 +108,19 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
             const auto dropoffNode = request.getDropoffNode();
             const auto requestDuration = request.getRequestDuration();
             const auto tillArrival = request.getArrival();
-            uint64_t routeDuration = 0.0;
+            uint32_t routeDuration = 0;
+            
             for (size_t j = 0; j < numberOfParkings; ++j) {
-                if (var[i][j]->solution_value() > 0.5) {
+                if (sat::SolutionBooleanValue(response, var[i][j])) {
                     parkingNode = j;
                     assigned = true;
                     routeDuration = dropoffToParking[dropoffNode][parkingNode] +
-                                    parkingToDropoff[parkingNode][dropoffNode];
+                                   parkingToDropoff[parkingNode][dropoffNode];
                     break;
                 }
             }
 
             sumDuration += routeDuration;
-
             if (tillArrival > 0) {
                 earlyRequests.push_back(request);
             } else if (assigned) {
