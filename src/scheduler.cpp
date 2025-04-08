@@ -72,11 +72,9 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         const auto dropoffNode = requests[i].getDropoffNode();
         
         const auto dropFactor = 1 + requests[i].getTimesDropped();
-        const bool isEarly = requests[i].isEarly();
-        const auto penalty = UNASSIGNED_PENALTY * dropFactor * !isEarly;
-        
+        const auto penalty = UNASSIGNED_PENALTY * dropFactor : 
+
         objective += penalty * sat::LinearExpr(unassignedVars[i]);
-        
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const auto cost = dropoffToParking[dropoffNode][j] + 
                                 parkingToDropoff[j][dropoffNode];
