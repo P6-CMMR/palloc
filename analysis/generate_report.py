@@ -127,13 +127,14 @@ def create_map_visualization(env, data, output_dir_path):
     parking_layer = folium.FeatureGroup(name="Parking Spots")
     for i, coords in enumerate(parking_points):
         capacity = env["parking_capacities"][i]
+        spot_text = "spot" if capacity == 1 else "spots"
         folium.CircleMarker(
             location=coords,
             radius=5,
             color="green",
             fill=True,
             fill_color="green",
-            tooltip=f"Parking Capacity: {capacity} spots<br>Weight: {parking_weights[i]}",
+            tooltip=f"Parking Capacity: {capacity} {spot_text}<br>Weight: {parking_weights[i]}",
         ).add_to(parking_layer)
     m.add_child(parking_layer)
 
@@ -166,12 +167,11 @@ def create_map_visualization(env, data, output_dir_path):
         
        
         density_points.append([lat, lon, intensity])
-
+        
     density_heatmap = HeatMap(
         density_points,
         name="Density Grid",
         radius=15,
-        max_zoom=15,
         gradient={
             "0.2": "blue",
             "0.4": "cyan",
