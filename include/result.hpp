@@ -37,7 +37,7 @@ class Result {
     static Result aggregateResults(const Results &results);
 
     void saveToFile(const std::filesystem::path &outputPath, bool prettify) const;
-    void loadResult(const std::filesystem::path &inputPath) const;
+    void loadResult(const std::filesystem::path &inputPath);
 
     TraceLists getTraceLists() const noexcept;
     SimulatorSettings getSimSettings() const noexcept;

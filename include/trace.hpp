@@ -14,6 +14,7 @@
 namespace palloc {
 class Assignment {
    public:
+    explicit Assignment() {}
     explicit Assignment(Coordinate dropoffCoordinate, Coordinate parkingCoordinate,
                         uint64_t requestDuration, uint64_t routeDuration)
         : _dropoffCoordinate(dropoffCoordinate),
@@ -21,6 +22,7 @@ class Assignment {
           _requestDuration(requestDuration),
           _routeDuration(routeDuration) {}
 
+    uint32_t getRequestDuration() const noexcept;
    private:
     friend struct glz::meta<Assignment>;
 
@@ -35,6 +37,7 @@ using Assignments = std::vector<Assignment>;
 
 class Trace {
    public:
+    explicit Trace() {}
     explicit Trace(uint64_t timestep, uint64_t currentTimeOfDay, size_t numberOfRequests,
                    size_t numberOfOngoingSimulations, uint64_t availableParkingSpots, double cost,
                    double averageDuration, size_t droppedRequests, Assignments assignments)
@@ -58,6 +61,8 @@ class Trace {
 
     double getCost() const noexcept;
     double getAverageDuration() const noexcept;
+
+    Assignments getAssignments() const noexcept;
 
    private:
     friend struct glz::meta<Trace>;

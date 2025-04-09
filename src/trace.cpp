@@ -16,6 +16,11 @@ double Trace::getCost() const noexcept { return _cost; }
 
 double Trace::getAverageDuration() const noexcept { return _averageDuration; }
 
+// Shallow copy, this is bad but not used enough to warrent implementing deep copy for all dependents.
+Assignments Trace::getAssignments() const noexcept { return Assignments(_assignments); }
+
+uint32_t Assignment::getRequestDuration() const noexcept { return _requestDuration; }
+
 std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
     os << "Trace(time=" << std::setw(5) << trace.getTimeStep() << ", requests=" << std::setw(5)
        << trace.getNumberOfRequests() << ", simulations=" << std::setw(5)

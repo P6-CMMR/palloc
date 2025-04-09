@@ -40,7 +40,7 @@ void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) 
     }
 }
 
-void Result::loadResult(const std::filesystem::path &inputPath) const {
+void Result::loadResult(const std::filesystem::path &inputPath) {
     if (!std::filesystem::exists(inputPath)) {
         throw std::runtime_error("Result file does not exist: " + inputPath.string());
     }
