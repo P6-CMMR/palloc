@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <filesystem>
 
+#include "glaze/glaze.hpp"
+
 namespace palloc {
 struct SimulatorSettings {
     uint32_t timesteps;
@@ -26,5 +28,15 @@ struct GeneralSettings {
     uint32_t numberOfThreads;
 };
 }  // namespace palloc
+
+template <>
+struct glz::meta<palloc::SimulatorSettings> {
+    using T = palloc::SimulatorSettings;
+    static constexpr auto value =
+        glz::object("timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
+                    &T::maxRequestDuration, "max_time_till_arrival", &T::maxTimeTillArrival,
+                    "request_rate", &T::requestRate, "batch_interval", &T::batchInterval,
+                    "using_weighted_parking", &T::useWeightedParking, "seed", &T::seed);
+};
 
 #endif

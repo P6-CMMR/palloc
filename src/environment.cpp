@@ -35,7 +35,8 @@ void Environment::loadEnvironment(const std::filesystem::path &environmentPath) 
         throw std::runtime_error("Environment file does not exist: " + environmentPath.string());
     }
 
-    const auto error = glz::read_file_json(*this, environmentPath.string(), std::string{});
+    const auto error = glz::read_file_json<glz::opts{.error_on_unknown_keys = false}>(
+        *this, environmentPath.string(), std::string{});
     if (error) {
         const auto errorStr = glz::format_error(error, std::string{});
         throw std::runtime_error("Failed to read environment file: " + environmentPath.string() +

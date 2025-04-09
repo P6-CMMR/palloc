@@ -125,7 +125,7 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
     """Calculates the parking weight based on how many dropoff points are nearby."""
     print("Calculating parking weights based on dropoff points nearby...")
     
-    grid_size = 500
+    GRID_SIZE = 100
     
     lats = np.array([lat for lat, _ in dropoff_coords])
     lons = np.array([lon for _, lon in dropoff_coords])
@@ -134,17 +134,17 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
     min_lon, max_lon = np.min(lons), np.max(lons)
     
     # Small buffer for points on the edges
-    buffer = 0.0005
-    min_lat -= buffer
-    max_lat += buffer
-    min_lon -= buffer
-    max_lon += buffer
+    BUFFER = 0.0005
+    min_lat -= BUFFER
+    max_lat += BUFFER
+    min_lon -= BUFFER
+    max_lon += BUFFER
     
     lat_range = max_lat - min_lat
     lon_range = max_lon - min_lon
     
-    lat_axis = np.linspace(min_lat, max_lat, grid_size)
-    lon_axis = np.linspace(min_lon, max_lon, grid_size)
+    lat_axis = np.linspace(min_lat, max_lat, GRID_SIZE)
+    lon_axis = np.linspace(min_lon, max_lon, GRID_SIZE)
     
     lon_mesh, lat_mesh = np.meshgrid(lon_axis, lat_axis)
     positions = np.vstack([lat_mesh.ravel(), lon_mesh.ravel()])
@@ -154,18 +154,34 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
     density = kernel(positions)
     
     # Reshape into a grid
-    density = density.reshape(grid_size, grid_size)
-    
+    density = density.reshape(GRID_SIZE, GRID_SIZE)
+    density_max = np.max(density)
+    if density_max > 0: 
+        density_normalized = density / density_max
+    else:
+        density_normalized = density
+        
+    MAX_WEIGHT = 100
     parking_weights = []
     for lat, lon in parking_coords:
-        # Calculate the grid index where the parking point falls within
-        i = int(np.floor((lat - min_lat) / lat_range * (grid_size - 1)))
-        j = int(np.floor((lon - min_lon) / lon_range * (grid_size - 1)))
+        i = int(np.floor((lat - min_lat) / lat_range * (GRID_SIZE - 1)))
+        j = int(np.floor((lon - min_lon) / lon_range * (GRID_SIZE - 1)))
         
-        weight = round(density[i][j])
+        weight = int(round(density_normalized[i][j] * MAX_WEIGHT))
         parking_weights.append(weight)
+        
+    density_grid = []
+    for i in range(GRID_SIZE):
+        for j in range(GRID_SIZE):
+            intensity = float(density_normalized[i][j])
+            if intensity > 0.05:
+                density_grid.append({
+                    "latitude": float(lat_mesh[i][j]),
+                    "longitude": float(lon_mesh[i][j]),
+                    "intensity": intensity
+                })
 
-    return parking_weights
+    return parking_weights, density_grid
 
 def write_response_to_file(dropoff_to_parking: list, 
                            parking_to_dropoff: list, 
@@ -193,7 +209,7 @@ def write_response_to_file(dropoff_to_parking: list,
         })
     
     smallest_round_trips = calculate_shortest_roundtrips(dropoff_to_parking, parking_to_dropoff)
-    parking_weights = calculate_parking_weight(dropoff_coords, parking_coords)
+    parking_weights, density_grid = calculate_parking_weight(dropoff_coords, parking_coords)
 
     output = {
         "dropoff_to_parking": dropoff_to_parking,
@@ -202,7 +218,8 @@ def write_response_to_file(dropoff_to_parking: list,
         "dropoff_coords": formatted_dropoff_coords,
         "parking_coords": formatted_parking_coords,
         "smallest_round_trips": smallest_round_trips,
-        "parking_weights": parking_weights
+        "parking_weights": parking_weights,
+        "density_grid": density_grid,
     }
     
     with open(filename, "w") as f:
