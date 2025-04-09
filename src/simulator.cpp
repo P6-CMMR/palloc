@@ -209,7 +209,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
         traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
                             totalAvailableParkingSpots, batchCost, batchAverageDuration,
-                            droppedRequests, assignments);
+                            droppedRequests, earlyRequests.size(), assignments);
 
         runCost += batchCost;
         runDuration += batchAverageDuration;

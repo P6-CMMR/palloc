@@ -40,12 +40,14 @@ class Trace {
     explicit Trace() {}
     explicit Trace(uint64_t timestep, uint64_t currentTimeOfDay, size_t numberOfRequests,
                    size_t numberOfOngoingSimulations, uint64_t availableParkingSpots, double cost,
-                   double averageDuration, size_t droppedRequests, Assignments assignments)
+                   double averageDuration, size_t droppedRequests, 
+                   size_t earlyRequests, Assignments assignments)
         : _assignments(std::move(assignments)),
           _numberOfRequests(numberOfRequests),
           _numberOfOngoingSimulations(numberOfOngoingSimulations),
           _availableParkingSpots(availableParkingSpots),
           _droppedRequests(droppedRequests),
+          _earlyRequests(earlyRequests),
           _timestep(timestep),
           _currentTimeOfDay(currentTimeOfDay),
           _cost(cost),
@@ -53,6 +55,7 @@ class Trace {
 
     size_t getNumberOfOngoingSimulations() const noexcept;
     size_t getDroppedRequests() const noexcept;
+    size_t getEarlyRequests() const noexcept;
     size_t getNumberOfRequests() const noexcept;
 
     uint64_t getAvailableParkingSpots() const noexcept;
@@ -73,6 +76,7 @@ class Trace {
     size_t _numberOfOngoingSimulations;
     size_t _availableParkingSpots;
     size_t _droppedRequests;
+    size_t _earlyRequests;
 
     uint64_t _timestep;
     uint64_t _currentTimeOfDay;
@@ -103,7 +107,7 @@ struct glz::meta<palloc::Trace> {
         "number_of_requests", &T::_numberOfRequests, "number_of_ongoing_simulations",
         &T::_numberOfOngoingSimulations, "available_parking_spots", &T::_availableParkingSpots,
         "cost", &T::_cost, "average_duration", &T::_averageDuration, "dropped_requests",
-        &T::_droppedRequests, "assignments", &T::_assignments);
+        &T::_droppedRequests, "early_requests", &T::_earlyRequests, "assignments", &T::_assignments);
 };
 
 #endif

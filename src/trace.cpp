@@ -6,6 +6,8 @@ size_t Trace::getNumberOfOngoingSimulations() const noexcept { return _numberOfO
 
 size_t Trace::getDroppedRequests() const noexcept { return _droppedRequests; }
 
+size_t Trace::getEarlyRequests() const noexcept { return _earlyRequests; }
+
 size_t Trace::getNumberOfRequests() const noexcept { return _numberOfRequests; }
 
 uint64_t Trace::getAvailableParkingSpots() const noexcept { return _availableParkingSpots; }
@@ -27,7 +29,8 @@ std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
        << trace.getNumberOfOngoingSimulations() << ", parkingSpots=" << std::setw(4)
        << trace.getAvailableParkingSpots() << ", cost=" << std::setw(8) << trace.getCost()
        << ", averageDuration=" << std::setw(10) << trace.getAverageDuration()
-       << ", droppedRequests=" << std::setw(5) << trace.getDroppedRequests() << ")";
+       << ", droppedRequests=" << std::setw(5) << trace.getDroppedRequests() 
+       << ", earlyRequests=" << std::setw(5) << trace.getEarlyRequests()<< ")";
 
     return os;
 }
