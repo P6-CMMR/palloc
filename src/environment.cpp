@@ -12,6 +12,10 @@ const Environment::DurationMatrix &Environment::getParkingToDropoff() const noex
 
 UintVector &Environment::getAvailableParkingSpots() noexcept { return _availableParkingSpots; }
 
+size_t Environment::getNumberOfDropoffs() const noexcept { return _dropoffToParking.size(); }
+
+size_t Environment::getNumberOfParkings() const noexcept { return _parkingToDropoff.size(); }
+
 const Environment::Coordinates &Environment::getDropoffCoordinates() const noexcept {
     return _dropoffCoords;
 }
@@ -20,13 +24,11 @@ const Environment::Coordinates &Environment::getParkingCoordinates() const noexc
     return _parkingCoords;
 }
 
-size_t Environment::getNumberOfDropoffs() const noexcept { return _dropoffToParking.size(); }
-
-size_t Environment::getNumberOfParkings() const noexcept { return _parkingToDropoff.size(); }
-
 const UintVector &Environment::getSmallestRoundTrips() const noexcept {
     return _smallestRoundTrips;
 }
+
+const UintVector &Environment::getParkingWeights() const noexcept { return _parkingWeights; }
 
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
     if (!std::filesystem::exists(environmentPath)) {

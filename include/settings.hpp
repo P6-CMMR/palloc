@@ -13,6 +13,7 @@ struct SimulatorSettings {
     uint32_t maxTimeTillArrival;
     uint32_t batchInterval;
     uint32_t seed;
+    bool useWeightedParking;
 };
 
 struct OutputSettings {

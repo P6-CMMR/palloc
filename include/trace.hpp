@@ -2,10 +2,7 @@
 #define TRACE_HPP
 
 #include <cstdint>
-#include <filesystem>
-#include <iomanip>
 #include <list>
-#include <ostream>
 #include <vector>
 
 #include "environment.hpp"
@@ -75,8 +72,6 @@ class Trace {
     double _cost;
     double _averageDuration;
 };
-
-std::ostream &operator<<(std::ostream &os, const Trace &trace);
 
 using TraceList = std::list<Trace>;
 using TraceLists = std::vector<TraceList>;

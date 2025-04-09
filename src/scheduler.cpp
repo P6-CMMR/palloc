@@ -7,9 +7,10 @@
 using namespace palloc;
 using namespace operations_research;
 
-SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
+SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
+                                         bool useWeightedParking) {
     assert(!requests.empty());
-    
+
     sat::CpModelBuilder cpModel;
 
     const auto &parkingToDropoff = env.getParkingToDropoff();
@@ -34,7 +35,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
         for (size_t i = 0; i < requestCount; ++i) {
             colVars.push_back(var[i][j]);
         }
-    
+
         cpModel.AddLessOrEqual(sat::LinearExpr::Sum(colVars), availableParkingSpots[j]);
     }
 
@@ -52,17 +53,17 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     }
 
     // All request have at most 1 parking spot or are unassigned
-    std::vector<sat::BoolVar> unassignedVars(requestCount); 
+    std::vector<sat::BoolVar> unassignedVars(requestCount);
     for (size_t i = 0; i < requestCount; ++i) {
         unassignedVars[i] = cpModel.NewBoolVar();
-        
+
         std::vector<sat::BoolVar> combinedVars;
-        combinedVars.reserve(numberOfParkings + 1);
+        combinedVars.reserve(numberOfParkings);
         combinedVars.push_back(unassignedVars[i]);
         for (size_t j = 0; j < numberOfParkings; ++j) {
             combinedVars.push_back(var[i][j]);
         }
-        
+
         cpModel.AddEquality(sat::LinearExpr::Sum(combinedVars), 1);
     }
 
@@ -71,25 +72,30 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].getDropoffNode();
         const auto dropFactor = 1 + requests[i].getTimesDropped();
-        const auto penalty = UNASSIGNED_PENALTY * dropFactor : 
-
+        const auto penalty = UNASSIGNED_PENALTY * dropFactor;
         objective += penalty * sat::LinearExpr(unassignedVars[i]);
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            const auto cost = dropoffToParking[dropoffNode][j] + 
-                                parkingToDropoff[j][dropoffNode];
+            auto cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
+
+            if (useWeightedParking) {
+                const auto &parkingWeights = env.getParkingWeights();
+                cost *= parkingWeights[j];
+            }
+
             objective += cost * sat::LinearExpr(var[i][j]);
         }
     }
-    
+
     cpModel.Minimize(objective);
 
     sat::Model model;
     sat::SatParameters parameters;
     parameters.set_max_time_in_seconds(MAX_SEARCH_TIME);
+    parameters.set_num_search_workers(1);
     model.Add(sat::NewSatParameters(parameters));
-    
+
     const sat::CpSolverResponse response = sat::SolveCpModel(cpModel.Build(), &model);
-    
+
     Simulations simulations;
     Requests unassignedRequests;
     Requests earlyRequests;
@@ -97,8 +103,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
     uint32_t sumDuration = 0;
     double averageDuration = 0.0;
     double cost = 0.0;
-    
-    if (response.status() == sat::CpSolverStatus::OPTIMAL || 
+
+    if (response.status() == sat::CpSolverStatus::OPTIMAL ||
         response.status() == sat::CpSolverStatus::FEASIBLE) {
         cost = response.objective_value();
         for (size_t i = 0; i < requestCount; ++i) {
@@ -109,13 +115,13 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests) {
             const auto requestDuration = request.getRequestDuration();
             const auto tillArrival = request.getArrival();
             uint32_t routeDuration = 0;
-            
+
             for (size_t j = 0; j < numberOfParkings; ++j) {
                 if (sat::SolutionBooleanValue(response, var[i][j])) {
                     parkingNode = j;
                     assigned = true;
                     routeDuration = dropoffToParking[dropoffNode][parkingNode] +
-                                   parkingToDropoff[parkingNode][dropoffNode];
+                                    parkingToDropoff[parkingNode][dropoffNode];
                     break;
                 }
             }
