@@ -29,13 +29,14 @@ class Environment {
 
     UintVector &getAvailableParkingSpots() noexcept;
 
+    const UintVector &getSmallestRoundTrips() const noexcept;
+    const UintVector &getParkingWeights() const noexcept;
+
     const Environment::Coordinates &getDropoffCoordinates() const noexcept;
     const Environment::Coordinates &getParkingCoordinates() const noexcept;
 
     size_t getNumberOfDropoffs() const noexcept;
     size_t getNumberOfParkings() const noexcept;
-
-    const UintVector &getSmallestRoundTrips() const noexcept;
 
    private:
     void loadEnvironment(const std::filesystem::path &environmentPath);
@@ -46,6 +47,7 @@ class Environment {
     DurationMatrix _parkingToDropoff;
     UintVector _availableParkingSpots;
     UintVector _smallestRoundTrips;
+    UintVector _parkingWeights;
     Coordinates _dropoffCoords;
     Coordinates _parkingCoords;
 };
@@ -63,7 +65,8 @@ struct glz::meta<palloc::Environment> {
     static constexpr auto value = glz::object(
         "dropoff_to_parking", &T::_dropoffToParking, "parking_to_dropoff", &T::_parkingToDropoff,
         "parking_capacities", &T::_availableParkingSpots, "dropoff_coords", &T::_dropoffCoords,
-        "parking_coords", &T::_parkingCoords, "smallest_round_trips", &T::_smallestRoundTrips);
+        "parking_coords", &T::_parkingCoords, "smallest_round_trips", &T::_smallestRoundTrips,
+        "parking_weights", &T::_parkingWeights);
 };
 
 #endif

@@ -2,10 +2,7 @@
 #define TRACE_HPP
 
 #include <cstdint>
-#include <filesystem>
-#include <iomanip>
 #include <list>
-#include <ostream>
 #include <vector>
 
 #include "environment.hpp"
@@ -16,7 +13,7 @@ class Assignment {
    public:
     explicit Assignment() {}
     explicit Assignment(Coordinate dropoffCoordinate, Coordinate parkingCoordinate,
-                        uint64_t requestDuration, uint64_t routeDuration)
+                        uint32_t requestDuration, uint32_t routeDuration)
         : _dropoffCoordinate(dropoffCoordinate),
           _parkingCoordinate(parkingCoordinate),
           _requestDuration(requestDuration),
@@ -29,8 +26,8 @@ class Assignment {
     Coordinate _dropoffCoordinate;
     Coordinate _parkingCoordinate;
 
-    uint64_t _requestDuration;
-    uint64_t _routeDuration;
+    uint32_t _requestDuration;
+    uint32_t _routeDuration;
 };
 
 using Assignments = std::vector<Assignment>;
@@ -38,8 +35,8 @@ using Assignments = std::vector<Assignment>;
 class Trace {
    public:
     explicit Trace() {}
-    explicit Trace(uint64_t timestep, uint64_t currentTimeOfDay, size_t numberOfRequests,
-                   size_t numberOfOngoingSimulations, uint64_t availableParkingSpots, double cost,
+    explicit Trace(uint32_t timestep, uint32_t currentTimeOfDay, size_t numberOfRequests,
+                   size_t numberOfOngoingSimulations, uint32_t availableParkingSpots, double cost,
                    double averageDuration, size_t droppedRequests, 
                    size_t earlyRequests, Assignments assignments)
         : _assignments(std::move(assignments)),
@@ -58,9 +55,9 @@ class Trace {
     size_t getEarlyRequests() const noexcept;
     size_t getNumberOfRequests() const noexcept;
 
-    uint64_t getAvailableParkingSpots() const noexcept;
+    uint32_t getAvailableParkingSpots() const noexcept;
 
-    uint64_t getTimeStep() const noexcept;
+    uint32_t getTimeStep() const noexcept;
 
     double getCost() const noexcept;
     double getAverageDuration() const noexcept;
@@ -74,18 +71,16 @@ class Trace {
 
     size_t _numberOfRequests;
     size_t _numberOfOngoingSimulations;
-    size_t _availableParkingSpots;
+    uint32_t _availableParkingSpots;
     size_t _droppedRequests;
     size_t _earlyRequests;
 
-    uint64_t _timestep;
-    uint64_t _currentTimeOfDay;
+    uint32_t _timestep;
+    uint32_t _currentTimeOfDay;
 
     double _cost;
     double _averageDuration;
 };
-
-std::ostream &operator<<(std::ostream &os, const Trace &trace);
 
 using TraceList = std::list<Trace>;
 using TraceLists = std::vector<TraceList>;

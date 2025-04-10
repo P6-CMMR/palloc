@@ -4,26 +4,39 @@
 #include <cstdint>
 #include <filesystem>
 
+#include "glaze/glaze.hpp"
+
 namespace palloc {
 struct SimulatorSettings {
-    uint64_t timesteps;
-    uint64_t startTime;
-    uint64_t maxRequestDuration;
+    uint32_t timesteps;
+    uint32_t startTime;
+    uint32_t maxRequestDuration;
     double requestRate;
-    uint64_t maxTimeTillArrival;
-    uint64_t batchInterval;
-    uint64_t seed;
+    uint32_t maxTimeTillArrival;
+    uint32_t batchInterval;
+    uint32_t seed;
+    bool useWeightedParking;
 };
 
 struct OutputSettings {
     std::filesystem::path path;
-    uint64_t numberOfRunsToAggregate;
+    uint32_t numberOfRunsToAggregate;
     bool prettify;
 };
 
 struct GeneralSettings {
-    uint64_t numberOfThreads;
+    uint32_t numberOfThreads;
 };
 }  // namespace palloc
+
+template <>
+struct glz::meta<palloc::SimulatorSettings> {
+    using T = palloc::SimulatorSettings;
+    static constexpr auto value =
+        glz::object("timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
+                    &T::maxRequestDuration, "max_time_till_arrival", &T::maxTimeTillArrival,
+                    "request_rate", &T::requestRate, "batch_interval", &T::batchInterval,
+                    "using_weighted_parking", &T::useWeightedParking, "seed", &T::seed);
+};
 
 #endif

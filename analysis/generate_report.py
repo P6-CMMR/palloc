@@ -109,17 +109,32 @@ def create_map_visualization(env, data, output_dir_path):
     )
     m.add_child(parking_assignments_heatmap)
 
+    # Dropoff layer
+    dropoff_layer = folium.FeatureGroup(name="Dropoff Points", show=False)
+    for coords in dropoff_points:
+        folium.CircleMarker(
+            location=coords,
+            radius=5,
+            color="blue",
+            fill=True,
+            fill_color="blue",
+            tooltip="Dropoff Point",
+        ).add_to(dropoff_layer)
+    m.add_child(dropoff_layer)
+
     # Parking layer
+    parking_weights = env["parking_weights"]
     parking_layer = folium.FeatureGroup(name="Parking Spots")
     for i, coords in enumerate(parking_points):
         capacity = env["parking_capacities"][i]
+        spot_text = "spot" if capacity == 1 else "spots"
         folium.CircleMarker(
             location=coords,
             radius=5,
             color="green",
             fill=True,
             fill_color="green",
-            tooltip=f"Parking Capacity: {capacity}"
+            tooltip=f"Parking Capacity: {capacity} {spot_text}<br>Weight: {parking_weights[i]}",
         ).add_to(parking_layer)
     m.add_child(parking_layer)
 
@@ -142,6 +157,32 @@ def create_map_visualization(env, data, output_dir_path):
     # Lat/lon tooltip
     m.add_child(folium.LatLngPopup())
     
+    # Density grid layer
+    density_grid = env["density_grid"]
+    density_points = []
+    for point in density_grid:
+        lat = point["latitude"]
+        lon = point["longitude"]
+        intensity = point["intensity"]
+        
+       
+        density_points.append([lat, lon, intensity])
+        
+    density_heatmap = HeatMap(
+        density_points,
+        name="Density Grid",
+        radius=15,
+        gradient={
+            "0.2": "blue",
+            "0.4": "cyan",
+            "0.6": "lime",
+            "0.8": "yellow",
+            "1.0": "red"
+        },
+        show=False
+    )
+    m.add_child(density_heatmap)
+
     folium.LayerControl().add_to(m)
 
     map_path = os.path.join(output_dir_path, "density_map.html")
@@ -291,8 +332,10 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     batch_interval_raw = settings.get("batch_interval", "N/A")
     batch_interval = f"{batch_interval_raw}m" if batch_interval_raw != "N/A" else "N/A"
     
-    seed = settings.get("seed", "N/A")
+    using_weighted_parking = settings.get("using_weighted_parking", "N/A")
     
+    seed = settings.get("seed", "N/A")
+
     # Stats
     total_dropped = data.get("total_dropped_requests", "N/A")
     global_avg_duration = format_duration_min_sec(data.get("global_avg_duration", 0))
@@ -312,14 +355,19 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
         config_part = parts[1]
         experiment_name = f"{exp_part} / {config_part}"
     
-    run_tabs_html = '<div class="run-tabs-controls">'
-    run_tabs_html += '<div class="tab-buttons">'
+    run_tabs_html = ""
+    num_runs_html = ""
+    if num_runs > 1:
+        num_runs_html = f"<p>Number of aggregated runs: <strong>{num_runs}</strong></p>"
+        experiment_name += f" (aggregated {num_runs} runs)"
+        run_tabs_html = '<div class="run-tabs-controls">'
+        run_tabs_html += '<div class="tab-buttons">'
 
-    for run_idx in range(num_runs):
-        btn_class = "active" if run_idx == 0 else ""
-        run_tabs_html += f'<button class="tab-button {btn_class}" onclick="showTab({run_idx})" id="tab-btn-{run_idx}">Run {run_idx + 1}</button>'
+        for run_idx in range(num_runs):
+            btn_class = "active" if run_idx == 0 else ""
+            run_tabs_html += f'<button class="tab-button {btn_class}" onclick="showTab({run_idx})" id="tab-btn-{run_idx}">Run {run_idx + 1}</button>'
 
-    run_tabs_html += "</div></div>"
+        run_tabs_html += "</div></div>"
     
     assignments_html = ""
     for run_idx, run_traces in enumerate(all_traces):
@@ -393,6 +441,8 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{max_request_arrival}}", str(max_request_arrival))
     html_content = html_content.replace("{{request_rate}}", str(request_rate))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
+    html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
+    html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
     html_content = html_content.replace("{{seed}}", str(seed))
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
@@ -402,7 +452,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{map_link}}", map_html_link)
     html_content = html_content.replace("{{experiment_name}}", experiment_name)
     html_content = html_content.replace("{{result_file}}", os.path.basename(result_file) if result_file else "")
-    html_content = html_content.replace("{{num_runs}}", f"<p>Number of aggregated runs: <strong>{num_runs}</strong></p>")
+    html_content = html_content.replace("{{num_runs}}", num_runs_html)
     
     if single_file:
         # Remove the back button for single file mode
@@ -536,7 +586,7 @@ def process_single_file(env, result_file):
     
     # Load data and create HTML
     data = load_results(result_file)
-    create_experiment_html(env, data, output_dir, base_name, result_file, True)
+    create_experiment_html(env, data, output_dir, "", result_file, True)
     
     print(f"Created report for {base_name}")
     

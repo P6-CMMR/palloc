@@ -10,9 +10,9 @@ size_t Trace::getEarlyRequests() const noexcept { return _earlyRequests; }
 
 size_t Trace::getNumberOfRequests() const noexcept { return _numberOfRequests; }
 
-uint64_t Trace::getAvailableParkingSpots() const noexcept { return _availableParkingSpots; }
+uint32_t Trace::getAvailableParkingSpots() const noexcept { return _availableParkingSpots; }
 
-uint64_t Trace::getTimeStep() const noexcept { return _timestep; }
+uint32_t Trace::getTimeStep() const noexcept { return _timestep; }
 
 double Trace::getCost() const noexcept { return _cost; }
 
@@ -23,14 +23,3 @@ Assignments Trace::getAssignments() const noexcept { return Assignments(_assignm
 
 uint32_t Assignment::getRequestDuration() const noexcept { return _requestDuration; }
 
-std::ostream &palloc::operator<<(std::ostream &os, const Trace &trace) {
-    os << "Trace(time=" << std::setw(5) << trace.getTimeStep() << ", requests=" << std::setw(5)
-       << trace.getNumberOfRequests() << ", simulations=" << std::setw(5)
-       << trace.getNumberOfOngoingSimulations() << ", parkingSpots=" << std::setw(4)
-       << trace.getAvailableParkingSpots() << ", cost=" << std::setw(8) << trace.getCost()
-       << ", averageDuration=" << std::setw(10) << trace.getAverageDuration()
-       << ", droppedRequests=" << std::setw(5) << trace.getDroppedRequests() 
-       << ", earlyRequests=" << std::setw(5) << trace.getEarlyRequests()<< ")";
-
-    return os;
-}

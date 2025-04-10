@@ -12,15 +12,15 @@
 
 using namespace palloc;
 
-uint64_t Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
+uint32_t Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
 
-uint64_t Simulation::getParkingNode() const noexcept { return _parkingNode; }
+uint32_t Simulation::getParkingNode() const noexcept { return _parkingNode; }
 
-uint64_t Simulation::getRequestDuration() const noexcept { return _requestDuration; }
+uint32_t Simulation::getRequestDuration() const noexcept { return _requestDuration; }
 
-uint64_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
+uint32_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
 
-uint64_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
+uint32_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
 
 bool Simulation::isInDropoff() const noexcept { return _inDropoff; }
 
@@ -54,15 +54,15 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     const auto seed = simSettings.seed;
     std::println("Using seed: {}", seed);
 
-    uint64_t startHour = simSettings.startTime / 60;
-    uint64_t startMin = simSettings.startTime % 60;
+    uint32_t startHour = simSettings.startTime / 60;
+    uint32_t startMin = simSettings.startTime % 60;
     std::println("Starting simulation from start time: {} ({:02d}:{:02d})", simSettings.startTime,
                  startHour, startMin);
 
-    uint64_t timesteps = simSettings.timesteps;
-    uint64_t numberOfRuns = outputSettings.numberOfRunsToAggregate;
+    uint32_t timesteps = simSettings.timesteps;
+    uint32_t numberOfRuns = outputSettings.numberOfRunsToAggregate;
 
-    uint64_t numberOfThreads = generalSettings.numberOfThreads;
+    uint32_t numberOfThreads = generalSettings.numberOfThreads;
     if (numberOfRuns > 1) {
         std::println("Simulating {} timesteps aggregating {} runs using {} threads...", timesteps,
                      numberOfRuns, numberOfThreads);
@@ -73,9 +73,9 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     Results results;
     results.reserve(numberOfRuns);
     std::mutex resultsMutex;
-    std::atomic<uint64_t> atomicRunCounter{0};
+    std::atomic<uint32_t> atomicRunCounter{0};
     auto worker = [&]() {
-        for (uint64_t run = atomicRunCounter.fetch_add(1); run < numberOfRuns;
+        for (uint32_t run = atomicRunCounter.fetch_add(1); run < numberOfRuns;
              run = atomicRunCounter.fetch_add(1)) {
             Simulator::simulateRun(env, simSettings, results, resultsMutex, run);
         }
@@ -84,7 +84,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::vector<std::thread> threads;
     threads.reserve(numberOfRuns);
     const auto start = std::chrono::high_resolution_clock::now();
-    for (uint64_t run = 0; run < numberOfThreads; ++run) {
+    for (uint32_t run = 0; run < numberOfThreads; ++run) {
         threads.emplace_back(worker);
     }
 
@@ -113,8 +113,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     }
 }
 
-static uint64_t calculateMaxDuration(const Requests &requests) {
-    uint64_t maxDuration = 0;
+static uint32_t calculateMaxDuration(const Requests &requests) {
+    uint32_t maxDuration = 0;
     for (const Request &request : requests) {
         if (!request.isEarly() && request.getRequestDuration() > maxDuration) {
             maxDuration = request.getRequestDuration();
@@ -137,7 +137,7 @@ static Assignments createAssignments(const Simulations &newSimulations, const En
 }
 
 void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
-                            std::mutex &resultsMutex, uint64_t runNumber) {
+                            std::mutex &resultsMutex, uint32_t runNumber) {
     const auto &availableParkingSpots = env.getAvailableParkingSpots();
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
 
@@ -147,10 +147,11 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                                 .seed = simSettings.seed + runNumber,
                                 .requestRate = simSettings.requestRate});
 
-    const uint64_t timesteps = simSettings.timesteps;
+    const uint32_t timesteps = simSettings.timesteps;
 
     Requests requests;
-    requests.reserve(timesteps * static_cast<uint64_t>(std::ceil(simSettings.requestRate)));
+    requests.reserve(static_cast<size_t>(timesteps) *
+                     static_cast<size_t>(std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     Requests earlyRequests;
@@ -162,8 +163,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     size_t droppedRequests = 0;
     double runCost = 0.0;
     double runDuration = 0.0;
-    for (uint64_t timestep = 1; timestep <= timesteps; ++timestep) {
-        uint64_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
+    for (uint32_t timestep = 1; timestep <= timesteps; ++timestep) {
+        uint32_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
 
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
@@ -183,11 +184,12 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             unassignedRequests.clear();
             earlyRequests.clear();
 
-            uint64_t maxDuration = calculateMaxDuration(requests);
+            uint32_t maxDuration = calculateMaxDuration(requests);
             seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
             if (!requests.empty()) {
-                const auto batchResult = Scheduler::scheduleBatch(env, requests);
+                const auto batchResult =
+                    Scheduler::scheduleBatch(env, requests, simSettings.useWeightedParking);
                 requests.clear();
 
                 batchCost = batchResult.cost;
@@ -262,7 +264,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     std::erase_if(simulations, simulate);
 }
 
-void Simulator::seperateTooEarlyRequests(Requests &requests, uint64_t maxDuration,
+void Simulator::seperateTooEarlyRequests(Requests &requests, uint32_t maxDuration,
                                          Requests &earlyRequests) {
     const auto end = requests.rend();
     for (auto it = requests.rbegin(); it != end; ++it) {
@@ -278,7 +280,7 @@ void Simulator::seperateTooEarlyRequests(Requests &requests, uint64_t maxDuratio
     }
 }
 
-void Simulator::insertNewRequests(RequestGenerator &generator, uint64_t currentTimeOfDay,
+void Simulator::insertNewRequests(RequestGenerator &generator, uint32_t currentTimeOfDay,
                                   Requests &requests) {
     const auto newRequests = generator.generate(currentTimeOfDay);
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());

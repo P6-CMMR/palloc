@@ -11,15 +11,16 @@ int main(int argc, char **argv) {
         SimulatorSettings simSettings{.timesteps = 1440,
                                       .maxRequestDuration = 600,
                                       .requestRate = 10,
-                                      .maxTimeTillArrival = 60,
-                                      .batchInterval = 2};
+                                      .maxTimeTillArrival = 0,
+                                      .batchInterval = 2,
+                                      .useWeightedParking = false};
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
-        std::optional<uint64_t> seedOpt;
+        std::optional<uint32_t> seedOpt;
         std::string startTimeStr = "08:00";
 
-        std::optional<uint64_t> numberOfThreadsOpt;
+        std::optional<uint32_t> numberOfThreadsOpt;
 
         argz::options opts{
             {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},
@@ -37,6 +38,9 @@ int main(int argc, char **argv) {
             {{"batch-delay", 'b'},
              simSettings.batchInterval,
              "interval in minutes before processing requests"},
+            {{"weighted-parking", 'w'},
+             simSettings.useWeightedParking,
+             "use weighted parking cost depending on dropoff node density"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
             {{"output", 'o'},
              outputPathStr,
@@ -94,9 +98,8 @@ int main(int argc, char **argv) {
         outputSettings.path = outputPathStr;
 
         GeneralSettings generalSettings{
-            .numberOfThreads = numberOfThreadsOpt.value_or(
-                std::min(static_cast<uint64_t>(std::thread::hardware_concurrency()),
-                         outputSettings.numberOfRunsToAggregate))};
+            .numberOfThreads = numberOfThreadsOpt.value_or(std::min(
+                std::thread::hardware_concurrency(), outputSettings.numberOfRunsToAggregate))};
 
         Simulator::simulate(env, simSettings, outputSettings, generalSettings);
     } catch (std::exception &e) {

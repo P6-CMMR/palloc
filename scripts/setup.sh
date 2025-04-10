@@ -170,8 +170,8 @@ else
     echo "Aalborg map already downloaded"
 fi
 
-echo "Generating data file..."
-python3 generate_data.py
+echo "Generating environment file..."
+python3 generate_environment.py
 
 echo "Generating test data file..."
 cd ../tests
