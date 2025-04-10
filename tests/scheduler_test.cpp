@@ -20,7 +20,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         Requests requests;
 
         requests.emplace_back(0, 10, 0);
-        const auto batchResult = Scheduler::scheduleBatch(env, requests);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == 1);
         REQUIRE(batchResult.unassignedRequests.size() == 0);
@@ -32,19 +32,19 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         Requests requests;
 
         requests.emplace_back(1, 5, 1);
-        const auto batchResult = Scheduler::scheduleBatch(env, requests);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == 0);
         REQUIRE(batchResult.unassignedRequests.size() == 0);
         REQUIRE(batchResult.earlyRequests.size() == 1);
-        REQUIRE(batchResult.cost == 0);
+        REQUIRE(batchResult.cost == Scheduler::UNASSIGNED_PENALTY);
     }
     
     SECTION("Request being unassinged") {
         Requests requests;
 
         requests.emplace_back(1, 1, 0);
-        const auto batchResult = Scheduler::scheduleBatch(env, requests);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == 0);
         REQUIRE(batchResult.unassignedRequests.size() == 1);
@@ -64,7 +64,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         for (size_t i = 0; i < requestAmount; ++i) {
             requests.emplace_back(1, 7, 0);
         }
-        const auto batchResult = Scheduler::scheduleBatch(env, requests);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == requestAmount - 1);
         REQUIRE(batchResult.unassignedRequests.size() == 1);
@@ -79,7 +79,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         for (size_t i = 0; i < requestAmount; ++i) {
             requests.emplace_back(1, 1, 0);
         }
-        const auto batchResult = Scheduler::scheduleBatch(env, requests);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == 0);
         REQUIRE(batchResult.unassignedRequests.size() == requestAmount);

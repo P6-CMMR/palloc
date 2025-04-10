@@ -19,7 +19,6 @@ class Scheduler {
     static SchedulerResult scheduleBatch(Environment &env, Requests &requests,
                                          bool useWeightedParking);
 
-   private:
     static constexpr int MAX_SEARCH_TIME = 60000;
     static constexpr int PARKING_NODES_TO_VISIT = 1;
     static constexpr int UNASSIGNED_PENALTY = 10000;
