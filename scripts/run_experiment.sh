@@ -15,8 +15,8 @@ if [ ! -f "build/palloc" ]; then
     exit 1
 fi
 
-if [ ! -f "data.json" ]; then
-    echo "Error: data.json not found in project root."
+if [ ! -f "environment.json" ]; then
+    echo "Error: environment.json not found in project root."
     exit 1
 fi
 
@@ -30,6 +30,7 @@ show_help() {
   echo "  -r, --requests          Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
   echo "  -t, --timesteps         Number of timesteps to simulate, default: 1440"
   echo "  -j, --jobs              Number of parallel jobs to run (default: number of CPU cores)"
+  echo "  -w, --weights           Use weights for distance to parking"
   echo ""
   echo "Examples:"
   echo "  $0 -d 600-1200          # Run simulations in the range 600-1200 max durration"
@@ -48,6 +49,7 @@ REQUEST_RATE_END=0
 AGGREGATIONS=3
 TIMESTEPS=1440
 PARALLEL_JOBS=$(nproc)
+WEIGHTS=""
 
 # Set fixed step sizes
 DURATION_STEP=10
@@ -59,6 +61,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             show_help
             exit 0
+            ;;
+        -w|--weights)
+            WEIGHTS="-w"
+            shift 1
             ;;
         -d|--duration)
             if [[ $# -lt 2 || $2 == -* ]]; then
@@ -368,7 +374,7 @@ while read job_info; do
     output=$(echo $job_info | cut -d'|' -f5)
     
     (
-        ./build/palloc -e data.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
+        ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" "$WEIGHTS" > /dev/null 2>&1
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
@@ -398,5 +404,5 @@ echo "Created experiment directory: $exp_dir"
 
 # Generate reports
 echo "Generating reports..."
-python analysis/generate_report.py data.json experiments/
+python analysis/generate_report.py environment.json experiments/
 
