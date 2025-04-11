@@ -1,7 +1,5 @@
 # Catch2
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    enable_testing()
-    
     FetchContent_Declare(
         Catch2 
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -16,7 +14,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "Found test sources: ${TEST_SOURCES}")
         add_executable(palloc_tests ${TEST_SOURCES})
         target_link_libraries(palloc_tests PRIVATE libpalloc Catch2::Catch2WithMain)
-
+        
         include(CTest)
         include(Catch)
         catch_discover_tests(palloc_tests)

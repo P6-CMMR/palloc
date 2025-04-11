@@ -17,7 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# filepath: CMakeLists.txt
+# Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 if(WIN32)
@@ -55,7 +55,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 FetchContent_Declare(
   glaze
   GIT_REPOSITORY https://github.com/stephenberry/glaze.git
-  GIT_TAG v5.1.0
+  GIT_TAG v5.0.0
   GIT_SHALLOW TRUE
 )
 
@@ -99,4 +99,6 @@ list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
 find_package(ortools REQUIRED)
 
 add_subdirectory(src)
+
+enable_testing()
 add_subdirectory(tests)

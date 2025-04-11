@@ -5,14 +5,6 @@
 
 using namespace palloc;
 
-
-/*
- * TODO
- * - Check multiple requests
- * - Check errors
- *
-*/
-
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
     
@@ -64,6 +56,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         for (size_t i = 0; i < requestAmount; ++i) {
             requests.emplace_back(1, 7, 0);
         }
+        
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == requestAmount - 1);
@@ -79,11 +72,12 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         for (size_t i = 0; i < requestAmount; ++i) {
             requests.emplace_back(1, 1, 0);
         }
+
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == 0);
         REQUIRE(batchResult.unassignedRequests.size() == requestAmount);
         REQUIRE(batchResult.earlyRequests.size() == 0);
-        REQUIRE(batchResult.cost == requestAmount * Scheduler::UNASSIGNED_PENALTY);
+        REQUIRE(batchResult.cost == static_cast<double>(requestAmount * Scheduler::UNASSIGNED_PENALTY));
     }
 }
