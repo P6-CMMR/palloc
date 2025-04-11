@@ -15,7 +15,10 @@ dictionary = {
 json_object = json.dumps(dictionary, indent=4)
  
 # Writing to sample.json
-filename = "test_data.json"
+if not os.path.exists("tests"):
+    os.makedirs("tests")
+
+filename = "tests/test_data.json"
 with open(filename, "w") as outfile:
     outfile.write(json_object)
 
