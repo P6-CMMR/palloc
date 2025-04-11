@@ -1,13 +1,14 @@
-#include "catch2/catch_test_macros.hpp"
 #include "scheduler.hpp"
-#include "request_generator.hpp"
+
+#include "catch2/catch_test_macros.hpp"
 #include "environment.hpp"
+#include "request_generator.hpp"
 
 using namespace palloc;
 
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
-    
+
     SECTION("Request being simulated") {
         Requests requests;
 
@@ -15,8 +16,8 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == 1);
-        REQUIRE(batchResult.unassignedRequests.size() == 0);
-        REQUIRE(batchResult.earlyRequests.size() == 0);
+        REQUIRE(batchResult.unassignedRequests.empty());
+        REQUIRE(batchResult.earlyRequests.empty());
         REQUIRE(batchResult.cost == 2);
     }
 
@@ -26,43 +27,41 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         requests.emplace_back(1, 5, 1);
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
-        REQUIRE(batchResult.simulations.size() == 0);
-        REQUIRE(batchResult.unassignedRequests.size() == 0);
+        REQUIRE(batchResult.simulations.empty());
+        REQUIRE(batchResult.unassignedRequests.empty());
         REQUIRE(batchResult.earlyRequests.size() == 1);
         REQUIRE(batchResult.cost == Scheduler::UNASSIGNED_PENALTY);
     }
-    
+
     SECTION("Request being unassinged") {
         Requests requests;
 
         requests.emplace_back(1, 1, 0);
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
-        REQUIRE(batchResult.simulations.size() == 0);
+        REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.size() == 1);
-        REQUIRE(batchResult.earlyRequests.size() == 0);
+        REQUIRE(batchResult.earlyRequests.empty());
         REQUIRE(batchResult.cost == Scheduler::UNASSIGNED_PENALTY);
     }
 }
 
-
-
 TEST_CASE("Multiple requests - [Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
-    
+
     SECTION("Parking is filled") {
         Requests requests;
         size_t requestAmount = env.getNumberOfParkings() + 1;
         for (size_t i = 0; i < requestAmount; ++i) {
             requests.emplace_back(1, 7, 0);
         }
-        
+
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
         REQUIRE(batchResult.simulations.size() == requestAmount - 1);
         REQUIRE(batchResult.unassignedRequests.size() == 1);
-        REQUIRE(batchResult.earlyRequests.size() == 0);
-        REQUIRE(batchResult.cost >  Scheduler::UNASSIGNED_PENALTY);
+        REQUIRE(batchResult.earlyRequests.empty());
+        REQUIRE(batchResult.cost > Scheduler::UNASSIGNED_PENALTY);
         REQUIRE(batchResult.cost < 2 * Scheduler::UNASSIGNED_PENALTY);
     }
 
@@ -75,9 +74,10 @@ TEST_CASE("Multiple requests - [Scheduler]") {
 
         const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
 
-        REQUIRE(batchResult.simulations.size() == 0);
+        REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.size() == requestAmount);
-        REQUIRE(batchResult.earlyRequests.size() == 0);
-        REQUIRE(batchResult.cost == static_cast<double>(requestAmount * Scheduler::UNASSIGNED_PENALTY));
+        REQUIRE(batchResult.earlyRequests.empty());
+        REQUIRE(batchResult.cost ==
+                static_cast<double>(requestAmount * Scheduler::UNASSIGNED_PENALTY));
     }
 }
