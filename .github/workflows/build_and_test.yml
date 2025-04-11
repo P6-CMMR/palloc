@@ -64,29 +64,50 @@ jobs:
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
-
-    - name: Generate Test Data
-      run: python tests/generate_test_data.py
-      working-directory: ${{ github.workspace }}
-
-    - name: List directory after test data generation
+      
+    - name: Copy OR-Tools libraries to lib directory (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        mkdir -p ${{ github.workspace }}/lib
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools.so* ${{ github.workspace }}/lib/
+        echo "LD_LIBRARY_PATH=${{ github.workspace }}/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        
+    - name: Copy OR-Tools libraries to lib directory (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        mkdir -p ${{ github.workspace }}/lib
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools.dylib* ${{ github.workspace }}/lib/
+        echo "DYLD_LIBRARY_PATH=${{ github.workspace }}/lib:$DYLD_LIBRARY_PATH" >> $GITHUB_ENV
+        
+    - name: Copy OR-Tools libraries to lib directory (Windows)
+      if: matrix.os == 'windows-latest'
       shell: bash
       run: |
-        echo "Build directory structure after test data generation:"
-        ls -la ${{ steps.strings.outputs.build-output-dir }}
-        echo "Tests directory structure:"
-        ls -la ${{ github.workspace }}/tests
+        mkdir -p ${{ github.workspace }}/lib
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/bin/ortools.dll ${{ github.workspace }}/lib/ || echo "DLL not found in bin"
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/Release/ortools.dll ${{ github.workspace }}/lib/ || echo "DLL not found in Release"
+        # Add lib to PATH for Windows
+        echo "${{ github.workspace }}/lib" >> $GITHUB_PATH
+
+    - name: Generate Test Data
+      run: python ${{ github.workspace }}/tests/generate_test_data.py
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
     - name: Test          
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      env:
+        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
+        DYLD_LIBRARY_PATH: ${{ env.DYLD_LIBRARY_PATH }}
 
     - name: Upload Linux
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
         name: palloc-linux
-        path: build/palloc
+        path: |
+          build/palloc
+          lib/*.so*
         if-no-files-found: error
 
     - name: Upload Windows
@@ -94,7 +115,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-win
-        path: build/Release/palloc.exe
+        path: |
+          build/Release/palloc.exe
+          lib/*.dll
         if-no-files-found: error
     
     - name: Upload macOS
@@ -102,6 +125,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-macos
-        path: build/palloc
+        path: |
+          build/palloc
+          lib/*.dylib
         if-no-files-found: error
-        
