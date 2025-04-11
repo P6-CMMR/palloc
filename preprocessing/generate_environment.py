@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import requests
 import json
 import numpy as np
+import argparse
 from scipy.stats import gaussian_kde # type: ignore
 from typing import cast
 
@@ -187,9 +188,9 @@ def write_response_to_file(dropoff_to_parking: list,
                            parking_to_dropoff: list, 
                            parking_capacities: list, 
                            dropoff_coords: list[tuple], 
-                           parking_coords: list[tuple]):
+                           parking_coords: list[tuple],
+                           filename: str):
     """Writes a data file to JSON format."""
-    filename = f"../environment.json"
 
     dropoff_to_parking = [[round(d / 60) for d in row] for row in dropoff_to_parking]
     parking_to_dropoff = [[round(d / 60) for d in row] for row in parking_to_dropoff]
@@ -226,7 +227,11 @@ def write_response_to_file(dropoff_to_parking: list,
         json.dump(output, f)
 
 def main():
-    root = read_osm("aalborg-map.osm")
+    parser = argparse.ArgumentParser(description="Generate environment data from OSM file.")
+    parser.add_argument("--map", "-m", type=str, default="aalborg_map.osm", help="OSM map file")
+    args = parser.parse_args()
+    
+    root = read_osm(args.map)
     dropoff_coords, parking_coords, parking_capacities = extract_data_from_osm(root)
     
     print(f"Found {len(dropoff_coords)} dropoff nodes and {len(parking_coords)} parking nodes")
@@ -246,11 +251,13 @@ def main():
         reverse_response.raise_for_status()
         reverse_data = reverse_response.json()
  
+        output_file = "../" + args.map.replace("_map.osm", "_env.json")
         write_response_to_file(forward_data["durations"], 
                                reverse_data["durations"],
                                parking_capacities,
                                dropoff_coords,
-                               parking_coords)
+                               parking_coords,
+                               output_file)
         print("Responses written to file successfully")
         
     except requests.exceptions.RequestException as e:

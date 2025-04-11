@@ -18,7 +18,7 @@ TEST_CASE("Base case - [Request Generator]") {
 
     constexpr uint32_t testRequestAmount = 1000;
     constexpr auto minRate = std::min(requestRate, 100);
-    const size_t upperBound = minRate + 3 * std::sqrt(minRate);
+    const size_t upperBound = std::ceil(minRate + 3 * std::sqrt(minRate));
     for (uint32_t i = 0; i < testRequestAmount; ++i) {
         const auto newRequests = generator.generate(i);
 
