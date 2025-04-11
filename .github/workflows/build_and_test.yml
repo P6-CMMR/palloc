@@ -91,7 +91,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-win
-        path: palloc-win
+        path: palloc-win/
         if-no-files-found: error
 
     - name: Upload Linux
@@ -99,7 +99,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-linux
-        path: palloc-linux
+        path: palloc-linux/
         if-no-files-found: error
     
     - name: Upload macOS
@@ -107,5 +107,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-macos
-        path: palloc-macos
+        path: palloc-macos/
         if-no-files-found: error
