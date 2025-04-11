@@ -79,19 +79,7 @@ jobs:
         mkdir -p palloc-linux/bin palloc-linux/lib
         cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-linux/bin/
         # Copy OR-Tools libraries to lib directory
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools*.so* palloc-linux/lib/
-
-        # Fix links in the copied libraries
-        for lib in palloc-linux/lib/libortools*.so*; do
-          if [ -L "$lib" ]; then
-            target=$(readlink "$lib")
-            target_dir=$(dirname "$target")
-            target_name=$(basename "$target")
-            new_target="../lib/$target_name"
-            ln -sf "$new_target" "$lib"
-          fi
-        done
-
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.so* palloc-linux/lib/
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
