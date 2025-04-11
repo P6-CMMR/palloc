@@ -18,6 +18,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(BUILD_SHARED_LIBS OFF) # Static library by default
 
+if(BUILD_SHARED_LIBS)
+    message(STATUS "Building shared library")
+else()
+    message(STATUS "Building static library")
+endif()
+
 # Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
@@ -31,11 +37,13 @@ else()
     set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-if(CMAKE_BUILD_TYPE)
-    string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UPPER)
-    message(STATUS "${CMAKE_BUILD_TYPE} CXX Flags: ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}")
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
 endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UPPER)
+message(STATUS "${CMAKE_BUILD_TYPE} CXX Flags: ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
