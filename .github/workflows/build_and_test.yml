@@ -43,15 +43,6 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-      
-    - name: Configure CMake (Unix)
-      if: matrix.os != 'windows-latest'
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DFORCE_TESTS=ON
-        -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
       if: matrix.os == 'windows-latest'
@@ -61,10 +52,52 @@ jobs:
           -DFORCE_TESTS=ON
           -G "Visual Studio 17 2022" -A x64
           -S ${{ github.workspace }} 
+    
+    - name: Configure CMake (Unix)
+      if: matrix.os != 'windows-latest'
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DFORCE_TESTS=ON
+        -S ${{ github.workspace }}
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
-      
+
+    - name: Generate Test Data
+      run: python ${{ github.workspace }}/tests/generate_test_data.py
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      env:
+        LD_LIBRARY_PATH: ${{ github.workspace }}/palloc-linux/lib:$LD_LIBRARY_PATH
+        DYLD_LIBRARY_PATH: ${{ github.workspace }}/palloc-macos/lib:$DYLD_LIBRARY_PATH
+
+    - name: Test          
+      run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      env:
+        LD_LIBRARY_PATH: ${{ github.workspace }}/palloc-linux/lib:$LD_LIBRARY_PATH
+        DYLD_LIBRARY_PATH: ${{ github.workspace }}/palloc-macos/lib:$DYLD_LIBRARY_PATH
+        PATH: ${{ github.workspace }}/palloc-win:$PATH
+
+    - name: Prepare Windows Package
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      run: |
+        # Create package directory
+        mkdir -p ${{ github.workspace }}/palloc-win
+        
+        # Copy executable
+        cp ${{ steps.strings.outputs.build-output-dir }}/Release/palloc.exe ${{ github.workspace }}/palloc-win/
+        
+        # Copy libraries
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/bin/ortools.dll ${{ github.workspace }}/palloc-win/ || echo "DLL not found in bin"
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/Release/ortools.dll ${{ github.workspace }}/palloc-win/ || echo "DLL not found in Release"
+        
+        # Create a simple batch file to run the program
+        echo '@echo off
+        %~dp0palloc.exe %*' > ${{ github.workspace }}/palloc-win/run.bat
+
     - name: Prepare Linux Package
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -102,47 +135,6 @@ jobs:
         "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/palloc" "$@"' > ${{ github.workspace }}/palloc-macos/run.sh
         
         chmod +x ${{ github.workspace }}/palloc-macos/run.sh
-        
-    - name: Prepare Windows Package
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        # Create package directory
-        mkdir -p ${{ github.workspace }}/palloc-win
-        
-        # Copy executable
-        cp ${{ steps.strings.outputs.build-output-dir }}/Release/palloc.exe ${{ github.workspace }}/palloc-win/
-        
-        # Copy libraries
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/bin/ortools.dll ${{ github.workspace }}/palloc-win/ || echo "DLL not found in bin"
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/Release/ortools.dll ${{ github.workspace }}/palloc-win/ || echo "DLL not found in Release"
-        
-        # Create a simple batch file to run the program
-        echo '@echo off
-        %~dp0palloc.exe %*' > ${{ github.workspace }}/palloc-win/run.bat
-
-    - name: Generate Test Data
-      run: python ${{ github.workspace }}/tests/generate_test_data.py
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      env:
-        LD_LIBRARY_PATH: ${{ github.workspace }}/palloc-linux/lib:$LD_LIBRARY_PATH
-        DYLD_LIBRARY_PATH: ${{ github.workspace }}/palloc-macos/lib:$DYLD_LIBRARY_PATH
-
-    - name: Test          
-      run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      env:
-        LD_LIBRARY_PATH: ${{ github.workspace }}/palloc-linux/lib:$LD_LIBRARY_PATH
-        DYLD_LIBRARY_PATH: ${{ github.workspace }}/palloc-macos/lib:$DYLD_LIBRARY_PATH
-        PATH: ${{ github.workspace }}/palloc-win:$PATH
-
-    - name: Upload Linux
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: palloc-linux
-        path: palloc-linux
-        if-no-files-found: error
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
@@ -150,6 +142,14 @@ jobs:
       with:
         name: palloc-win
         path: palloc-win
+        if-no-files-found: error
+
+    - name: Upload Linux
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: palloc-linux
+        path: palloc-linux
         if-no-files-found: error
     
     - name: Upload macOS
