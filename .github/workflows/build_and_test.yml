@@ -53,6 +53,7 @@ jobs:
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DFORCE_TESTS=ON
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
@@ -60,6 +61,7 @@ jobs:
       run: >
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DFORCE_TESTS=ON
           -G "Visual Studio 17 2022" -A x64
           -S ${{ github.workspace }} 
 

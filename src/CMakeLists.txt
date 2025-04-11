@@ -10,4 +10,6 @@ if(LIB_SOURCES)
     target_link_libraries(${PROJECT_NAME} PRIVATE libpalloc)
 endif()
 
-set_source_files_properties(${PROJECT_NAME}.cpp PROPERTIES COMPILE_FLAGS "-Wno-missing-field-initializers")
+if(NOT WIN32)
+    set_source_files_properties(${PROJECT_NAME}.cpp PROPERTIES COMPILE_FLAGS "-Wno-missing-field-initializers")
+endif()

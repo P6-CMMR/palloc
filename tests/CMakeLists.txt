@@ -1,4 +1,5 @@
 # Catch2
+option(FORCE_TESTS "Force building tests regardless of build type" OFF)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     FetchContent_Declare(
         Catch2 
