@@ -69,6 +69,13 @@ jobs:
       run: python ${{ github.workspace }}/tests/generate_test_data.py
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
+    - name: print files
+      run: >
+        echo "Files in ${{ steps.strings.outputs.build-output-dir }}:"
+        ls -R ${{ steps.strings.outputs.build-output-dir }}
+        echo "Files in ${{ steps.strings.outputs.build-output-dir }}/tests:"
+        ls -R ${{ steps.strings.outputs.build-output-dir }}/tests
+
     - name: Test          
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
