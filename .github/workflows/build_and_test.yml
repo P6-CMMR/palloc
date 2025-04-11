@@ -73,6 +73,19 @@ jobs:
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
+    - name: Prepare Linux package
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        mkdir -p palloc-linux/bin palloc-linux/lib
+        cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-linux/bin/
+        # Copy OR-Tools libraries to lib directory
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools*.so* palloc-linux/lib/
+        # Create a shell script to run the program
+        echo '#!/bin/bash
+        export LD_LIBRARY_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/lib:$LD_LIBRARY_PATH"
+        "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/bin/palloc" "$@"' > palloc-linux/palloc.sh
+        chmod +x palloc-linux/palloc.sh
+
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
