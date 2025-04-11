@@ -1,4 +1,5 @@
 import json
+import os
  
 # Data to be written
 dictionary = {
@@ -14,5 +15,10 @@ dictionary = {
 json_object = json.dumps(dictionary, indent=4)
  
 # Writing to sample.json
-with open("test_data.json", "w") as outfile:
+filename = "test_data.json"
+with open(filename, "w") as outfile:
     outfile.write(json_object)
+
+script_dir = os.getcwd()
+output_path = os.path.join(script_dir, "test_data.json")
+print(f"Data written to {output_path}")
