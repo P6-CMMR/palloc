@@ -27,7 +27,7 @@ show_help() {
   echo "  -h, --help              Show help message"
   echo "  -d, --duration          Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
   echo "  -A, --arrival           Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60"
-  echo "  -r, --request-rate          Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
+  echo "  -r, --requests          Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
   echo "  -t, --timesteps         Number of timesteps to simulate, default: 1440"
   echo "  -j, --jobs              Number of parallel jobs to run (default: number of CPU cores)"
   echo "  -w, --weights           Use weights for distance to parking"
@@ -100,7 +100,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift 2
             ;;
-        -r|--request-rate)
+        -r|--requests)
             if [[ $# -lt 2 || $2 == -* ]]; then
             echo "Error: Missing value for option $1"
             show_help

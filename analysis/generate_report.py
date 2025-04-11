@@ -613,7 +613,7 @@ def main():
     else:
         # Process single file
         report_path = process_single_file(env, args.results)
-        print(f"Open {report_path} to view results.")
+        print(f"\nReport generated. Open {report_path} to view results.")
 
 if __name__ == "__main__":
     main()

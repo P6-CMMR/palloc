@@ -19,3 +19,5 @@ double Trace::getCost() const noexcept { return _cost; }
 double Trace::getAverageDuration() const noexcept { return _averageDuration; }
 
 Assignments Trace::getAssignments() const noexcept { return _assignments; }
+
+uint32_t Assignment::getRequestDuration() const noexcept { return _requestDuration; }
