@@ -68,73 +68,10 @@ jobs:
     - name: Generate Test Data
       run: python ${{ github.workspace }}/tests/generate_test_data.py
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      env:
-        LD_LIBRARY_PATH: ${{ github.workspace }}/palloc-linux/lib:$LD_LIBRARY_PATH
-        DYLD_LIBRARY_PATH: ${{ github.workspace }}/palloc-macos/lib:$DYLD_LIBRARY_PATH
 
     - name: Test          
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      env:
-        LD_LIBRARY_PATH: ${{ github.workspace }}/palloc-linux/lib:$LD_LIBRARY_PATH
-        DYLD_LIBRARY_PATH: ${{ github.workspace }}/palloc-macos/lib:$DYLD_LIBRARY_PATH
-        PATH: ${{ github.workspace }}/palloc-win:$PATH
-
-    - name: Prepare Windows Package
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        # Create package directory
-        mkdir -p ${{ github.workspace }}/palloc-win
-        
-        # Copy executable
-        cp ${{ steps.strings.outputs.build-output-dir }}/Release/palloc.exe ${{ github.workspace }}/palloc-win/
-        
-        # Copy libraries
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/bin/ortools.dll ${{ github.workspace }}/palloc-win/ || echo "DLL not found in bin"
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/Release/ortools.dll ${{ github.workspace }}/palloc-win/ || echo "DLL not found in Release"
-        
-        # Create a simple batch file to run the program
-        echo '@echo off
-        %~dp0palloc.exe %*' > ${{ github.workspace }}/palloc-win/run.bat
-
-    - name: Prepare Linux Package
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        # Create package directory
-        mkdir -p ${{ github.workspace }}/palloc-linux/lib
-        
-        # Copy executable
-        cp ${{ steps.strings.outputs.build-output-dir }}/palloc ${{ github.workspace }}/palloc-linux/
-        
-        # Copy libraries
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools.so* ${{ github.workspace }}/palloc-linux/lib/
-        
-        # Create a simple README or run script
-        echo '#!/bin/bash
-        export LD_LIBRARY_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/lib:$LD_LIBRARY_PATH"
-        "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/palloc" "$@"' > ${{ github.workspace }}/palloc-linux/run.sh
-        
-        chmod +x ${{ github.workspace }}/palloc-linux/run.sh
-        
-    - name: Prepare macOS Package
-      if: matrix.os == 'macos-latest'
-      run: |
-        # Create package directory
-        mkdir -p ${{ github.workspace }}/palloc-macos/lib
-        
-        # Copy executable
-        cp ${{ steps.strings.outputs.build-output-dir }}/palloc ${{ github.workspace }}/palloc-macos/
-        
-        # Copy libraries
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools.dylib* ${{ github.workspace }}/palloc-macos/lib/
-        
-        # Create a simple README or run script
-        echo '#!/bin/bash
-        export DYLD_LIBRARY_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/lib:$DYLD_LIBRARY_PATH"
-        "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/palloc" "$@"' > ${{ github.workspace }}/palloc-macos/run.sh
-        
-        chmod +x ${{ github.workspace }}/palloc-macos/run.sh
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
