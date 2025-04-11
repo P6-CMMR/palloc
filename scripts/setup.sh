@@ -173,6 +173,10 @@ fi
 echo "Generating environment file..."
 python3 generate_environment.py
 
+echo "Generating test data file..."
+cd ../tests
+python3 generate_test_data.py
+
 echo "Shutting down OSRM backend..."
 sudo docker stop $CONTAINER_ID > /dev/null
 sudo docker rm $CONTAINER_ID > /dev/null

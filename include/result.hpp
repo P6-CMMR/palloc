@@ -30,9 +30,12 @@ class Result {
           _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost) {}
 
+    explicit Result(const std::filesystem::path &inputPath) { loadResult(inputPath); };
+
     static Result aggregateResults(const Results &results);
 
     void saveToFile(const std::filesystem::path &outputPath, bool prettify) const;
+    void loadResult(const std::filesystem::path &inputPath);
 
     TraceLists getTraceLists() const noexcept;
     SimulatorSettings getSimSettings() const noexcept;
@@ -44,10 +47,10 @@ class Result {
     friend struct glz::meta<Result>;
 
     TraceLists _traceLists;
-    SimulatorSettings _simSettings;
-    size_t _droppedRequests;
-    double _globalAvgDuration;
-    double _globalAvgCost;
+    SimulatorSettings _simSettings{};
+    size_t _droppedRequests{};
+    double _globalAvgDuration{};
+    double _globalAvgCost{};
 };
 
 using Results = std::vector<Result>;
