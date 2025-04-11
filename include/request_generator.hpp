@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <random>
 
-#include "types.hpp"
 #include "request.hpp"
+#include "types.hpp"
 
 namespace palloc {
 class RequestGenerator {

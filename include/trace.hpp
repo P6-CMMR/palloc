@@ -5,8 +5,8 @@
 #include <list>
 #include <vector>
 
-#include "environment.hpp"
 #include "assignment.hpp"
+#include "environment.hpp"
 #include "glaze/glaze.hpp"
 
 namespace palloc {
