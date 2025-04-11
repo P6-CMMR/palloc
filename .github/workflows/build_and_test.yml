@@ -70,6 +70,14 @@ jobs:
       run: python tests/generate_test_data.py
       working-directory: ${{ github.workspace }}
 
+    - name: List directory after test data generation
+      shell: bash
+      run: |
+        echo "Build directory structure after test data generation:"
+        ls -la ${{ steps.strings.outputs.build-output-dir }}
+        echo "Tests directory structure:"
+        ls -la ${{ github.workspace }}/tests
+
     - name: Test          
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
