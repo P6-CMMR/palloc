@@ -23,5 +23,5 @@ with open(filename, "w") as outfile:
     outfile.write(json_object)
 
 script_dir = os.getcwd()
-output_path = os.path.join(script_dir, "test_data.json")
+output_path = os.path.join(script_dir, filename)
 print(f"Data written to {output_path}")

@@ -67,7 +67,7 @@ jobs:
 
     - name: Generate Test Data
       run: python ${{ github.workspace }}/tests/generate_test_data.py
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      working-directory: ${{ github.workspace }}
 
     - name: Test          
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
