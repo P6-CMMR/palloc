@@ -80,11 +80,18 @@ jobs:
         cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-linux/bin/
         # Copy OR-Tools libraries to lib directory
         cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/libortools*.so* palloc-linux/lib/
-        # Create a shell script to run the program
-        echo '#!/bin/bash
-        export LD_LIBRARY_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/lib:$LD_LIBRARY_PATH"
-        "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/bin/palloc" "$@"' > palloc-linux/palloc.sh
-        chmod +x palloc-linux/palloc.sh
+
+        # Fix links in the copied libraries
+        for lib in palloc-linux/lib/libortools*.so*; do
+          if [ -L "$lib" ]; then
+            target=$(readlink "$lib")
+            target_dir=$(dirname "$target")
+            target_name=$(basename "$target")
+            new_target="../lib/$target_name"
+            ln -sf "$new_target" "$lib"
+          fi
+        done
+
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
