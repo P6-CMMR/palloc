@@ -44,8 +44,9 @@ TEST_CASE("Base case - [Simulator]") {
     size_t tempDropAmount = 0;
 
     for (const auto &trace : traces) {
-        if (trace.getTimeStep() == earlierTrace.getTimeStep()) { continue;
-}
+        if (trace.getTimeStep() == earlierTrace.getTimeStep()) {
+            continue;
+        }
         uint32_t timestep = trace.getTimeStep();
         size_t totalTraceRequests = trace.getNumberOfRequests() + trace.getDroppedRequests() +
                                     trace.getNumberOfOngoingSimulations() +
