@@ -13,15 +13,12 @@ jobs:
 
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        build_type: [Release]
+        build_type: [Debug]
         include:
           - os: windows-latest
-            build_type: Release
           - os: ubuntu-latest
-            build_type: Release
             cpp_compiler: g++
           - os: macos-latest
-            build_type: Release
             cpp_compiler: g++
 
     steps:
