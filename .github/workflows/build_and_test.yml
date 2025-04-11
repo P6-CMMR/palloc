@@ -65,17 +65,9 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: print files
-      run: |
-        echo "Files in ${{ steps.strings.outputs.build-output-dir }}:"
-        ls -R ${{ steps.strings.outputs.build-output-dir }}
-        echo "Files in ${{ steps.strings.outputs.build-output-dir }}/tests:"
-        ls -R ${{ steps.strings.outputs.build-output-dir }}/tests || echo "tests directory not found"
-
     - name: Generate Test Data
       run: python ${{ github.workspace }}/tests/generate_test_data.py
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
-
 
     - name: Test          
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
