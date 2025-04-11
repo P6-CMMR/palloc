@@ -81,18 +81,14 @@ jobs:
         # Copy OR-Tools libraries to lib directory
         cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.so* palloc-linux/lib/
 
-        cat > palloc-linux/bin/palloc.original << EOF
-        #!/bin/bash
-        export LD_LIBRARY_PATH="\$(dirname "\$(dirname "\${BASH_SOURCE[0]}")")/lib:\$LD_LIBRARY_PATH"
-        exec "\$(dirname "\${BASH_SOURCE[0]}")/palloc.real" "\$@"
-        EOF
-        
+        cd palloc-linux/bin
+        for lib in ../lib/*.so*; do
+          ln -s $lib .
+        done
 
-        chmod +x palloc-linux/bin/palloc.original
-        
-
-        mv palloc-linux/bin/palloc palloc-linux/bin/palloc.real
-        mv palloc-linux/bin/palloc.original palloc-linux/bin/palloc
+        echo "Testing library linking:"
+        cd ${{ github.workspace }}/palloc-linux/bin
+        ldd ./palloc | grep -v "not found"
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
