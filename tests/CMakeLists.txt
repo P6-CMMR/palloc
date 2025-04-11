@@ -1,6 +1,14 @@
 # Catch2
 option(FORCE_TESTS "Force building tests regardless of build type" OFF)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR FORCE_TESTS)
+    set(BUILD_TESTS TRUE)
+else()
+    set(BUILD_TESTS FALSE)
+endif()
+
+message(STATUS "Build tests: ${BUILD_TESTS}")
+if(BUILD_TESTS)
     FetchContent_Declare(
         Catch2 
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
