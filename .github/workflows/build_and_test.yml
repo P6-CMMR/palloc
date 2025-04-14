@@ -99,12 +99,12 @@ jobs:
         name: palloc-linux
         path: |
             ${{ steps.strings.outputs.build-output-dir }}/palloc-linux
-            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/examples
-            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/include
-            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/Makefile
-            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/README.md
-            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/lib/cmake
-            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/lib/pkgconfig
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/examples
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/include
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/Makefile
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/README.md
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/cmake
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/pkgconfig
         if-no-files-found: error
     
     - name: Upload macOS
@@ -114,4 +114,10 @@ jobs:
         name: palloc-macos
         path: |
             ${{ steps.strings.outputs.build-output-dir }}/palloc-macos
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/examples
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/include
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/Makefile
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/README.md
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/cmake
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/pkgconfig
         if-no-files-found: error
