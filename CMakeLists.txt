@@ -24,20 +24,15 @@ elseif(APPLE)
     set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-macos")
 endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PLATFORM_DIR}/bin")
-
-# Fix for MSVC insisting on adding more folders
-if(MSVC)
-    foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-        string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${PLATFORM_DIR}/bin")
-    endforeach()
-endif()
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${PLATFORM_DIR}/bin")
+endforeach()
 
 # Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
-if(WIN32)
+if(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/W4 /Od /DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
     set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -83,7 +78,7 @@ FetchContent_MakeAvailable(glaze)
 set(ORTOOLS_VERSION "9.12")
 set(ORTOOLS_BUILD "4544")
 
-if(WIN32)
+if(MSVC)
     set(ORTOOLS_PACKAGE "or-tools_x64_VisualStudio2022_cpp_v${ORTOOLS_VERSION}.${ORTOOLS_BUILD}")
     set(ORTOOLS_ARCHIVE_EXT "zip")
 elseif(APPLE)

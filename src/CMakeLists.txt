@@ -10,6 +10,11 @@ target_link_libraries(libpalloc PUBLIC ortools::ortools glaze::glaze)
 set_target_properties(libpalloc PROPERTIES PREFIX "")
 target_link_libraries(${PROJECT_NAME} PRIVATE libpalloc)
 
-if(NOT WIN32)
+# Stop MSVC from making subdirectories
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PLATFORM_DIR}/bin")
+endif()
+
+if(NOT MSVC)
     set_source_files_properties(${PROJECT_NAME}.cpp PROPERTIES COMPILE_FLAGS "-Wno-missing-field-initializers")
 endif()
