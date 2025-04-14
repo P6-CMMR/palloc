@@ -123,12 +123,10 @@ find_package(ortools REQUIRED)
 
 add_subdirectory(src)
 
-# Put test executable in a different directory
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
-foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/tests")
-endforeach()
+# Put test executable in a different directory for Unix
+if(UNIX)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+endif()
 
 enable_testing()
 add_subdirectory(tests)

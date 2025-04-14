@@ -79,6 +79,7 @@ jobs:
         path: |
             ${{ steps.strings.outputs.build-output-dir }}/palloc-win
             !${{ steps.strings.outputs.build-output-dir }}/palloc-win/lib
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-win/bin/palloc_tests.exe
         if-no-files-found: error
 
     - name: Upload Linux
