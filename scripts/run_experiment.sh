@@ -8,8 +8,8 @@ if [[ "$(pwd)" != "$PROJECT_ROOT" ]]; then
     cd "$PROJECT_ROOT"
 fi
 
-if [ ! -f "build/palloc" ]; then
-    echo "Error: build/palloc executable not found."
+if [ ! -f "./build/palloc-linux/bin/palloc" ]; then
+    echo "Error: palloc executable not found."
     echo "Compiling the project..."
     ./scripts/compile.sh release
     exit 1
@@ -374,7 +374,7 @@ while read job_info; do
     output=$(echo $job_info | cut -d'|' -f5)
     
     (
-        ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" "$WEIGHTS" > /dev/null 2>&1
+        ./build/palloc-linux/bin/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" "$WEIGHTS" > /dev/null 2>&1
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"

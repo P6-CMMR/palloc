@@ -26,7 +26,7 @@ mkdir -p perf
 "$PERF_EXE" record --call-graph dwarf,8192 \
     -e cycles:u \
     --strict-freq \
-    ./build/palloc -e data.json
+    ./build/palloc-linux/bin/palloc -e data.json
 
 "$PERF_EXE" script -i perf.data | \
     ${FLAMEGRAPH_DIR}/stackcollapse-perf.pl | \
