@@ -76,8 +76,8 @@ set(ORTOOLS_VERSION "9.12")
 set(ORTOOLS_BUILD "4544")
 
 if(WIN32)
-    set(ORTOOLS_PACKAGE "Google.OrTools.${ORTOOLS_VERSION}.${ORTOOLS_BUILD}")
-    set(ORTOOLS_ARCHIVE_EXT "nupkg")
+    set(ORTOOLS_PACKAGE "or-tools_x64_VisualStudio2022_cpp_v${ORTOOLS_VERSION}.${ORTOOLS_BUILD}")
+    set(ORTOOLS_ARCHIVE_EXT "zip")
 elseif(APPLE)
     set(ORTOOLS_PACKAGE "or-tools_arm64_macOS-15.3.1_cpp_v${ORTOOLS_VERSION}.${ORTOOLS_BUILD}")
     set(ORTOOLS_ARCHIVE_EXT "tar.gz")
@@ -106,6 +106,13 @@ if(NOT EXISTS "${ORTOOLS_EXTRACT_DIR}")
     endif()
 endif()
 
+if(WIN32)
+    file(GLOB DLLS "${ORTOOLS_EXTRACT_DIR}/bin/*.dll")
+    foreach(DLL ${DLLS})
+        file(COPY "${DLL}" DESTINATION "${PLATFORM_DIR}/bin")
+    endforeach()
+endif()
+
 list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
 
 find_package(ortools REQUIRED)
@@ -116,3 +123,8 @@ add_subdirectory(src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 enable_testing()
 add_subdirectory(tests)
+
+# Cleanup
+if(WIN32)
+    file(REMOVE_RECURSE "${PLATFORM_DIR}/lib")
+endif()
