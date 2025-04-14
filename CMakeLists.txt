@@ -123,12 +123,3 @@ add_subdirectory(src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 enable_testing()
 add_subdirectory(tests)
-
-# Cleanup
-if(WIN32)
-    add_custom_command(
-        TARGET ${PROJECT_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${PLATFORM_DIR}/lib"
-    )
-endif()
