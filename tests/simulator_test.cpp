@@ -2,6 +2,8 @@
 
 #include "catch2/catch_test_macros.hpp"
 
+#include <iostream>
+
 using namespace palloc;
 
 TEST_CASE("Base case - [Simulator]") {
@@ -27,18 +29,22 @@ TEST_CASE("Base case - [Simulator]") {
                                   .batchInterval = batchInterval,
                                   .seed = seed};
 
+    std::cout << "got here 1" << std::endl;
+
     Environment env(testDataPath);
+    std::cout << "got here 2" << std::endl;
 
     Simulator::simulate(env, simSettings, outputSettings, generalSettings);
+    std::cout << "got here 3" << std::endl;
 
     Result result(tempResultPath);
-
+    std::cout << "got here 4" << std::endl;
     const auto traces = result.getTraceLists()[0];
     REQUIRE(traces.size() == timesteps);
 
     Trace earlierTrace = traces.front();
     std::vector<std::pair<uint32_t, Assignment>> assignements;
-
+    std::cout << "got here 5" << std::endl;
     const size_t parkingAmount =
         earlierTrace.getAvailableParkingSpots() + earlierTrace.getNumberOfOngoingSimulations();
     size_t tempDropAmount = 0;
