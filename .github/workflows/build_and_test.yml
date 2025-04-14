@@ -105,6 +105,8 @@ jobs:
             !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/README.md
             !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/cmake
             !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/pkgconfig
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/bin
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/share
         if-no-files-found: error
     
     - name: Upload macOS
@@ -120,4 +122,6 @@ jobs:
             !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/README.md
             !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/cmake
             !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/pkgconfig
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/bin
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/share
         if-no-files-found: error
