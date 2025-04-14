@@ -73,35 +73,12 @@ jobs:
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
-    - name: Prepare Windows Package
-      if: matrix.os == 'windows-latest'
-      run: |
-        mkdir -p palloc-win/bin palloc-win/lib
-        cp ${{ steps.strings.outputs.build-output-dir }}/*.exe palloc-win/bin/
-        cp ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.dll palloc-win/lib/
-
-    - name: Prepare Linux Package
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        mkdir -p palloc-linux/bin palloc-linux/lib
-        cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-linux/bin/
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.so* palloc-linux/lib/
-        patchelf --set-rpath '$ORIGIN/../lib' palloc-linux/bin/palloc
-
-    - name: Prepare macOS Package
-      if: matrix.os == 'macos-latest'
-      run: |
-        mkdir -p palloc-macos/bin palloc-macos/lib
-        cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-macos/bin/
-        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.dylib palloc-macos/lib/
-        install_name_tool -change @rpath/libortools.dylib @loader_path/../lib/libortools.dylib palloc-macos/bin/palloc
-
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: palloc-win
-        path: palloc-win
+        path: ${{ steps.strings.outputs.build-output-dir }}/palloc-win
         if-no-files-found: error
 
     - name: Upload Linux
@@ -109,7 +86,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-linux
-        path: palloc-linux
+        path: ${{ steps.strings.outputs.build-output-dir }}/palloc-linux
         if-no-files-found: error
     
     - name: Upload macOS
@@ -117,5 +94,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-macos
-        path: palloc-macos
+        path: ${{ steps.strings.outputs.build-output-dir }}/palloc-macos
         if-no-files-found: error

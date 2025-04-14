@@ -15,20 +15,19 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+# Output directory
+if(WIN32)
+    set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-win")
+elseif(LINUX)
+    set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-linux")
+elseif(APPLE)
+    set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-macos")
+endif()
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PLATFORM_DIR}/bin")
+    
 # Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-
-if(UNIX)
-    if(APPLE)
-        set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
-    else()
-        set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
-    endif()
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-endif()
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "/W4 /Od /DEBUG")
@@ -89,8 +88,8 @@ endif()
 
 set(ORTOOLS_URL "https://github.com/google/or-tools/releases/download/v${ORTOOLS_VERSION}/${ORTOOLS_PACKAGE}.${ORTOOLS_ARCHIVE_EXT}")
 set(ORTOOLS_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/or-tools-download")
-set(ORTOOLS_EXTRACT_DIR "${CMAKE_CURRENT_BINARY_DIR}/or-tools")
 set(ORTOOLS_ARCHIVE "${ORTOOLS_DOWNLOAD_DIR}/or-tools.${ORTOOLS_ARCHIVE_EXT}")
+set(ORTOOLS_EXTRACT_DIR "${PLATFORM_DIR}/lib/or-tools")
 
 if(NOT EXISTS "${ORTOOLS_EXTRACT_DIR}")
     file(DOWNLOAD "${ORTOOLS_URL}" "${ORTOOLS_ARCHIVE}" SHOW_PROGRESS)
@@ -108,9 +107,12 @@ if(NOT EXISTS "${ORTOOLS_EXTRACT_DIR}")
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
+
 find_package(ortools REQUIRED)
 
 add_subdirectory(src)
 
+# Put test executable in a different directory
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 enable_testing()
 add_subdirectory(tests)
