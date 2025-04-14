@@ -126,5 +126,9 @@ add_subdirectory(tests)
 
 # Cleanup
 if(WIN32)
-    file(REMOVE_RECURSE "${PLATFORM_DIR}/lib")
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${PLATFORM_DIR}/lib"
+    )
 endif()
