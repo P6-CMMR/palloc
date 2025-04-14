@@ -73,22 +73,29 @@ jobs:
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
-    - name: Prepare Linux package
+    - name: Prepare Windows Package
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir -p palloc-win/bin palloc-win/lib
+        cp ${{ steps.strings.outputs.build-output-dir }}/*.exe palloc-win/bin/
+        cp ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.dll palloc-win/lib/
+
+    - name: Prepare Linux Package
       if: matrix.os == 'ubuntu-latest'
       run: |
         mkdir -p palloc-linux/bin palloc-linux/lib
         cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-linux/bin/
-        # Copy OR-Tools libraries to lib directory
         cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.so* palloc-linux/lib/
+        sudo apt-get update && sudo apt-get install -y patchelf
+        patchelf --set-rpath '$ORIGIN/../lib' palloc-linux/bin/palloc
+        patchelf --print-rpath palloc-linux/bin/palloc
 
-        cd palloc-linux/bin
-        for lib in ../lib/*.so*; do
-          ln -s $lib .
-        done
-
-        echo "Testing library linking:"
-        cd ${{ github.workspace }}/palloc-linux/bin
-        ldd ./palloc | grep -v "not found"
+    - name: Prepare macOS Package
+      if: matrix.os == 'macos-latest'
+      run: |
+        mkdir -p palloc-macos/bin palloc-macos/lib
+        cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-macos/bin/
+        cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.dylib palloc-macos/lib/
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
