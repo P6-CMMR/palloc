@@ -9,6 +9,7 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
+    std::print("Scheduler test 1\n");
     std::filesystem::path testDataPath = std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
     std::print("Loading environment from: {}\n", testDataPath.string());
     std::print("File exists: {}\n", (std::filesystem::exists(testDataPath) ? "yes" : "no"));
@@ -53,7 +54,12 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
 }
 
 TEST_CASE("Multiple requests - [Scheduler]") {
-    Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
+    std::print("Scheduler test 2\n");
+    std::filesystem::path testDataPath = std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
+    std::print("Loading environment from: {}\n", testDataPath.string());
+    std::print("File exists: {}\n", (std::filesystem::exists(testDataPath) ? "yes" : "no"));
+
+    Environment env(testDataPath);
 
     SECTION("Parking is filled") {
         Requests requests;

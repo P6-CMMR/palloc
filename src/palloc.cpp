@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
         simSettings.seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
-        outputSettings.path = outputPathStr;
+        outputSettings.outputPath = outputPathStr;
 
         GeneralSettings generalSettings{
             .numberOfThreads = numberOfThreadsOpt.value_or(std::min(

@@ -19,7 +19,7 @@ struct SimulatorSettings {
 };
 
 struct OutputSettings {
-    std::filesystem::path path;
+    std::filesystem::path outputPath;
     uint32_t numberOfRunsToAggregate;
     bool prettify;
 };
