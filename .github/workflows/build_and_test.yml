@@ -86,9 +86,7 @@ jobs:
         mkdir -p palloc-linux/bin palloc-linux/lib
         cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-linux/bin/
         cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.so* palloc-linux/lib/
-        sudo apt-get update && sudo apt-get install -y patchelf
         patchelf --set-rpath '$ORIGIN/../lib' palloc-linux/bin/palloc
-        patchelf --print-rpath palloc-linux/bin/palloc
 
     - name: Prepare macOS Package
       if: matrix.os == 'macos-latest'
@@ -96,13 +94,14 @@ jobs:
         mkdir -p palloc-macos/bin palloc-macos/lib
         cp ${{ steps.strings.outputs.build-output-dir }}/palloc palloc-macos/bin/
         cp -L ${{ steps.strings.outputs.build-output-dir }}/or-tools/lib/*.dylib palloc-macos/lib/
+        install_name_tool -change @rpath/libortools.dylib @loader_path/../lib/libortools.dylib palloc-macos/bin/palloc
 
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: palloc-win
-        path: palloc-win/
+        path: palloc-win
         if-no-files-found: error
 
     - name: Upload Linux
@@ -110,7 +109,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-linux
-        path: palloc-linux/
+        path: palloc-linux
         if-no-files-found: error
     
     - name: Upload macOS
@@ -118,5 +117,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: palloc-macos
-        path: palloc-macos/
+        path: palloc-macos
         if-no-files-found: error
