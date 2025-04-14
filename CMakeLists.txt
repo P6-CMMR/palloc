@@ -110,6 +110,10 @@ list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
 
 find_package(ortools REQUIRED)
 
+# Threads
+find_package(Threads REQUIRED)
+message(STATUS "Threads found: ${Threads_FOUND}")
+
 add_subdirectory(src)
 
 # Put test executable in a different directory
