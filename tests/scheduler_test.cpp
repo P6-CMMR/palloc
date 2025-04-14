@@ -1,7 +1,5 @@
 #include "scheduler.hpp"
 
-#include <print>
-
 #include "catch2/catch_test_macros.hpp"
 #include "environment.hpp"
 #include "request_generator.hpp"
@@ -9,12 +7,7 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
-    std::print("Scheduler test 1\n");
-    std::filesystem::path testDataPath = std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
-    std::print("Loading environment from: {}\n", testDataPath.string());
-    std::print("File exists: {}\n", (std::filesystem::exists(testDataPath) ? "yes" : "no"));
-
-    Environment env(testDataPath);
+    Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
 
     SECTION("Request being simulated") {
         Requests requests;
@@ -54,12 +47,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
 }
 
 TEST_CASE("Multiple requests - [Scheduler]") {
-    std::print("Scheduler test 2\n");
-    std::filesystem::path testDataPath = std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
-    std::print("Loading environment from: {}\n", testDataPath.string());
-    std::print("File exists: {}\n", (std::filesystem::exists(testDataPath) ? "yes" : "no"));
-
-    Environment env(testDataPath);
+    Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
 
     SECTION("Parking is filled") {
         Requests requests;

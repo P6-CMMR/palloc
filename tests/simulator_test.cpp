@@ -11,11 +11,6 @@ TEST_CASE("Base case - [Simulator]") {
     const std::filesystem::path tempResultPath =
         std::filesystem::path(PROJECT_ROOT) / "tests/temp_result.json";
 
-    std::print("Loading environment from: {}\n", testDataPath.string());
-    std::print("File exists: {}\n", (std::filesystem::exists(testDataPath) ? "yes" : "no"));
-    std::print("Loading result from: {}\n", tempResultPath.string());
-    std::print("File exists: {}\n", (std::filesystem::exists(tempResultPath) ? "yes" : "no"));
-
     OutputSettings outputSettings{
         .outputPath = tempResultPath, .numberOfRunsToAggregate = 1, .prettify = true};
     GeneralSettings generalSettings{.numberOfThreads = 1};

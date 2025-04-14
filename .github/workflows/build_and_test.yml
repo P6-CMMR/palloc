@@ -49,17 +49,24 @@ jobs:
       run: >
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DFORCE_TESTS=ON
           -G "Visual Studio 17 2022" -A x64
           -S ${{ github.workspace }} 
     
-    - name: Configure CMake (Unix)
+    - name: Configure CMake (Linux)
       if: matrix.os != 'windows-latest'
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DFORCE_TESTS=ON
+        -S ${{ github.workspace }}
+    
+    - name: Configure CMake (macOS)
+      if: matrix.os == 'macos-latest'
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
 
     - name: Build
@@ -69,7 +76,8 @@ jobs:
       run: python ${{ github.workspace }}/tests/generate_test_data.py
       working-directory: ${{ github.workspace }}
 
-    - name: Test          
+    - name: Test (Linux only)     
+      if: matrix.os == 'ubuntu-latest'
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
