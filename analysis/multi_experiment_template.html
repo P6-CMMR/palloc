@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Palloc Simulation Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { color: #2c3e50; }
+        .container { 
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .settings-container {
+            border-left: 5px solid #27ae60;  
+        }
+        .stats-container { 
+            border-left: 5px solid #3498db; 
+        }
+        .assignments-container {
+            border-left: 5px solid #9b59b6;  
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .stat-item { 
+            margin: 8px 0;
+        }
+        .stat-item span:first-child { 
+            font-weight: bold;
+            margin-right: 10px; 
+        }
+        .plot-links { margin: 20px 0; }
+        .plot-links a { 
+            display: block; 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #f5f5f5; 
+            text-decoration: none;
+            color: #3498db;
+            border-radius: 5px;
+        }
+        .plot-links a:hover {
+            background: #e0e0e0;
+        }
+        .assignment-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .assignment-item:last-child {
+            border-bottom: none;
+        }
+        .assignment-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .route-link-btn {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 4px 8px;
+            background-color: #9b59b6;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .route-link-btn:hover {
+            background-color: #8e44ad;
+        }
+        .route-link {
+            margin-top: 5px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            background-color: #2c3e50;
+            color: white; 
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #1a252f;
+        }
+        .experiment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .result-file-info {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .run-tabs {
+            margin-top: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .tab-button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .tab-button.active {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .tab-content {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 0 5px 5px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="experiment-header">
+        <div>
+            <h1>Palloc Simulation Results</h1>
+            <h2>{{experiment_name}}</h2>
+        </div>
+        <a href="../index.html" class="back-button">Back to All Experiments</a>
+    </div>
+    <h2>Simulation Settings</h2>
+    <div class="container settings-container">
+        <div class="stat-item">
+            <span>Timesteps:</span>
+            <span>{{timesteps}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Start Time:</span>
+            <span>{{start_time}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Request Duration:</span>
+            <span>{{max_request_duration}}</span>
+        </div>
+        <div class="stat-item">
+
+            <span>Max Request Time Till Arrival:</span>
+            <span>{{max_request_arrival}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Request Rate Per Step:</span>
+            <span>{{request_rate}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Batch Interval:</span>
+            <span>{{batch_interval}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Using Weighted Parking:</span>
+            <span>{{using_weighted_parking}}</span>
+        </div>
+    </div>
+    <h2>General Statistics</h2>
+    <div class="container stats-container">
+        <div class="stat-item">
+            <span>Dropped Requests Range:</span>
+            <span>{{range_dropped}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Average Duration Range:</span>
+            <span>{{range_avg_duration}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Cost Range:</span>
+            <span>{{range_cost}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Global Average Cost:</span>
+            <span>{{global_avg_cost}}</span>
+        </div>
+    </div>
+    <h2>Plots</h2>
+  
+    </div>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 import json
 import sys
@@ -200,6 +201,128 @@ def create_map_visualization(env, data, output_dir_path):
         f.write(map_html)
 
     return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
+
+def create_multi_experiment_html(json_files, output_dir_path):
+    """Create html from comulative experiment data and save to experiment directory."""
+    os.makedirs(output_dir_path, exist_ok=True)
+
+    metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
+
+    request_rate_arr = []
+    duration_arr = []
+    arrival_arr = []
+    interval_arr = []
+    cost = {}
+
+    for metric1 in metrics:
+        for metric2 in metrics:
+            if metric1 == metric2:
+                continue
+            cost[metric1 + " | " + metric2] = {"label": "x: " + metric1 + " | y: "  + metric2, "cost": {}}
+
+    
+    for json_file in json_files:
+        metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
+
+        data = load_results(json_file)
+        simulation_cost = data.get("global_avg_cost")
+        settings = data.get("settings")
+
+        metrics["Request Rate"] = settings.get("request_rate")
+        metrics["Max Duration"] = settings.get("max_request_duration")
+        metrics["Max Arrival"] = settings.get("max_time_till_arrival")
+        metrics["Batching Interval"]  = settings.get("batch_interval")
+
+        request_rate_arr.append(metrics["Request Rate"])
+        duration_arr.append(metrics["Max Duration"])
+        arrival_arr.append(metrics["Max Arrival"])
+        interval_arr.append(metrics["Batching Interval"])
+
+        for metric1 in metrics:
+            for metric2 in metrics:
+                if metric1 == metric2:
+                    continue
+
+                temp_metrics = metrics.copy()
+                temp_metrics.pop(metric1)
+                temp_metrics.pop(metric2)
+                remaining_metrics_str = ""
+
+                for metric in temp_metrics:
+                    remaining_metrics_str += metric + ":" + str(temp_metrics[metric]) + "|"
+                remaining_metrics_str
+                remaining_metrics_str = remaining_metrics_str[:-1]
+                if remaining_metrics_str not in cost[metric1 + " | " + metric2]["cost"]:
+                    cost[metric1 + " | " + metric2]["cost"][remaining_metrics_str] = [simulation_cost]
+                else:
+                    cost[metric1 + " | " + metric2]["cost"][remaining_metrics_str].append(simulation_cost)
+
+    # Initial figure with length on the x-axis and height on the y-axis
+    fig = go.Figure()
+    first_result = cost["Request Rate | Max Duration"][next(iter( cost["Request Rate | Max Duration"] ))]
+    fig.add_trace(go.Contour(
+        z=first_result,
+        x=request_rate_arr,
+        y=duration_arr
+    ))
+
+    updatemenus=[
+        {
+            "buttons": [
+                {
+                    "label": "Length vs Height",
+                    "method": "update",
+                    "args": [
+                        {"x": [data["length"]], "y": [data["height"]], "z":[data["length_height"]]},
+                        {"xaxis": {"title": "Length"}, "yaxis": {"title": "Height"}}
+                    ]
+                }
+            ],
+            "direction": "down",
+            "showactive": True,
+        }
+    ]
+
+    
+    updatemenus[0]["buttons"].append()
+
+    # Update menus for dropdown
+    fig.update_layout(
+        updatemenus=[
+            {
+                "buttons": [
+                    {
+                        "label": "Length vs Height",
+                        "method": "update",
+                        "args": [
+                            {"x": [data["length"]], "y": [data["height"]], "z":[data["length_height"]]},
+                            {"xaxis": {"title": "Length"}, "yaxis": {"title": "Height"}}
+                        ]
+                    }
+                ],
+                "direction": "down",
+                "showactive": True,
+            }
+        ]
+    )
+
+
+
+    # Add axis titles
+    fig.update_layout(xaxis_title="Length", yaxis_title="Height")
+
+        
+
+
+    #metrics = {
+    #    "max_request_rate": {"label": "Max Request Rate", "data": request_rate},
+    #    "max_duration": {"label": "Max Duration", "data": duration},
+    #    "max_arrival": {"label": "Max Early Arrival", "data": arrival},
+    #    "batch_interval": {"label": "Interval of Batching", "data": interval}
+    #}
+
+
+
 
 def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file="", single_file=False):
     """Create html from simulation data and save to experiment directory."""
@@ -503,6 +626,10 @@ def create_browser_index(experiments_root):
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
         if json_files:
+            # Insert shared part here
+
+
+
             experiments_html += '<h3>Configurations</h3><div class="run-grid">'
             
             for json_file in json_files:
@@ -510,11 +637,17 @@ def create_browser_index(experiments_root):
                 
                 duration = "Unknown"
                 rate = "Unknown"
-                if config_name.startswith("d") and "-r" in config_name:
-                    parts = config_name.split("-r")
-                    if len(parts) == 2:
+                arrival = "Unknown"
+                if config_name.startswith("d") and "-a" in config_name and "-r" in config_name:
+                    delimiters = ["-a", "-r"]
+                    temp_config_name = config_name
+                    for delimiter in delimiters:
+                            temp_config_name = " ".join(temp_config_name.split(delimiter))
+                    parts = temp_config_name.split()
+                    if len(parts) == 3:
                         duration = parts[0][1:]  # Remove the "d" prefix
-                        rate = parts[1]
+                        arrival = parts[1]
+                        rate = parts[2]
                 
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
@@ -524,6 +657,7 @@ def create_browser_index(experiments_root):
                         <div class="config-name">{config_name}</div>
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
+                            <div class="config-detail">Early Arrival: {arrival} min</div>
                             <div class="config-detail">Rate: {rate}</div>
                         </div>
                     </a>
@@ -564,6 +698,8 @@ def process_experiments(env, experiments_dir):
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
+        create_multi_experiment_html(json_files,  report_root / exp_name)
+
         for json_file in json_files:
             config_name = os.path.basename(json_file).replace(".json", "")
 
