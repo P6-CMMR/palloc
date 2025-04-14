@@ -2,8 +2,6 @@
 
 #include "catch2/catch_test_macros.hpp"
 
-#include <print>
-
 using namespace palloc;
 
 TEST_CASE("Base case - [Simulator]") {
