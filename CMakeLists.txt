@@ -25,7 +25,15 @@ elseif(APPLE)
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PLATFORM_DIR}/bin")
-    
+
+# Fix for MSVC insisting on adding more folders
+if(MSVC)
+    foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+        string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${PLATFORM_DIR}/bin")
+    endforeach()
+endif()
+
 # Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 

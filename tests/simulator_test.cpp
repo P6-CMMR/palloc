@@ -5,7 +5,6 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Simulator]") {
-    std::print("Simulator test 1\n");
     const std::filesystem::path testDataPath =
         std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
     const std::filesystem::path tempResultPath =

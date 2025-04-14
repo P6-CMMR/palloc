@@ -13,12 +13,3 @@ target_link_libraries(${PROJECT_NAME} PRIVATE libpalloc)
 if(NOT WIN32)
     set_source_files_properties(${PROJECT_NAME}.cpp PROPERTIES COMPILE_FLAGS "-Wno-missing-field-initializers")
 endif()
-
-# Cleanup
-if(WIN32)
-    add_custom_command(
-        TARGET ${PROJECT_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E remove_directory "${PLATFORM_DIR}/lib"
-    )
-endif()
