@@ -53,17 +53,8 @@ jobs:
           -DFORCE_TESTS=ON
           -S ${{ github.workspace }} 
     
-    - name: Configure CMake (Linux)
+    - name: Configure CMake (Unix)
       if: matrix.os != 'windows-latest'
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DFORCE_TESTS=ON
-        -S ${{ github.workspace }}
-    
-    - name: Configure CMake (macOS)
-      if: matrix.os == 'macos-latest'
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
