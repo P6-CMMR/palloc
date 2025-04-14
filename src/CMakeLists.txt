@@ -1,6 +1,8 @@
 file(GLOB_RECURSE LIB_SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 list(FILTER LIB_SOURCES EXCLUDE REGEX ".*palloc\\.cpp$")
 
+set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+
 add_executable(${PROJECT_NAME} "${PROJECT_SOURCE_DIR}/src/palloc.cpp")
 if(LIB_SOURCES)
     add_library(libpalloc STATIC ${LIB_SOURCES})
