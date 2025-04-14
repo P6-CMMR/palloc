@@ -12,13 +12,10 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [windows-latest, ubuntu-latest]
         build_type: [Release]
         include:
           - os: windows-latest
           - os: ubuntu-latest
-            cpp_compiler: g++
-          - os: macos-latest
             cpp_compiler: g++
 
     steps:
