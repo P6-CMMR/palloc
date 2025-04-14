@@ -72,7 +72,8 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Generate Test Data
+    - name: Generate Test Data (Linux only)
+      if: matrix.os == 'ubuntu-latest'
       run: python ${{ github.workspace }}/tests/generate_test_data.py
       working-directory: ${{ github.workspace }}
 
