@@ -41,6 +41,7 @@ jobs:
       with:
         platform: x64
         static: 0
+        version: 14.2
 
     - name: Set Build Output Directory
       id: strings
