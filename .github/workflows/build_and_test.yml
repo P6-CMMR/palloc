@@ -50,6 +50,7 @@ jobs:
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -G "Visual Studio 17 2022" -A x64
+          -DFORCE_TESTS=ON
           -S ${{ github.workspace }} 
     
     - name: Configure CMake (Linux)
@@ -72,13 +73,12 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Generate Test Data (Linux only)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Generate Test Data
       run: python ${{ github.workspace }}/tests/generate_test_data.py
       working-directory: ${{ github.workspace }}
 
-    - name: Test (Linux only)     
-      if: matrix.os == 'ubuntu-latest'
+    - name: Test
+      if: matrix.os != 'macos-latest'
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
@@ -97,7 +97,14 @@ jobs:
       uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
       with:
         name: palloc-linux
-        path: ${{ steps.strings.outputs.build-output-dir }}/palloc-linux
+        path: |
+            ${{ steps.strings.outputs.build-output-dir }}/palloc-linux
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/examples
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/include
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/Makefile
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/README.md
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/lib/cmake
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/ortools/lib/pkgconfig
         if-no-files-found: error
     
     - name: Upload macOS
@@ -105,5 +112,6 @@ jobs:
       uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
       with:
         name: palloc-macos
-        path: ${{ steps.strings.outputs.build-output-dir }}/palloc-macos
+        path: |
+            ${{ steps.strings.outputs.build-output-dir }}/palloc-macos
         if-no-files-found: error

@@ -18,3 +18,14 @@ endif()
 if(NOT MSVC)
     set_source_files_properties(${PROJECT_NAME}.cpp PROPERTIES COMPILE_FLAGS "-Wno-missing-field-initializers")
 endif()
+
+# Move or-tools license file to lib/or-tools
+add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${PLATFORM_DIR}/licenses/or-tools"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${PLATFORM_DIR}/lib/or-tools/share/doc/ortools/LICENSE"
+        "${PLATFORM_DIR}/licenses/or-tools/LICENSE"
+    COMMENT "Copying OR-Tools license to output directory"
+)
