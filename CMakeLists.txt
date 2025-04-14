@@ -16,16 +16,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-set(BUILD_SHARED_LIBS OFF) # Static library by default
-
-if(BUILD_SHARED_LIBS)
-    message(STATUS "Building shared library")
-else()
-    message(STATUS "Building static library")
-endif()
 
 # Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+
+if(UNIX)
+    if(APPLE)
+        set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
+    else()
+        set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+    endif()
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "/W4 /Od /DEBUG")
@@ -37,7 +40,7 @@ else()
     set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
 endif()
 
-if (NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
