@@ -1,5 +1,7 @@
 #include "scheduler.hpp"
 
+#include <print>
+
 #include "catch2/catch_test_macros.hpp"
 #include "environment.hpp"
 #include "request_generator.hpp"
@@ -7,7 +9,11 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
-    Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
+    std::filesystem::path testDataPath = std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
+    std::print("Loading environment from: {}\n", testDataPath.string());
+    std::print("File exists: {}\n", (std::filesystem::exists(testDataPath) ? "yes" : "no"));
+
+    Environment env(testDataPath);
 
     SECTION("Request being simulated") {
         Requests requests;
