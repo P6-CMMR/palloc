@@ -35,18 +35,9 @@ jobs:
         restore-keys: |
             ${{ runner.os }}-build-
 
-    - name: Setup MSYS2 with GCC 14.2
+    - name: Setup MSVC
       if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
-      with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            make
+      uses: ilammy/msvc-dev-cmd@v1.13.0
 
     - name: Set Build Output Directory
       id: strings
@@ -56,15 +47,13 @@ jobs:
 
     - name: Configure CMake (Windows)
       if: matrix.os == 'windows-latest'
-      shell: msys2 {0}
-      run: |
-        cmake -B ${{ steps.strings.outputs.build-output-dir }} \
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DFORCE_TESTS=ON \
-        -G "Ninja" \
-        -S ${{ github.workspace }}
-
+      run: >
+          cmake -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DFORCE_TESTS=ON
+          -G "Visual Studio 17 2022" -A x64
+          -S ${{ github.workspace }} 
+    
     - name: Configure CMake (Unix)
       if: matrix.os != 'windows-latest'
       run: >
