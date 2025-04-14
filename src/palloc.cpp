@@ -55,13 +55,13 @@ int main(int argc, char **argv) {
              "number of aggregates)"}};
 
         argz::parse(about, opts, argc, argv);
-        if (environmentPathStr.empty() && !about.printed_help) {
-            std::println(stderr, "Error: Expected environment file");
-            return EXIT_FAILURE;
+        if (about.printed_help || about.printed_version) {
+            return EXIT_SUCCESS;
         }
 
         if (environmentPathStr.empty()) {
-            return EXIT_SUCCESS;
+            std::println(stderr, "Error: Expected environment file");
+            return EXIT_FAILURE;
         }
 
         if (simSettings.timesteps < 1) {
