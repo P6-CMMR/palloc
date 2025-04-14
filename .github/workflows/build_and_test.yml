@@ -78,7 +78,6 @@ jobs:
       working-directory: ${{ github.workspace }}
 
     - name: Test
-      if: matrix.os != 'macos-latest'
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
