@@ -1,134 +1,34 @@
-import plotly.graph_objects as go
 import numpy as np
+import plotly.graph_objects as go
 
-# Example data
-data = {
-    "length": np.linspace(1, 5, 10),
-    "height": np.linspace(10, 50, 10),
-    "width": np.linspace(100, 500, 10)
-}
+# Define your variables
+heights = [1, 2, 3, 4]  # Rows (e.g., heights)
+lengths = [1, 2, 3, 4, 5]  # Columns (e.g., lengths)
 
-# Generate z-values for the contours
-def generate_contour_data(x, y):
-    X, Y = np.meshgrid(x, y)
-    Z = np.sin(X) + np.cos(Y)  # Example function
-    return X, Y, Z
-
-# Default x, y, z
-X, Y, Z = generate_contour_data(data["length"], data["height"])
-
-# Create initial contour plot
-fig = go.Figure(go.Contour(z=Z, x=data["length"], y=data["height"], contours_coloring='heatmap'))
-
-# Dropdown menus for axes
-x_axis_menu = [
-    {
-        "label": "Length",
-        "method": "update",
-        "args": [
-            {"x": [data["length"]]},
-            {"xaxis": {"title": "Length"}}
-        ]
-    },
-    {
-        "label": "Height",
-        "method": "update",
-        "args": [
-            {"x": [data["height"]]},
-            {"xaxis": {"title": "Height"}}
-        ]
-    },
-    {
-        "label": "Width",
-        "method": "update",
-        "args": [
-            {"x": [data["width"]]},
-            {"xaxis": {"title": "Width"}}
-        ]
-    }
+# Define values for each (height, length) combination
+values = [
+    [5, 2, 1, 3, 4],  # height = 1
+    [4, 3, 2, 5, 6],  # height = 2
+    [7, 6, 5, 4, 3],  # height = 3
+    [8, 7, 6, 5, 4]   # height = 4
 ]
 
-y_axis_menu = [
-    {
-        "label": "Length",
-        "method": "update",
-        "args": [
-            {"y": [data["length"]]},
-            {"yaxis": {"title": "Length"}}
-        ]
-    },
-    {
-        "label": "Height",
-        "method": "update",
-        "args": [
-            {"y": [data["height"]]},
-            {"yaxis": {"title": "Height"}}
-        ]
-    },
-    {
-        "label": "Width",
-        "method": "update",
-        "args": [
-            {"y": [data["width"]]},
-            {"yaxis": {"title": "Width"}}
-        ]
-    }
-]
+# Create a contour plot
+fig = go.Figure()
 
-z_axis_menu = [
-    {
-        "label": "Sin(X) + Cos(Y)",
-        "method": "update",
-        "args": [
-            {"z": [generate_contour_data(data["length"], data["height"])[2]]},
-            {}
-        ]
-    },
-    {
-        "label": "X * Y",
-        "method": "update",
-        "args": [
-            {"z": [generate_contour_data(data["length"], data["height"])[0] * generate_contour_data(data["length"], data["height"])[1]]},
-            {}
-        ]
-    }
-]
-
-# Add dropdowns to the layout
-fig.update_layout(
-    updatemenus=[
-        {
-            "buttons": x_axis_menu,
-            "direction": "down",
-            "showactive": True,
-            "x": 0.1,
-            "y": 1.15,
-            "xanchor": "left",
-            "yanchor": "top"
-        },
-        {
-            "buttons": y_axis_menu,
-            "direction": "down",
-            "showactive": True,
-            "x": 0.3,
-            "y": 1.15,
-            "xanchor": "left",
-            "yanchor": "top"
-        },
-        {
-            "buttons": z_axis_menu,
-            "direction": "down",
-            "showactive": True,
-            "x": 0.5,
-            "y": 1.15,
-            "xanchor": "left",
-            "yanchor": "top"
-        }
-    ]
+fig.add_trace(
+    go.Contour(
+        z=values,  # Data values
+        x=lengths,  # Lengths (X-axis)
+        y=heights,  # Heights (Y-axis)
+        colorscale="Viridis",
+        contours=dict(showlabels=True),  # Add labels to the contours
+    )
 )
 
-# Initial axis titles
+# Add titles and labels
 fig.update_layout(
+    title="Contour Plot of Length and Height Combinations",
     xaxis_title="Length",
     yaxis_title="Height"
 )

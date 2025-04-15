@@ -202,16 +202,23 @@ def create_map_visualization(env, data, output_dir_path):
 
     return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
 
+def arr_has_duplicate(arr):
+    arr.sort()
+    prev_el = None
+    for el in arr:
+        if el == prev_el:
+            return True
+        prev_el = el
+        
+    return False
+        
+
 def create_multi_experiment_html(json_files, output_dir_path):
     """Create html from comulative experiment data and save to experiment directory."""
     os.makedirs(output_dir_path, exist_ok=True)
 
-    metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
+    metrics = {"Request Rate": [], "Max Duration": [], "Max Arrival": [], "Batching Interval":[]}
 
-    request_rate_arr = []
-    duration_arr = []
-    arrival_arr = []
-    interval_arr = []
     cost = {}
 
     for metric1 in metrics:
@@ -222,21 +229,15 @@ def create_multi_experiment_html(json_files, output_dir_path):
 
     
     for json_file in json_files:
-        metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
 
         data = load_results(json_file)
         simulation_cost = data.get("global_avg_cost")
         settings = data.get("settings")
 
-        metrics["Request Rate"] = settings.get("request_rate")
-        metrics["Max Duration"] = settings.get("max_request_duration")
-        metrics["Max Arrival"] = settings.get("max_time_till_arrival")
-        metrics["Batching Interval"]  = settings.get("batch_interval")
-
-        request_rate_arr.append(metrics["Request Rate"])
-        duration_arr.append(metrics["Max Duration"])
-        arrival_arr.append(metrics["Max Arrival"])
-        interval_arr.append(metrics["Batching Interval"])
+        metrics["Request Rate"].append(settings.get("request_rate"))
+        metrics["Max Duration"].append(settings.get("max_request_duration"))
+        metrics["Max Arrival"].append(settings.get("max_time_till_arrival"))
+        metrics["Batching Interval"].append(settings.get("batch_interval"))
 
         for metric1 in metrics:
             for metric2 in metrics:
@@ -249,7 +250,7 @@ def create_multi_experiment_html(json_files, output_dir_path):
                 remaining_metrics_str = ""
 
                 for metric in temp_metrics:
-                    remaining_metrics_str += metric + ":" + str(temp_metrics[metric]) + "|"
+                    remaining_metrics_str += metric + ":" + str(temp_metrics[metric][len(temp_metrics[metric]) - 1]) + "|"
                 remaining_metrics_str
                 remaining_metrics_str = remaining_metrics_str[:-1]
                 if remaining_metrics_str not in cost[metric1 + " | " + metric2]["cost"]:
@@ -259,60 +260,63 @@ def create_multi_experiment_html(json_files, output_dir_path):
 
     # Initial figure with length on the x-axis and height on the y-axis
     fig = go.Figure()
-    first_result = cost["Request Rate | Max Duration"][next(iter( cost["Request Rate | Max Duration"] ))]
+
+    inner_key = next(iter(cost["Request Rate | Max Duration"]["cost"]))
+ 
+    z = [cost["Request Rate | Max Duration"]["cost"][inner_key], 
+         cost["Request Rate | Max Duration"]["cost"][inner_key], 
+         cost["Request Rate | Max Duration"]["cost"][inner_key], 
+         cost["Request Rate | Max Duration"]["cost"][inner_key]]
+    x = metrics["Request Rate"]
+    y = metrics["Max Duration"]
+
     fig.add_trace(go.Contour(
-        z=first_result,
-        x=request_rate_arr,
-        y=duration_arr
+        z=z,
+        x=x,
+        y=y,
+        colorscale="Viridis"
     ))
 
     updatemenus=[
         {
-            "buttons": [
-                {
-                    "label": "Length vs Height",
-                    "method": "update",
-                    "args": [
-                        {"x": [data["length"]], "y": [data["height"]], "z":[data["length_height"]]},
-                        {"xaxis": {"title": "Length"}, "yaxis": {"title": "Height"}}
-                    ]
-                }
-            ],
+            "buttons": [],
             "direction": "down",
             "showactive": True,
         }
     ]
 
-    
-    updatemenus[0]["buttons"].append()
+    for config_key in cost:
+        config = cost[config_key]
+
+        for inner_key in config["cost"]:
+            split = config_key.split(" | ")
+
+            x = metrics[split[0]]
+            y = metrics[split[1]]
+            if arr_has_duplicate(x) or arr_has_duplicate(y):
+                continue
+            
+            updatemenus[0]["buttons"].append(
+                {
+                    "label": config["label"] + " | " + inner_key,
+                    "method": "update",
+                    "args": [
+                        {"x": [metrics[split[0]]], 
+                         "y": [metrics[split[1]]], 
+                         "z":[config["cost"][inner_key]]},
+                        {"xaxis": {"title": split[0]}, "yaxis": {"title": split[1]}}
+                    ]
+                }  
+            )
 
     # Update menus for dropdown
     fig.update_layout(
-        updatemenus=[
-            {
-                "buttons": [
-                    {
-                        "label": "Length vs Height",
-                        "method": "update",
-                        "args": [
-                            {"x": [data["length"]], "y": [data["height"]], "z":[data["length_height"]]},
-                            {"xaxis": {"title": "Length"}, "yaxis": {"title": "Height"}}
-                        ]
-                    }
-                ],
-                "direction": "down",
-                "showactive": True,
-            }
-        ]
+        updatemenus=updatemenus
     )
 
 
-
-    # Add axis titles
-    fig.update_layout(xaxis_title="Length", yaxis_title="Height")
-
+    fig.show()
         
-
 
     #metrics = {
     #    "max_request_rate": {"label": "Max Request Rate", "data": request_rate},
