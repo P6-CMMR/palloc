@@ -161,14 +161,13 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
         density_normalized = density / density_max
     else:
         density_normalized = density
-        
-    MAX_WEIGHT = 100
+
     parking_weights = []
     for lat, lon in parking_coords:
         i = int(np.floor((lat - min_lat) / lat_range * (GRID_SIZE - 1)))
         j = int(np.floor((lon - min_lon) / lon_range * (GRID_SIZE - 1)))
         
-        weight = int(round(density_normalized[i][j] * MAX_WEIGHT))
+        weight = density_normalized[i][j]
         parking_weights.append(weight)
         
     density_grid = []
