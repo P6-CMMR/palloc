@@ -15,8 +15,8 @@ if [ ! -f "build/palloc" ]; then
     exit 1
 fi
 
-if [ ! -f "environment.json" ]; then
-    echo "Error: environment.json not found in project root."
+if [ ! -f "aalborg_env.json" ]; then
+    echo "Error: aalborg_env.json not found in project root."
     exit 1
 fi
 
@@ -374,12 +374,15 @@ while read job_info; do
     output=$(echo $job_info | cut -d'|' -f5)
     
     (
-        ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" "$WEIGHTS" > /dev/null 2>&1
+        if [ -n "$WEIGHTS" ]; then
+            ./build/palloc -e aalborg_env.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" -w > /dev/null 2>&1
+        else
+            ./build/palloc -e aalborg_env.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
+        fi
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
 
-        
         increment_progress
         
         # Return the semaphore slot
@@ -404,5 +407,5 @@ echo "Created experiment directory: $exp_dir"
 
 # Generate reports
 echo "Generating reports..."
-python analysis/generate_report.py environment.json experiments/
+python analysis/generate_report.py aalborg_env.json experiments/
 
