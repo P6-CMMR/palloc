@@ -5,8 +5,7 @@ import numpy as np
 import argparse
 
 from typing import cast
-from sklearn.model_selection import RandomizedSearchCV
-from scipy.stats import uniform
+from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 
 def read_osm(filename: str):
@@ -154,18 +153,16 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
     positions = np.vstack([lat_mesh.ravel(), lon_mesh.ravel()])
     
     values = np.vstack([lats, lons])
-    search_space = {'bandwidth': uniform(1e-3, 1)} 
+    search_space = {"bandwidth": np.linspace(1e-3, 1e-2, 100)}
 
-    search_grid = RandomizedSearchCV(
-        KernelDensity(kernel='gaussian'),
+    search_grid = GridSearchCV(
+        KernelDensity(kernel="gaussian"),
         search_space,
-        n_iter=100,
         n_jobs=-1, 
-        cv=5,
-        random_state=42
+        cv=5
     )
     search_grid.fit(values.T)
-    best_bandwidth = search_grid.best_params_['bandwidth']
+    best_bandwidth = search_grid.best_params_["bandwidth"]
     
     print(f"Best KDE bandwidth found: {best_bandwidth}")
     
