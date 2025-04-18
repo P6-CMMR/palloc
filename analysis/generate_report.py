@@ -211,9 +211,15 @@ def arr_has_duplicate(arr):
         prev_el = el
         
     return False
-        
 
-def create_multi_experiment_html(json_files, output_dir_path):
+def add_non_duplicate(arr, el):
+    try:
+        arr.index(el)
+    except:
+        arr.append(el)
+    return arr
+
+def create_experiment_graph_html(json_files, output_dir_path):
     """Create html from comulative experiment data and save to experiment directory."""
     os.makedirs(output_dir_path, exist_ok=True)
 
@@ -234,10 +240,10 @@ def create_multi_experiment_html(json_files, output_dir_path):
         simulation_cost = data.get("global_avg_cost")
         settings = data.get("settings")
 
-        metrics["Request Rate"].append(settings.get("request_rate"))
-        metrics["Max Duration"].append(settings.get("max_request_duration"))
-        metrics["Max Arrival"].append(settings.get("max_time_till_arrival"))
-        metrics["Batching Interval"].append(settings.get("batch_interval"))
+        metrics["Request Rate"] = add_non_duplicate(metrics["Request Rate"], settings.get("request_rate"))
+        metrics["Max Duration"] = add_non_duplicate(metrics["Max Duration"], settings.get("max_request_duration"))
+        metrics["Max Arrival"] = add_non_duplicate(metrics["Max Arrival"], settings.get("max_time_till_arrival"))
+        metrics["Batching Interval"] = add_non_duplicate(metrics["Batching Interval"], settings.get("batch_interval"))
 
         for metric1 in metrics:
             for metric2 in metrics:
@@ -293,7 +299,7 @@ def create_multi_experiment_html(json_files, output_dir_path):
 
             x = metrics[split[0]]
             y = metrics[split[1]]
-            if arr_has_duplicate(x) or arr_has_duplicate(y):
+            if len(x) < 2  or len(y) < 2:
                 continue
             
             updatemenus[0]["buttons"].append(
@@ -314,19 +320,16 @@ def create_multi_experiment_html(json_files, output_dir_path):
         updatemenus=updatemenus
     )
 
+    try:
+        button_template_path = Path(__file__).parent / "index_graph_button_template.html"
+        with open(button_template_path, "r") as f:
+            button_template = f.read()
 
-    fig.show()
-        
+    except Exception as e:
+        print(f"Error loading button template: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    #metrics = {
-    #    "max_request_rate": {"label": "Max Request Rate", "data": request_rate},
-    #    "max_duration": {"label": "Max Duration", "data": duration},
-    #    "max_arrival": {"label": "Max Early Arrival", "data": arrival},
-    #    "batch_interval": {"label": "Interval of Batching", "data": interval}
-    #}
-
-
-
+    write_html_with_button(fig, "contour_graph.html", button_template, output_dir_path)
 
 def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file="", single_file=False):
     """Create html from simulation data and save to experiment directory."""
@@ -632,8 +635,16 @@ def create_browser_index(experiments_root):
         if json_files:
             # Insert shared part here
 
+            experiments_html += '<div class="run-grid">'
+            experiments_html += f"""
+                <div class="config-item">
+                    <a href="{exp_name}/contour_graph.html" class="config-link">
+                        <div class="config-name">{exp_name.capitalize()} Contour Graph</div>
+                    </a>
+                </div>
+                """
 
-
+            experiments_html += "</div>"
             experiments_html += '<h3>Configurations</h3><div class="run-grid">'
             
             for json_file in json_files:
@@ -702,7 +713,7 @@ def process_experiments(env, experiments_dir):
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
-        create_multi_experiment_html(json_files,  report_root / exp_name)
+        create_experiment_graph_html(json_files,  report_root / exp_name)
 
         for json_file in json_files:
             config_name = os.path.basename(json_file).replace(".json", "")
