@@ -17,7 +17,7 @@ struct SchedulerResult {
 class Scheduler {
    public:
     static SchedulerResult scheduleBatch(Environment &env, Requests &requests,
-                                         bool useWeightedParking);
+                                         const SimulatorSettings &simSettings);
 
     static constexpr int MAX_SEARCH_TIME = 60000;
     static constexpr int PARKING_NODES_TO_VISIT = 1;

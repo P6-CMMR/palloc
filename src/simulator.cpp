@@ -188,8 +188,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
             if (!requests.empty()) {
-                const auto batchResult =
-                    Scheduler::scheduleBatch(env, requests, simSettings.useWeightedParking);
+                const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
                 requests.clear();
 
                 batchCost = batchResult.cost;

@@ -8,7 +8,7 @@ using namespace palloc;
 using namespace operations_research;
 
 SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
-                                         bool useWeightedParking) {
+                                         const SimulatorSettings &simSettings) {
     assert(!requests.empty());
 
     sat::CpModelBuilder cpModel;
@@ -40,13 +40,14 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     }
 
     // If travel time longer than request duration it cannot be assigned from r -> p
+    const auto minParkingTime = simSettings.minParkingTime;
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].getDropoffNode();
         const auto requestDuration = requests[i].getRequestDuration();
         for (size_t j = 0; j < numberOfParkings; ++j) {
             const auto travelTime =
                 (parkingToDropoff[j][dropoffNode] + dropoffToParking[dropoffNode][j]);
-            if (travelTime > requestDuration) {
+            if (travelTime + minParkingTime > requestDuration) {
                 cpModel.AddEquality(var[i][j], 0);
             }
         }
@@ -69,6 +70,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
 
     // Minimize global cost of all requests
     sat::LinearExpr objective;
+    const bool useWeightedParking = simSettings.useWeightedParking;
     for (size_t i = 0; i < requestCount; ++i) {
         const auto dropoffNode = requests[i].getDropoffNode();
         const auto dropFactor = 1 + requests[i].getTimesDropped();
