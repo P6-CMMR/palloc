@@ -8,12 +8,16 @@ using namespace palloc;
 
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
+    SimulatorSettings simSettings{
+        .minParkingTime = 0,
+        .useWeightedParking = false
+    };
 
     SECTION("Request being simulated") {
         Requests requests;
 
         requests.emplace_back(0, 10, 0);
-        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
 
         REQUIRE(batchResult.simulations.size() == 1);
         REQUIRE(batchResult.unassignedRequests.empty());
@@ -25,7 +29,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         Requests requests;
 
         requests.emplace_back(1, 5, 1);
-        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
 
         REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.empty());
@@ -37,7 +41,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         Requests requests;
 
         requests.emplace_back(1, 1, 0);
-        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
 
         REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.size() == 1);
@@ -48,6 +52,10 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
 
 TEST_CASE("Multiple requests - [Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
+    SimulatorSettings simSettings{
+        .minParkingTime = 0,
+        .useWeightedParking = false
+    };
 
     SECTION("Parking is filled") {
         Requests requests;
@@ -56,7 +64,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
             requests.emplace_back(1, 7, 0);
         }
 
-        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
 
         REQUIRE(batchResult.simulations.size() == requestAmount - 1);
         REQUIRE(batchResult.unassignedRequests.size() == 1);
@@ -72,7 +80,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
             requests.emplace_back(1, 1, 0);
         }
 
-        const auto batchResult = Scheduler::scheduleBatch(env, requests, false);
+        const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
 
         REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.size() == requestAmount);

@@ -327,6 +327,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     max_request_arrival_raw = settings.get("max_request_arrival", "N/A")
     max_request_arrival = f"{max_request_arrival_raw}m" if max_request_arrival_raw != "N/A" else "N/A"
     
+    min_parking_time_raw = settings.get("min_parking_time", "N/A")
+    min_parking_time = f"{min_parking_time_raw}m" if min_parking_time_raw != "N/A" else "N/A"
+    
     request_rate = settings.get("request_rate", "N/A")
     
     batch_interval_raw = settings.get("batch_interval", "N/A")
@@ -439,6 +442,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{start_time}}", str(start_time))
     html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
     html_content = html_content.replace("{{max_request_arrival}}", str(max_request_arrival))
+    html_content = html_content.replacE("{{min_parking_time}}", str(min_parking_time))
     html_content = html_content.replace("{{request_rate}}", str(request_rate))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))

@@ -13,6 +13,7 @@ struct SimulatorSettings {
     uint32_t maxRequestDuration;
     double requestRate;
     uint32_t maxTimeTillArrival;
+    uint32_t minParkingTime;
     uint32_t batchInterval;
     uint32_t seed;
     bool useWeightedParking;
@@ -32,11 +33,11 @@ struct GeneralSettings {
 template <>
 struct glz::meta<palloc::SimulatorSettings> {
     using T = palloc::SimulatorSettings;
-    static constexpr auto value =
-        glz::object("timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
-                    &T::maxRequestDuration, "max_time_till_arrival", &T::maxTimeTillArrival,
-                    "request_rate", &T::requestRate, "batch_interval", &T::batchInterval,
-                    "using_weighted_parking", &T::useWeightedParking, "seed", &T::seed);
+    static constexpr auto value = glz::object(
+        "timesteps", &T::timesteps, "start_time", &T::startTime, "max_request_duration",
+        &T::maxRequestDuration, "max_time_till_arrival", &T::maxTimeTillArrival, "min_parking_time",
+        &T::minParkingTime, "request_rate", &T::requestRate, "batch_interval", &T::batchInterval,
+        "using_weighted_parking", &T::useWeightedParking, "seed", &T::seed);
 };
 
 #endif

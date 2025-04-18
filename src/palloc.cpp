@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
                                       .maxRequestDuration = 600,
                                       .requestRate = 10,
                                       .maxTimeTillArrival = 0,
+                                      .minParkingTime = 0,
                                       .batchInterval = 2,
                                       .useWeightedParking = false};
 
@@ -32,6 +33,9 @@ int main(int argc, char **argv) {
             {{"arrival", 'A'},
              simSettings.maxTimeTillArrival,
              "max duration of early requests in minutes"},
+            {{"minimum-parking-time", 'm'},
+             simSettings.minParkingTime,
+             "minimum parking time in minutes"},
             {{"requests", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
