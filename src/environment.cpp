@@ -28,7 +28,7 @@ const UintVector &Environment::getSmallestRoundTrips() const noexcept {
     return _smallestRoundTrips;
 }
 
-const UintVector &Environment::getParkingWeights() const noexcept { return _parkingWeights; }
+const DoubleVector &Environment::getParkingWeights() const noexcept { return _parkingWeights; }
 
 void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
     if (!std::filesystem::exists(environmentPath)) {

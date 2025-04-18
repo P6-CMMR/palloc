@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
             {{"minimum-parking-time", 'm'},
              simSettings.minParkingTime,
              "minimum parking time in minutes"},
-            {{"requests", 'r'},
+            {{"request-rate", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
             {{"batch-delay", 'b'},

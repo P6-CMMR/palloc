@@ -2,8 +2,11 @@ import xml.etree.ElementTree as ET
 import requests
 import json
 import numpy as np
-from scipy.stats import gaussian_kde # type: ignore
+import argparse
+
 from typing import cast
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KernelDensity
 
 def read_osm(filename: str):
     """Reads OSM file and returns the root element."""
@@ -150,8 +153,21 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
     positions = np.vstack([lat_mesh.ravel(), lon_mesh.ravel()])
     
     values = np.vstack([lats, lons])
-    kernel = gaussian_kde(values)
-    density = kernel(positions)
+    search_space = {"bandwidth": np.linspace(1e-3, 1e-2, 100)}
+
+    search_grid = GridSearchCV(
+        KernelDensity(kernel="gaussian"),
+        search_space,
+        n_jobs=-1, 
+        cv=5
+    )
+    search_grid.fit(values.T)
+    best_bandwidth = search_grid.best_params_["bandwidth"]
+    
+    print(f"Best KDE bandwidth found: {best_bandwidth}")
+    
+    log_density = search_grid.score_samples(positions.T) 
+    density = np.exp(log_density)
     
     # Reshape into a grid
     density = density.reshape(GRID_SIZE, GRID_SIZE)
@@ -160,14 +176,13 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
         density_normalized = density / density_max
     else:
         density_normalized = density
-        
-    MAX_WEIGHT = 100
+
     parking_weights = []
     for lat, lon in parking_coords:
         i = int(np.floor((lat - min_lat) / lat_range * (GRID_SIZE - 1)))
         j = int(np.floor((lon - min_lon) / lon_range * (GRID_SIZE - 1)))
         
-        weight = int(round(density_normalized[i][j] * MAX_WEIGHT))
+        weight = density_normalized[i][j]
         parking_weights.append(weight)
         
     density_grid = []
@@ -187,9 +202,9 @@ def write_response_to_file(dropoff_to_parking: list,
                            parking_to_dropoff: list, 
                            parking_capacities: list, 
                            dropoff_coords: list[tuple], 
-                           parking_coords: list[tuple]):
+                           parking_coords: list[tuple],
+                           filename: str):
     """Writes a data file to JSON format."""
-    filename = f"../environment.json"
 
     dropoff_to_parking = [[round(d / 60) for d in row] for row in dropoff_to_parking]
     parking_to_dropoff = [[round(d / 60) for d in row] for row in parking_to_dropoff]
@@ -226,7 +241,11 @@ def write_response_to_file(dropoff_to_parking: list,
         json.dump(output, f)
 
 def main():
-    root = read_osm("aalborg-map.osm")
+    parser = argparse.ArgumentParser(description="Generate environment data from OSM file.")
+    parser.add_argument("--map", "-m", type=str, default="aalborg_map.osm", help="OSM map file")
+    args = parser.parse_args()
+    
+    root = read_osm(args.map)
     dropoff_coords, parking_coords, parking_capacities = extract_data_from_osm(root)
     
     print(f"Found {len(dropoff_coords)} dropoff nodes and {len(parking_coords)} parking nodes")
@@ -246,11 +265,13 @@ def main():
         reverse_response.raise_for_status()
         reverse_data = reverse_response.json()
  
+        output_file = "../" + args.map.replace("_map.osm", "_env.json")
         write_response_to_file(forward_data["durations"], 
                                reverse_data["durations"],
                                parking_capacities,
                                dropoff_coords,
-                               parking_coords)
+                               parking_coords,
+                               output_file)
         print("Responses written to file successfully")
         
     except requests.exceptions.RequestException as e:

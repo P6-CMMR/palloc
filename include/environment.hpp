@@ -30,7 +30,7 @@ class Environment {
     UintVector &getAvailableParkingSpots() noexcept;
 
     const UintVector &getSmallestRoundTrips() const noexcept;
-    const UintVector &getParkingWeights() const noexcept;
+    const DoubleVector &getParkingWeights() const noexcept;
 
     const Environment::Coordinates &getDropoffCoordinates() const noexcept;
     const Environment::Coordinates &getParkingCoordinates() const noexcept;
@@ -47,7 +47,7 @@ class Environment {
     DurationMatrix _parkingToDropoff;
     UintVector _availableParkingSpots;
     UintVector _smallestRoundTrips;
-    UintVector _parkingWeights;
+    DoubleVector _parkingWeights;
     Coordinates _dropoffCoords;
     Coordinates _parkingCoords;
 };

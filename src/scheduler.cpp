@@ -77,13 +77,14 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
         const auto penalty = UNASSIGNED_PENALTY * dropFactor;
         objective += penalty * sat::LinearExpr(unassignedVars[i]);
         for (size_t j = 0; j < numberOfParkings; ++j) {
-            auto cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
+            double cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
             if (useWeightedParking) {
                 const auto &parkingWeights = env.getParkingWeights();
+                assert(parkingWeights[j] >= 0.0 && parkingWeights[j] <= 1.0);
                 cost *= parkingWeights[j];
             }
 
-            objective += cost * sat::LinearExpr(var[i][j]);
+            objective += std::lround(cost) * sat::LinearExpr(var[i][j]);
         }
     }
 

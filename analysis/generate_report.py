@@ -442,7 +442,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{start_time}}", str(start_time))
     html_content = html_content.replace("{{max_request_duration}}", str(max_request_duration))
     html_content = html_content.replace("{{max_request_arrival}}", str(max_request_arrival))
-    html_content = html_content.replacE("{{min_parking_time}}", str(min_parking_time))
+    html_content = html_content.replace("{{min_parking_time}}", str(min_parking_time))
     html_content = html_content.replace("{{request_rate}}", str(request_rate))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
@@ -617,7 +617,7 @@ def main():
     else:
         # Process single file
         report_path = process_single_file(env, args.results)
-        print(f"\nReport generated. Open {report_path} to view results.")
+        print(f"Open {report_path} to view results.")
 
 if __name__ == "__main__":
     main()
