@@ -15,12 +15,25 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+# Output directory
+if(WIN32)
+    set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-win")
+elseif(LINUX)
+    set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-linux")
+elseif(APPLE)
+    set(PLATFORM_DIR "${CMAKE_BINARY_DIR}/palloc-macos")
+endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PLATFORM_DIR}/bin")
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${PLATFORM_DIR}/bin")
+endforeach()
 
 # Project root macro
 add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
-if(WIN32)
+if(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/W4 /Od /DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2")
     set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -30,11 +43,13 @@ else()
     set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-if(CMAKE_BUILD_TYPE)
-    string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UPPER)
-    message(STATUS "${CMAKE_BUILD_TYPE} CXX Flags: ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}")
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
 endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UPPER)
+message(STATUS "${CMAKE_BUILD_TYPE} CXX Flags: ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -64,7 +79,7 @@ FetchContent_MakeAvailable(glaze)
 set(ORTOOLS_VERSION "9.12")
 set(ORTOOLS_BUILD "4544")
 
-if(WIN32)
+if(MSVC)
     set(ORTOOLS_PACKAGE "or-tools_x64_VisualStudio2022_cpp_v${ORTOOLS_VERSION}.${ORTOOLS_BUILD}")
     set(ORTOOLS_ARCHIVE_EXT "zip")
 elseif(APPLE)
@@ -77,8 +92,8 @@ endif()
 
 set(ORTOOLS_URL "https://github.com/google/or-tools/releases/download/v${ORTOOLS_VERSION}/${ORTOOLS_PACKAGE}.${ORTOOLS_ARCHIVE_EXT}")
 set(ORTOOLS_DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/or-tools-download")
-set(ORTOOLS_EXTRACT_DIR "${CMAKE_CURRENT_BINARY_DIR}/or-tools")
 set(ORTOOLS_ARCHIVE "${ORTOOLS_DOWNLOAD_DIR}/or-tools.${ORTOOLS_ARCHIVE_EXT}")
+set(ORTOOLS_EXTRACT_DIR "${PLATFORM_DIR}/lib/or-tools")
 
 if(NOT EXISTS "${ORTOOLS_EXTRACT_DIR}")
     file(DOWNLOAD "${ORTOOLS_URL}" "${ORTOOLS_ARCHIVE}" SHOW_PROGRESS)
@@ -95,10 +110,27 @@ if(NOT EXISTS "${ORTOOLS_EXTRACT_DIR}")
     endif()
 endif()
 
+if(WIN32)
+    file(GLOB DLLS "${ORTOOLS_EXTRACT_DIR}/bin/*.dll")
+    foreach(DLL ${DLLS})
+        file(COPY "${DLL}" DESTINATION "${PLATFORM_DIR}/bin")
+    endforeach()
+endif()
+
 list(APPEND CMAKE_PREFIX_PATH "${ORTOOLS_EXTRACT_DIR}")
+
 find_package(ortools REQUIRED)
 
 add_subdirectory(src)
+
+# Put test executable in a different directory for Unix
+if(UNIX)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+    foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+        string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/tests")
+    endforeach()
+endif()
 
 enable_testing()
 add_subdirectory(tests)

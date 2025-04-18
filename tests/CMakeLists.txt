@@ -1,5 +1,14 @@
 # Catch2
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+option(FORCE_TESTS "Force building tests regardless of build type" OFF)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR FORCE_TESTS)
+    set(BUILD_TESTS TRUE)
+else()
+    set(BUILD_TESTS FALSE)
+endif()
+
+message(STATUS "Build tests: ${BUILD_TESTS}")
+if(BUILD_TESTS)
     FetchContent_Declare(
         Catch2 
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -13,7 +22,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if (TEST_SOURCES)
         message(STATUS "Found test sources: ${TEST_SOURCES}")
         add_executable(palloc_tests ${TEST_SOURCES})
-        target_link_libraries(palloc_tests PRIVATE libpalloc Catch2::Catch2WithMain)
+        target_link_libraries(palloc_tests PUBLIC libpalloc Catch2::Catch2WithMain)
         
         include(CTest)
         include(Catch)

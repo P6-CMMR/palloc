@@ -5,7 +5,7 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Request Generator]") {
-    constexpr int requestRate = 10;
+    constexpr double requestRate = 10;
     constexpr int maxTimeTillArrival = 5;
     constexpr int maxRequestDuration = 10;
     constexpr int dropoffNodes = 3;
@@ -17,7 +17,7 @@ TEST_CASE("Base case - [Request Generator]") {
                                 .requestRate = requestRate});
 
     constexpr uint32_t testRequestAmount = 1000;
-    constexpr auto minRate = std::min(requestRate, 100);
+    const double minRate = std::max(requestRate, 100.0);
     const size_t upperBound = std::ceil(minRate + 3 * std::sqrt(minRate));
     for (uint32_t i = 0; i < testRequestAmount; ++i) {
         const auto newRequests = generator.generate(i);

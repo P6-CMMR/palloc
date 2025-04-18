@@ -11,7 +11,7 @@ TEST_CASE("Base case - [Simulator]") {
         std::filesystem::path(PROJECT_ROOT) / "tests/temp_result.json";
 
     OutputSettings outputSettings{
-        .path = tempResultPath, .numberOfRunsToAggregate = 1, .prettify = true};
+        .outputPath = tempResultPath, .numberOfRunsToAggregate = 1, .prettify = true};
     GeneralSettings generalSettings{.numberOfThreads = 1};
 
     constexpr auto timesteps = 1000;

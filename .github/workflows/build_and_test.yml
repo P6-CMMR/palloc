@@ -12,16 +12,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest]
         build_type: [Release]
         include:
           - os: windows-latest
-            build_type: Release
           - os: ubuntu-latest
-            build_type: Release
-            cpp_compiler: g++
-          - os: macos-latest
-            build_type: Release
             cpp_compiler: g++
 
     steps:
@@ -46,14 +41,6 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-      
-    - name: Configure CMake (Unix)
-      if: matrix.os != 'windows-latest'
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
       if: matrix.os == 'windows-latest'
@@ -61,36 +48,70 @@ jobs:
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -G "Visual Studio 17 2022" -A x64
+          -DFORCE_TESTS=ON
           -S ${{ github.workspace }} 
+    
+    - name: Configure CMake (Unix)
+      if: matrix.os != 'windows-latest'
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DFORCE_TESTS=ON
+        -S ${{ github.workspace }}
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Generate Test Data
+      run: python ${{ github.workspace }}/tests/generate_test_data.py
+      working-directory: ${{ github.workspace }}
 
     - name: Test
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --verbose
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
 
-    - name: Upload Linux
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: palloc-linux
-        path: build/palloc
-        if-no-files-found: error
-
     - name: Upload Windows
       if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v4
+      uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
       with:
         name: palloc-win
-        path: build/Release/palloc.exe
+        path: |
+            ${{ steps.strings.outputs.build-output-dir }}/palloc-win
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-win/lib
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-win/bin/palloc_tests.exe
+        if-no-files-found: error
+
+    - name: Upload Linux
+      if: matrix.os == 'ubuntu-latest'
+      uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
+      with:
+        name: palloc-linux
+        path: |
+            ${{ steps.strings.outputs.build-output-dir }}/palloc-linux
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/examples
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/include
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/Makefile
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/README.md
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/cmake
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/pkgconfig
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/bin
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/share
         if-no-files-found: error
     
     - name: Upload macOS
       if: matrix.os == 'macos-latest'
-      uses: actions/upload-artifact@v4
+      uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
       with:
         name: palloc-macos
-        path: build/palloc
+        path: |
+            ${{ steps.strings.outputs.build-output-dir }}/palloc-macos
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/examples
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/include
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/Makefile
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/README.md
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/cmake
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/lib/pkgconfig
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/bin
+            !${{ steps.strings.outputs.build-output-dir }}/palloc-linux/lib/or-tools/share
         if-no-files-found: error
-        

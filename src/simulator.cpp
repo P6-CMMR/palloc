@@ -108,8 +108,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::println("Average objective cost: {}", globalAvgCost);
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
-    if (!outputSettings.path.empty()) {
-        result.saveToFile(outputSettings.path, outputSettings.prettify);
+    if (!outputSettings.outputPath.empty()) {
+        result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
     }
 }
 

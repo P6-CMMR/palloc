@@ -12,3 +12,4 @@ summary.txt
 .progress
 .progress_lock
 job_list.txt
+*.supp
