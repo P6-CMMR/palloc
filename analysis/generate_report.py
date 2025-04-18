@@ -234,35 +234,67 @@ def create_experiment_graph_html(json_files, output_dir_path):
             cost[metric1 + " | " + metric2] = {"label": "x: " + metric1 + " | y: "  + metric2, "cost": {}}
 
     
+    current_metric = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
+
     for json_file in json_files:
 
         data = load_results(json_file)
         simulation_cost = data.get("global_avg_cost")
         settings = data.get("settings")
 
-        metrics["Request Rate"] = add_non_duplicate(metrics["Request Rate"], settings.get("request_rate"))
-        metrics["Max Duration"] = add_non_duplicate(metrics["Max Duration"], settings.get("max_request_duration"))
-        metrics["Max Arrival"] = add_non_duplicate(metrics["Max Arrival"], settings.get("max_time_till_arrival"))
-        metrics["Batching Interval"] = add_non_duplicate(metrics["Batching Interval"], settings.get("batch_interval"))
+        current_metric["Request Rate"] = settings.get("request_rate")
+        current_metric["Max Duration"] = settings.get("max_request_duration")
+        current_metric["Max Arrival"] = settings.get("max_time_till_arrival")
+        current_metric["Batching Interval"] = settings.get("batch_interval")
+
+        metrics["Request Rate"] = add_non_duplicate(metrics["Request Rate"], current_metric["Request Rate"])
+        metrics["Max Duration"] = add_non_duplicate(metrics["Max Duration"], current_metric["Max Duration"])
+        metrics["Max Arrival"] = add_non_duplicate(metrics["Max Arrival"], current_metric["Max Arrival"])
+        metrics["Batching Interval"] = add_non_duplicate(metrics["Batching Interval"], current_metric["Batching Interval"])
 
         for metric1 in metrics:
             for metric2 in metrics:
                 if metric1 == metric2:
                     continue
 
-                temp_metrics = metrics.copy()
+                temp_metrics = current_metric.copy()
                 temp_metrics.pop(metric1)
                 temp_metrics.pop(metric2)
                 remaining_metrics_str = ""
 
                 for metric in temp_metrics:
-                    remaining_metrics_str += metric + ":" + str(temp_metrics[metric][len(temp_metrics[metric]) - 1]) + "|"
-                remaining_metrics_str
+                    remaining_metrics_str += metric + ":" + str(current_metric[metric]) + "|"
+
                 remaining_metrics_str = remaining_metrics_str[:-1]
                 if remaining_metrics_str not in cost[metric1 + " | " + metric2]["cost"]:
                     cost[metric1 + " | " + metric2]["cost"][remaining_metrics_str] = [simulation_cost]
                 else:
                     cost[metric1 + " | " + metric2]["cost"][remaining_metrics_str].append(simulation_cost)
+    
+    # Make options for average for each 2 variable config
+    for metric1 in metrics:
+        for metric2 in metrics:
+            temp_sum_arr = []
+            if metric1 == metric2:
+                continue
+            unused_metrics_arr = cost[metric1 + " | " + metric2]["cost"]
+            unused_metrics_key_arr = list(unused_metrics_arr.keys())
+
+            for inner_arr_key in unused_metrics_key_arr:
+                inner_arr = unused_metrics_arr[inner_arr_key]
+                if len(temp_sum_arr) == 0:
+                    temp_sum_arr = inner_arr.copy()
+                else: 
+                    for i in range(0, len(inner_arr)):
+                        temp_sum_arr[i] += inner_arr[i] 
+
+            average_arr = []
+            for i in range(0, len(temp_sum_arr)):
+                average_arr.append(temp_sum_arr[i] / len(unused_metrics_key_arr))
+
+            cost[metric1 + " | " + metric2]["cost"]["average"] = average_arr
+
+
 
     # Initial figure with length on the x-axis and height on the y-axis
     fig = go.Figure()
