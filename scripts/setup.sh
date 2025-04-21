@@ -163,19 +163,26 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
 done
 
 cd ../preprocessing
-if [ ! -f "aalborg-map.osm" ]; then
-    echo "Downloading detailed map of Aalborg..."
-    python3 fetch_map.py
-else
-    echo "Aalborg map already downloaded"
-fi
+CITIES=("Aalborg" "Aarhus" "Copenhagen" "Odense")
+for city in "${CITIES[@]}"; do
+    # Convert city name to lowercase
+    city_file="${city,,}_map.osm" 
+    
+    if [ ! -f "$city_file" ]; then
+        echo "Downloading detailed map of $city..."
+        python3 fetch_map.py --city "$city"
+    else
+        echo "$city map already downloaded"
+    fi
+    
+    echo "Generating environment file for $city..."
+    python3 generate_environment.py --map "$city_file"
+done
 
-echo "Generating environment file..."
-python3 generate_environment.py
 
 echo "Generating test data file..."
-cd ../tests
-python3 generate_test_data.py
+cd ..
+python3 tests/generate_test_data.py
 
 echo "Shutting down OSRM backend..."
 sudo docker stop $CONTAINER_ID > /dev/null

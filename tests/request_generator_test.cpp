@@ -1,31 +1,29 @@
-#include "catch2/catch_test_macros.hpp"
 #include "request_generator.hpp"
+
+#include "catch2/catch_test_macros.hpp"
 
 using namespace palloc;
 
 TEST_CASE("Base case - [Request Generator]") {
+    constexpr double requestRate = 10;
+    constexpr int maxTimeTillArrival = 5;
+    constexpr int maxRequestDuration = 10;
+    constexpr int dropoffNodes = 3;
 
-    const int requestRate = 10;
-    const int maxTimeTillArrival = 5;
-    const int maxRequestDuration = 10;
-    const int dropoffNodes = 3;
+    RequestGenerator generator({.dropoffNodes = dropoffNodes,
+                                .maxTimeTillArrival = maxTimeTillArrival,
+                                .maxRequestDuration = maxRequestDuration,
+                                .seed = 1,
+                                .requestRate = requestRate});
 
-    RequestGenerator generator({
-        .dropoffNodes = dropoffNodes,
-        .maxTimeTillArrival = maxTimeTillArrival,
-        .maxRequestDuration = maxRequestDuration,
-        .seed = 1,
-        .requestRate = requestRate 
-    });
-    const size_t testRequestAmount = 1000;
-    const auto minRate = std::min(requestRate, 100);
-    const auto upperBound =  minRate + 3 * sqrt(minRate);
-
-    for (size_t i = 0; i < testRequestAmount; ++i) {
+    constexpr uint32_t testRequestAmount = 1000;
+    const double minRate = std::max(requestRate, 100.0);
+    const size_t upperBound = std::ceil(minRate + 3 * std::sqrt(minRate));
+    for (uint32_t i = 0; i < testRequestAmount; ++i) {
         const auto newRequests = generator.generate(i);
-        
+
         REQUIRE(newRequests.size() <= upperBound);
-        for (Request request : newRequests) {
+        for (const Request &request : newRequests) {
             REQUIRE(request.getArrival() <= maxTimeTillArrival);
             REQUIRE(request.getDropoffNode() <= dropoffNodes);
             REQUIRE(request.getRequestDuration() <= maxRequestDuration);

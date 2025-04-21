@@ -18,8 +18,4 @@ double Trace::getCost() const noexcept { return _cost; }
 
 double Trace::getAverageDuration() const noexcept { return _averageDuration; }
 
-// Shallow copy, this is bad but not used enough to warrent implementing deep copy for all dependents.
-Assignments Trace::getAssignments() const noexcept { return Assignments(_assignments); }
-
-uint32_t Assignment::getRequestDuration() const noexcept { return _requestDuration; }
-
+Assignments Trace::getAssignments() const noexcept { return _assignments; }

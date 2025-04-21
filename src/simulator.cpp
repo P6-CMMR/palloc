@@ -109,8 +109,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::println("Average objective cost: {}", globalAvgCost);
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
-    if (!outputSettings.path.empty()) {
-        result.saveToFile(outputSettings.path, outputSettings.prettify);
+    if (!outputSettings.outputPath.empty()) {
+        result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
     }
 }
 
@@ -189,8 +189,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
             if (!requests.empty()) {
-                const auto batchResult =
-                    Scheduler::scheduleBatch(env, requests, simSettings.useWeightedParking);
+                const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
                 requests.clear();
 
                 batchCost = batchResult.cost;

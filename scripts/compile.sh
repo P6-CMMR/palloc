@@ -22,15 +22,15 @@ cd build
 
 case "$1" in
     "release")
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake -DCMAKE_BUILD_TYPE=Release .. 
         echo "Release mode enabled"
         ;;
     "perf")
-        cmake .. -DCMAKE_BUILD_TYPE=Perf
+        cmake -DCMAKE_BUILD_TYPE=Perf .. 
         echo "Performance profiling mode enabled"
         ;;
     *)
-        cmake .. -DCMAKE_BUILD_TYPE=Debug
+        cmake -DCMAKE_BUILD_TYPE=Debug .. 
         echo "Debug mode enabled"
         ;;
 esac

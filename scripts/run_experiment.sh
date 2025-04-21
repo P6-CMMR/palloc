@@ -8,15 +8,15 @@ if [[ "$(pwd)" != "$PROJECT_ROOT" ]]; then
     cd "$PROJECT_ROOT"
 fi
 
-if [ ! -f "build/palloc" ]; then
-    echo "Error: build/palloc executable not found."
+if [ ! -f "./build/palloc-linux/bin/palloc" ]; then
+    echo "Error: palloc executable not found."
     echo "Compiling the project..."
     ./scripts/compile.sh release
     exit 1
 fi
 
-if [ ! -f "environment.json" ]; then
-    echo "Error: environment.json not found in project root."
+if [ ! -f "aalborg_env.json" ]; then
+    echo "Error: aalborg_env.json not found in project root."
     exit 1
 fi
 
@@ -27,7 +27,7 @@ show_help() {
   echo "  -h, --help              Show help message"
   echo "  -d, --duration          Max duration in minutes of requests (can be a range: MIN-MAX), default: 600"
   echo "  -A, --arrival           Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60"
-  echo "  -r, --requests          Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
+  echo "  -r, --request-rate          Request rate per timestep (can be a range: MIN-MAX), default: 10.0"
   echo "  -t, --timesteps         Number of timesteps to simulate, default: 1440"
   echo "  -j, --jobs              Number of parallel jobs to run (default: number of CPU cores)"
   echo "  -w, --weights           Use weights for distance to parking"
@@ -42,7 +42,7 @@ show_help() {
 # Default values
 MAX_DURATION=600
 DURATION_END=0
-MAX_ARRIVAL=60
+MAX_ARRIVAL=0
 ARRIVAL_END=0
 REQUEST_RATE=10.0
 REQUEST_RATE_END=0
@@ -100,7 +100,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift 2
             ;;
-        -r|--requests)
+        -r|--request-rate)
             if [[ $# -lt 2 || $2 == -* ]]; then
             echo "Error: Missing value for option $1"
             show_help
@@ -374,15 +374,14 @@ while read job_info; do
     
     (
         if [ -n "$WEIGHTS" ]; then
-            ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" -w > /dev/null 2>&1
+            ./build/palloc-linux/bin/palloc -e aalborg_env.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" -w > /dev/null 2>&1
         else
-            ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
+            ./build/palloc-linux/bin/palloc -e aalborg_env.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
         fi
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
 
-        
         increment_progress
         
         # Return the semaphore slot
@@ -407,5 +406,5 @@ echo "Created experiment directory: $exp_dir"
 
 # Generate reports
 echo "Generating reports..."
-python analysis/generate_report.py environment.json experiments/
+python analysis/generate_report.py aalborg_env.json experiments/
 
