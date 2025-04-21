@@ -54,7 +54,7 @@ valgrind --leak-check=full \
          --errors-for-leak-kinds=definite \
          --error-exitcode=1 \
          --suppressions=./ortools.supp \
-         ./build/palloc -e "$1"
+         ./build/palloc-linux/bin/palloc -e "$1"
 
 # Remove the temporary suppression file
 rm ortools.supp

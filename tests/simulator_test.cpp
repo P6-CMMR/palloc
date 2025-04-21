@@ -11,21 +11,26 @@ TEST_CASE("Base case - [Simulator]") {
         std::filesystem::path(PROJECT_ROOT) / "tests/temp_result.json";
 
     OutputSettings outputSettings{
-        .path = tempResultPath, .numberOfRunsToAggregate = 1, .prettify = true};
+        .outputPath = tempResultPath, .numberOfRunsToAggregate = 1, .prettify = true};
     GeneralSettings generalSettings{.numberOfThreads = 1};
 
     constexpr auto timesteps = 1000;
     constexpr auto maxRequestDuration = 5;
     constexpr auto requestRate = 10;
     constexpr auto maxTimeTillArrival = 5;
+    constexpr auto minParkingTime = 0;
     constexpr auto batchInterval = 2;
     constexpr auto seed = 1;
+    constexpr auto useWeightedParking = false;
     SimulatorSettings simSettings{.timesteps = timesteps,
                                   .maxRequestDuration = maxRequestDuration,
                                   .requestRate = requestRate,
                                   .maxTimeTillArrival = maxTimeTillArrival,
+                                  .minParkingTime = minParkingTime,
                                   .batchInterval = batchInterval,
-                                  .seed = seed};
+                                  .seed = seed,
+                                  .useWeightedParking = useWeightedParking
+                                };
 
     Environment env(testDataPath);
 

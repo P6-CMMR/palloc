@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
                                       .maxRequestDuration = 600,
                                       .requestRate = 10,
                                       .maxTimeTillArrival = 0,
+                                      .minParkingTime = 0,
                                       .batchInterval = 2,
                                       .useWeightedParking = false};
 
@@ -32,7 +33,10 @@ int main(int argc, char **argv) {
             {{"arrival", 'A'},
              simSettings.maxTimeTillArrival,
              "max duration of early requests in minutes"},
-            {{"requests", 'r'},
+            {{"minimum-parking-time", 'm'},
+             simSettings.minParkingTime,
+             "minimum parking time in minutes"},
+            {{"request-rate", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
             {{"batch-delay", 'b'},
@@ -55,13 +59,13 @@ int main(int argc, char **argv) {
              "number of aggregates)"}};
 
         argz::parse(about, opts, argc, argv);
-        if (environmentPathStr.empty() && !about.printed_help) {
-            std::println(stderr, "Error: Expected environment file");
-            return EXIT_FAILURE;
+        if (about.printed_help || about.printed_version) {
+            return EXIT_SUCCESS;
         }
 
         if (environmentPathStr.empty()) {
-            return EXIT_SUCCESS;
+            std::println(stderr, "Error: Expected environment file");
+            return EXIT_FAILURE;
         }
 
         if (simSettings.timesteps < 1) {
@@ -95,7 +99,7 @@ int main(int argc, char **argv) {
 
         simSettings.seed =
             seedOpt.value_or(std::chrono::system_clock::now().time_since_epoch().count());
-        outputSettings.path = outputPathStr;
+        outputSettings.outputPath = outputPathStr;
 
         GeneralSettings generalSettings{
             .numberOfThreads = numberOfThreadsOpt.value_or(std::min(
