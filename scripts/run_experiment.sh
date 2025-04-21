@@ -254,12 +254,11 @@ job_list_file="${exp_dir}/job_list.txt"
 # Build the job list
 current_duration=$MAX_DURATION
 while [ "$current_duration" -le "$DURATION_END" ] || [ "$DURATION_END" -eq 0 ]; do
-
     current_arrival=$MAX_ARRIVAL
     while [ "$current_arrival" -le "$ARRIVAL_END" ] || [ "$ARRIVAL_END" -eq 0 ]; do
         current_rate=$REQUEST_RATE
         while (( $(echo "$current_rate <= $REQUEST_RATE_END" | bc -l) )) || [ "$REQUEST_RATE_END" = "0" ]; do
-            config_name="d${current_duration}-a${current_arrival}-r${current_rate}"
+            config_name="d${current_duration}-A${current_arrival}-r${current_rate}"
             SEED=$(date +%s)$RANDOM  # Add more randomness
             OUTPUT_FILE="${exp_dir}/${config_name}.json"
             
@@ -274,12 +273,12 @@ while [ "$current_duration" -le "$DURATION_END" ] || [ "$DURATION_END" -eq 0 ]; 
             current_rate=$(echo "$current_rate + $REQUEST_RATE_STEP" | bc)
         done
 
-        # Break if not ranging through durations
+        # Break if not ranging through arrivals
         if [ "$ARRIVAL_END" -eq 0 ]; then
             break
         fi
         
-        # Increment duration
+        # Increment arrival
         current_arrival=$((current_arrival + ARRIVAL_STEP))
     done
     
@@ -374,7 +373,11 @@ while read job_info; do
     output=$(echo $job_info | cut -d'|' -f5)
     
     (
-        ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" "$WEIGHTS" > /dev/null 2>&1
+        if [ -n "$WEIGHTS" ]; then
+            ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" -w > /dev/null 2>&1
+        else
+            ./build/palloc -e environment.json -o "$output" -d "$duration" -A "$arrival" -r "$rate" -s "$seed" -a "$AGGREGATIONS" -t "$TIMESTEPS" > /dev/null 2>&1
+        fi
         
         # Log the run
         echo "Duration: ${duration}, Arrival: ${arrival}, Rate: ${rate}, Seed: ${seed}" >> "${exp_dir}/summary.txt"
