@@ -1,19 +1,28 @@
 #include "result.hpp"
 
+#include "utils.hpp"
+
 using namespace palloc;
 
 Result Result::aggregateResults(const Results &results) {
     TraceLists traceLists;
     SimulatorSettings simSettings = results[0].getSimSettings();
     size_t droppedRequests = 0;
-    double globalAvgDuration = 0.0;
-    double globalAvgCost = 0.0;
+
+    std::vector<double> avgDurationVec;
+    avgDurationVec.reserve(results.size());
+
+    std::vector<double> avgCostVec;
+    avgCostVec.reserve(results.size());
     for (const Result &result : results) {
         traceLists.push_back(result.getTraceLists()[0]);
         droppedRequests += result.getDroppedRequests();
-        globalAvgDuration += result.getGlobalAvgDuration();
-        globalAvgCost += result.getGlobalAvgCost();
+        avgDurationVec.push_back(result.getGlobalAvgDuration());
+        avgCostVec.push_back(result.getGlobalAvgCost());
     }
+
+    auto globalAvgDuration = utils::KahanSum(avgDurationVec);
+    auto globalAvgCost = utils::KahanSum(avgCostVec);
 
     const size_t numResults = results.size();
     droppedRequests /= numResults;
