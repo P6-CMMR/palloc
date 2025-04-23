@@ -90,7 +90,6 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     for (auto &thread : threads) {
         thread.join();
-        std::print("One run done");
     }
 
     const auto end = std::chrono::high_resolution_clock::now();

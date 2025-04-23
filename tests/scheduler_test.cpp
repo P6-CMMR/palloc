@@ -9,7 +9,14 @@ using namespace palloc;
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
     SimulatorSettings simSettings{
+        .timesteps = 0,
+        .startTime = 0,
+        .maxRequestDuration = 0,
+        .requestRate = 0,
+        .maxTimeTillArrival = 0,
         .minParkingTime = 0,
+        .batchInterval = 0,
+        .seed = 0,
         .useWeightedParking = false
     };
 
@@ -53,7 +60,14 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
 TEST_CASE("Multiple requests - [Scheduler]") {
     Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
     SimulatorSettings simSettings{
+        .timesteps = 0,
+        .startTime = 0,
+        .maxRequestDuration = 0,
+        .requestRate = 0,
+        .maxTimeTillArrival = 0,
         .minParkingTime = 0,
+        .batchInterval = 0,
+        .seed = 0,
         .useWeightedParking = false
     };
 

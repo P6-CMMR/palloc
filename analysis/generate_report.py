@@ -847,7 +847,7 @@ def create_browser_index(experiments_root):
             with open(summary_file, "r") as f:
                 summary_lines = f.readlines()
                 experiments_html += '<div class="summary-info"><h3>Summary</h3><pre>'
-                for line in summary_lines[:15]:  # Show first 15 lines
+                for line in summary_lines[:10]:  # Show first 10 lines
                     experiments_html += line
                 experiments_html += "</pre></div>"
         
@@ -879,8 +879,8 @@ def create_browser_index(experiments_root):
                 duration = "Unknown"
                 rate = "Unknown"
                 arrival = "Unknown"
-                if config_name.startswith("d") and "-a" in config_name and "-r" in config_name:
-                    delimiters = ["-a", "-r"]
+                if config_name.startswith("d") and "-A" in config_name and "-r" in config_name:
+                    delimiters = ["-A", "-r"]
                     temp_config_name = config_name
                     for delimiter in delimiters:
                             temp_config_name = " ".join(temp_config_name.split(delimiter))
