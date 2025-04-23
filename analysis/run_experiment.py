@@ -1,0 +1,355 @@
+import os
+import platform
+import sys
+import argparse
+import glob
+import time
+import re
+import multiprocessing
+import subprocess
+import threading
+import queue
+from progress_bar import print_progress_bar
+from datetime import datetime
+
+def get_palloc_path():
+    """Get path to palloc based on OS"""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    system = platform.system()
+    if system == "Linux":
+        return os.path.join(project_root, "build/palloc-linux/bin/palloc")
+    elif system == "Windows":
+        return os.path.join(project_root, "build\\palloc-windows\\bin\\palloc.exe")
+    elif system == "Darwin":  # macOS
+        return os.path.join(project_root, "build/palloc-macos/bin/palloc")
+    else:
+        print(f"Unsupported operating system: {system}")
+        sys.exit(1)
+
+def check_environment():
+    """Check if required files exist"""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    palloc_path = get_palloc_path()
+    if not os.path.isfile(palloc_path):
+        print(f"Error: palloc executable not found at {palloc_path}")
+        print("Please compile the project first.")
+        sys.exit(1)
+    
+    env_file = os.path.join(project_root, "aalborg_env.json")
+    if not os.path.isfile(env_file):
+        print("Error: aalborg_env.json not found in project root.")
+        print("Please run the setup script to create the environment file.")
+        sys.exit(1)
+    
+    return True
+
+def show_help():
+    """Show help message with examples"""
+    script_name = os.path.basename(__file__)
+    print(f"Usage: {script_name} [options]")
+    print("Options:")
+    print("  -h, --help              Show help message")
+    print("  -d, --duration          Max duration in minutes of requests (can be a range: MIN-MAX), default: 600")
+    print("  -A, --arrival           Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60")
+    print("  -r, --request-rate      Request rate per timestep (can be a range: MIN-MAX), default: 10.0")
+    print("  -t, --timesteps         Number of timesteps to simulate, default: 1440")
+    print("  -j, --jobs              Number of parallel jobs to run (default: number of CPU cores)")
+    print("  -w, --weights           Use weights for distance to parking")
+    print("  -a, --aggregations      Number of runs per configuration, default: 3")
+    print("  -s, --seed              Random seed for reproducibility")
+    print("")
+    print("Examples:")
+    print(f"  {script_name} -d 600-1200          # Run simulations in the range 600-1200 max duration")
+    print(f"  {script_name} -r 5.0-15.0          # Run simulations in the range 5.0-15.0 request rate")
+    print(f"  {script_name} -A 10-60             # Run simulations in the range 10-60 max time till arrival")
+    print(f"  {script_name} -j 4                 # Run 4 simulations in parallel")
+    
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(add_help=False)
+    
+    parser.add_argument("-h", "--help", action="store_true", help="Show help message")
+    parser.add_argument("-d", "--duration", default="600", help="Max duration in minutes")
+    parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes")
+    parser.add_argument("-r", "--request-rate", default="10.0", help="Request rate per timestep")
+    parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
+    parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
+    parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
+    parser.add_argument("-a", "--aggregations", default="3", help="Number of runs per configuration")
+    parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
+    
+    args = parser.parse_args()
+    
+    if args.help:
+        show_help()
+        sys.exit(0)
+    
+    return args
+
+def parse_range(value_str, is_float=False):
+    """Parse a range string e.g. '10-20'"""
+    if "-" in value_str:
+        start, end = value_str.split("-", 1)
+        if is_float:
+            return float(start), float(end)
+        else:
+            return int(start), int(end)
+    else:
+        if is_float:
+            return float(value_str), 0
+        else:
+            return int(value_str), 0
+    
+def get_next_experiment_dir():
+    """Find the next experiment directory number"""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    experiments_dir = os.path.join(project_root, "experiments")
+    
+    os.makedirs(experiments_dir, exist_ok=True)
+    
+    highest_num = 0
+    for dir_path in glob.glob(os.path.join(experiments_dir, "experiment-*")):
+        if os.path.isdir(dir_path):
+            dir_name = os.path.basename(dir_path)
+            match = re.match(r"experiment-(\d+)", dir_name)
+            if match:
+                num = int(match.group(1))
+                highest_num = max(highest_num, num)
+    
+    next_num = highest_num + 1
+    exp_dir = os.path.join(experiments_dir, f"experiment-{next_num}")
+    os.makedirs(exp_dir, exist_ok=True)
+    
+    return exp_dir
+
+def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range):
+    """Create a summary file with experiment parameters"""
+    summary_path = os.path.join(exp_dir, "summary.txt")
+    
+    duration_step = 10
+    arrival_step = 10
+    rate_step = 0.5
+    
+    with open(summary_path, "w") as f:
+        f.write("Experiment Summary\n")
+        f.write(f"Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n")
+        
+        duration_start, duration_end = duration_range
+        arrival_start, arrival_end = arrival_range
+        rate_start, rate_end = rate_range
+        
+        duration_count = 1
+        if duration_end > 0:
+            duration_count = 0
+            current_dur = duration_start
+            while current_dur <= duration_end:
+                duration_count += 1
+                current_dur += duration_step
+            f.write(f"Duration range: {duration_start}-{duration_end} (step: {duration_step})\n")
+        else:
+            f.write(f"Duration: {duration_start}\n")
+        
+        arrival_count = 1
+        if arrival_end > 0:
+            arrival_count = 0
+            current_arv = arrival_start
+            while current_arv <= arrival_end:
+                arrival_count += 1
+                current_arv += arrival_step
+            f.write(f"Arrival range: {arrival_start}-{arrival_end} (step: {arrival_step})\n")
+        else:
+            f.write(f"Arrival: {arrival_start}\n")
+        
+        rate_count = 1
+        if rate_end > 0:
+            rate_count = 0
+            current_rate = rate_start
+            while current_rate <= rate_end:
+                rate_count += 1
+                current_rate += rate_step
+            f.write(f"Request rate range: {rate_start}-{rate_end} (step: {rate_step})\n")
+        else:
+            f.write(f"Request rate: {rate_start}\n")
+        
+        total_configs = duration_count * arrival_count * rate_count
+        
+        f.write(f"Total configurations: {total_configs}\n")
+        f.write(f"Number of runs per configuration: {args.aggregations}\n")
+        f.write(f"Parallel jobs: {args.jobs}\n")
+        f.write(f"Timesteps: {args.timesteps}\n")
+        f.write("----------------------------------------\n")
+    
+    return total_configs, (duration_step, arrival_step, rate_step)
+        
+def run_job(job_tuple, args, exp_dir, progress_queue):
+    """Run a single simulation job"""
+    duration, arrival, rate, seed, output_file = job_tuple
+    
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    palloc_path = get_palloc_path()
+    
+    cmd = [
+        palloc_path,
+        "-e", os.path.join(project_root, "aalborg_env.json"),
+        "-o", output_file,
+        "-d", duration,
+        "-A", arrival,
+        "-r", rate,
+        "-s", seed,
+        "-a", args.aggregations,
+        "-t", args.timesteps
+    ]
+    
+    if args.weights:
+        cmd.append("-w")
+    
+    try:
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)    
+        progress_queue.put(1)
+        
+    except subprocess.CalledProcessError as e:
+        print(f"\nError running job: {e}")
+        print(f"Command: {" ".join(cmd)}")
+        progress_queue.put(0)
+    
+def run_job_wrapper(args_tuple):
+    job_tuple, args, exp_dir, progress_queue = args_tuple
+    run_job(job_tuple, args, exp_dir, progress_queue)
+
+def display_progress(progress_dict, total):
+    """Thread function to display progress"""
+    start_time = time.time()
+    
+    while progress_dict["running"]:
+        completed = progress_dict["completed"]
+        print_progress_bar(completed, total, start_time)
+        time.sleep(0.5)
+
+def run_jobs(jobs, args, exp_dir):
+    print(f"Running simulations in parallel with {args.jobs} concurrent jobs...")
+    
+    total_jobs = len(jobs)
+    
+    manager = multiprocessing.Manager()
+    progress_queue = manager.Queue()
+    
+    progress_dict = {"completed": 0, "running": True}
+    display_thread = threading.Thread(
+        target=display_progress, 
+        args=(progress_dict, total_jobs)
+    )
+    
+    display_thread.daemon = True
+    display_thread.start()
+    
+    job_args = [(job, args, exp_dir, progress_queue) for job in jobs]
+    with multiprocessing.Pool(processes=int(args.jobs)) as pool:
+        result = pool.map_async(run_job_wrapper, job_args)
+        while not result.ready():
+            try:
+                progress_queue.get(timeout=0.1)
+                progress_dict["completed"] += 1
+            except queue.Empty:
+                pass
+    
+    try:
+        while not progress_queue.empty():
+            progress_queue.get_nowait()
+            progress_dict["completed"] += 1
+    except queue.Empty:
+        pass
+    
+    progress_dict["running"] = False
+    display_thread.join(timeout=1)
+    
+    print_progress_bar(progress_dict["completed"], total_jobs, final=True)
+    
+    return total_jobs
+
+def main():
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.chdir(project_root)
+    
+    check_environment()
+    
+    args = parse_arguments()
+    
+    duration_range = parse_range(args.duration)
+    arrival_range = parse_range(args.arrival)
+    rate_range = parse_range(args.request_rate, is_float=True)
+    
+    exp_dir = get_next_experiment_dir()
+    
+    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range)
+    duration_step, arrival_step, rate_step = steps
+    
+    print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
+    print("Parameters:")
+    duration_start, duration_end = duration_range
+    if duration_end > 0:
+        print(f"  - Duration range: {duration_start}-{duration_end} (step: {duration_step})")
+    else:
+        print(f"  - Duration: {duration_start}")
+    
+    arrival_start, arrival_end = arrival_range
+    if arrival_end > 0:
+        print(f"  - Arrival range: {arrival_start}-{arrival_end} (step: {arrival_step})")
+    else:
+        print(f"  - Arrival: {arrival_start}")
+    
+    rate_start, rate_end = rate_range
+    if rate_end > 0:
+        print(f"  - Request rate range: {rate_start}-{rate_end} (step: {rate_step})")
+    else:
+        print(f"  - Request rate: {rate_start}")
+    
+    print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Output directory: {exp_dir}")
+    print("----------------------------------------")
+    
+    jobs = []
+    current_duration = duration_start
+    while current_duration <= duration_end or duration_end == 0:
+        current_arrival = arrival_start
+        while current_arrival <= arrival_end or arrival_end == 0:
+            current_rate = rate_start
+            while current_rate <= rate_end or rate_end == 0:
+                config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}"
+                seed = args.seed
+                output_file = os.path.join(exp_dir, f"{config_name}.json")
+                
+                jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(seed), output_file))
+                
+                if rate_end == 0:
+                    break
+                
+                current_rate += rate_step
+                current_rate = round(current_rate * 100) / 100
+            
+            if arrival_end == 0:
+                break
+            
+            current_arrival += arrival_step
+        
+        if duration_end == 0:
+            break
+        
+        current_duration += duration_step
+    
+    run_jobs(jobs, args, exp_dir)
+    
+    print("\nSimulations completed!")
+    print(f"Created experiment directory: {exp_dir}")
+    
+    print("Generating reports...")
+    
+    report_script = os.path.join(project_root, "analysis", "generate_report.py")
+    env_file = os.path.join(project_root, "aalborg_env.json") 
+    experiments_dir = os.path.join(project_root, "experiments")
+    
+    subprocess.run(["python", report_script, env_file, experiments_dir])
+
+if __name__ == "__main__":
+    main()

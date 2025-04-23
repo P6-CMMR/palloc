@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 import json
 import sys
@@ -9,6 +10,8 @@ import os
 import glob
 from folium.plugins import HeatMap
 from pathlib import Path
+import itertools
+import numpy as np
 
 def load_results(result_file):
     """Load simulation results from a JSON file."""
@@ -200,6 +203,350 @@ def create_map_visualization(env, data, output_dir_path):
         f.write(map_html)
 
     return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
+
+def arr_has_duplicate(arr):
+    arr.sort()
+    prev_el = None
+    for el in arr:
+        if el == prev_el:
+            return True
+        prev_el = el
+        
+    return False
+
+def add_non_duplicate(arr, el):
+    try:
+        arr.index(el)
+    except:
+        arr.append(el)
+    return arr
+
+def extract_cost_object(json_files):
+    """Create and object with the results of all the configurations as an object nested for every metric"""
+
+    metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
+
+    cost = {}
+
+    for json_file in json_files:
+        temp_cost = cost
+        data = load_results(json_file)
+        settings = data.get("settings")
+        simulation_cost = data.get("global_avg_cost")
+
+        metrics["Request Rate"] = settings.get("request_rate")
+        metrics["Max Duration"] = settings.get("max_request_duration")
+        metrics["Max Arrival"] = settings.get("max_time_till_arrival")
+        metrics["Batching Interval"] = settings.get("batch_interval")
+
+        metric_keys = list(metrics.keys())
+        key_amount = len(metric_keys)
+
+        for i in range(0, key_amount):
+            if "metric" not in temp_cost:
+                temp_cost["metric"] = metric_keys[i]
+
+            metric_val = str(metrics[metric_keys[i]]) 
+
+            if i == (key_amount - 1):
+                temp_cost[metric_val] = simulation_cost
+                continue
+
+            if metric_val not in temp_cost:
+                temp_cost[metric_val] = {}
+            
+            temp_cost = temp_cost[metric_val]
+
+    return cost
+
+def get_cost_list_one_metric(cost, metric, other_metric_values):
+    out_list = []
+
+    anchor = cost
+    anchor_idx = 0
+    idx = 0
+
+    metric_keys = None
+    metric_keys_idx = 0
+
+    last_val = False
+
+    while True:
+        if cost["metric"] == metric:
+            anchor_idx = idx
+            anchor = cost
+            if metric_keys is None:
+                metric_keys = list(cost.keys())[1:]
+            cost = cost[metric_keys[metric_keys_idx]]
+
+            metric_keys_idx += 1
+            if metric_keys_idx == len(metric_keys):
+                last_val = True
+            
+        else:
+            cost = cost[other_metric_values[idx]]
+            idx += 1
+
+        if type(cost) in (int, float, complex):
+            out_list.append(cost)
+            cost = anchor
+            idx = anchor_idx
+            if last_val:
+                break
+
+    return out_list
+        
+
+def create_bar_graph_html(cost,  output_dir_path):
+    """Create line graph from cost and metric object and save as html"""
+    os.makedirs(output_dir_path, exist_ok=True)
+
+    metrics = {}
+
+    temp_cost = cost
+    metric_keys = list(cost.keys())
+    first_metric_key = metric_keys[1]
+
+    while type(temp_cost[first_metric_key]) not in (int, float, complex):
+        metrics[temp_cost["metric"]] = metric_keys[1:]
+        temp_cost = temp_cost[first_metric_key]
+        metric_keys = list(temp_cost.keys())
+        first_metric_key = metric_keys[1]
+
+    metrics[temp_cost["metric"]] = metric_keys[1:]
+
+    bar_cost = {}
+
+    metric_key_list = list(metrics.keys())
+
+    for metric1 in metric_key_list:
+        bar_cost[metric1] = {"label": "x: " + metric1, "cost": {}}
+
+    for metric1 in metric_key_list:
+        metric1_idx = metric_key_list.index(metric1)
+
+        remaining_metrics = metric_key_list.copy()
+        remaining_metrics.pop(metric1_idx)
+
+        remaining_keys = []
+        for metric in remaining_metrics:
+            remaining_keys.append(metrics[metric])
+
+        remaining_cross_prod = itertools.product(*remaining_keys)
+
+        all_result_lists = []
+
+        for el in remaining_cross_prod:
+            other_metrics_list = list(el)
+         
+            remaining_str = ""
+            for i in range(0, len(remaining_metrics)):
+                remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+            
+            result = get_cost_list_one_metric(cost, metric1, other_metrics_list)
+
+            bar_cost[metric1]["cost"][remaining_str] = result
+            all_result_lists.append(result)
+
+        bar_cost[metric1]["cost"][" | Average"] = np.mean(np.array(all_result_lists), axis=0)
+        
+    fig = go.Figure()
+
+    updatemenus = [
+        {
+            "buttons": [],
+            "direction": "down",
+            "showactive": True,
+        }
+    ]
+
+    default_x, default_y = None, None   
+    cost = bar_cost
+
+    for metric1 in cost:
+        config = cost[metric1]
+        for inner_key in config["cost"]:
+            x = metrics[metric1]
+            if len(x) < 2:
+                continue
+
+            y = config["cost"][inner_key]
+
+            if default_x is None and default_y is None:
+                default_x, default_y = x, y
+
+            updatemenus[0]["buttons"].append(
+                {
+                    "label": "x: " + metric1 + inner_key,
+                    "method": "update",
+                    "args": [
+                        {"x": [x], 
+                         "y": [y]},
+                        {"xaxis": {"title": metric1}},
+                    ],
+                }
+            )
+
+
+    if default_x is not None and default_y is not None:
+        bar_fig = px.bar(
+            x=default_x,
+            y=default_y
+        )
+        for trace in bar_fig.data:
+            fig.add_trace(trace)
+
+    fig.update_layout(
+        updatemenus=updatemenus
+    )
+
+    try:
+        button_template_path = Path(__file__).parent / "index_graph_button_template.html"
+        with open(button_template_path, "r") as f:
+            button_template = f.read()
+
+    except Exception as e:
+        print(f"Error loading button template: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    write_html_with_button(fig, "bar_graph.html", button_template, output_dir_path)
+
+
+def create_contour_graph_html(cost, output_dir_path):
+    """Create contour graph from cost and metric object and save as html"""
+    os.makedirs(output_dir_path, exist_ok=True)
+
+    metrics = {}
+
+    temp_cost = cost
+    metric_keys = list(cost.keys())
+    first_metric_key = metric_keys[1]
+
+    while type(temp_cost[first_metric_key]) not in (int, float, complex):
+        metrics[temp_cost["metric"]] = metric_keys[1:]
+        temp_cost = temp_cost[first_metric_key]
+        metric_keys = list(temp_cost.keys())
+        first_metric_key = metric_keys[1]
+
+    metrics[temp_cost["metric"]] = metric_keys[1:]
+
+    contour_cost = {}
+
+    metric_key_list = list(metrics.keys())
+
+    for metric1 in metric_key_list:
+        inner_cost = {}
+        for metric2 in metric_key_list:
+            if metric1 == metric2:
+                continue
+            inner_cost[metric2] = {"label": "x: " + metric1 + " | y: "  + metric2, "cost": {}}
+
+        contour_cost[metric1] = inner_cost
+
+    for metric1 in metric_key_list:
+        for metric2 in metric_key_list:
+            if metric1 == metric2:
+                continue
+
+            metric1_idx = metric_key_list.index(metric1)
+            metric2_idx = metric_key_list.index(metric2)
+
+            remaining_metrics = metric_key_list.copy()
+            remaining_metrics.pop(metric1_idx)
+            remaining_metrics.pop(remaining_metrics.index(metric2))
+
+            remaining_keys = []
+
+            for metric in remaining_metrics:
+                remaining_keys.append(metrics[metric])
+
+            remaining_cross_prod = itertools.product(*remaining_keys)
+
+            all_result_lists = []
+
+            for el in remaining_cross_prod:
+                el = list(el)
+                result_list = []
+
+                remaining_str = ""
+                for i in range(0, len(remaining_metrics)):
+                    remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+
+                for key in metrics[metric2]:
+                    temp_idx = metric2_idx if metric2_idx < metric1_idx else metric2_idx - 1
+                    other_metrics_list = el[:temp_idx] + [key] + el[temp_idx:]
+                    result_list.append(get_cost_list_one_metric(cost, metric1, other_metrics_list))
+
+                contour_cost[metric1][metric2]["cost"][remaining_str] = result_list
+                all_result_lists.append(result_list)
+
+            contour_cost[metric1][metric2]["cost"][" | Average"] = np.mean(np.array(all_result_lists), axis=0)
+        
+    cost = contour_cost
+
+    fig = go.Figure()
+
+    updatemenus = [
+        {
+            "buttons": [],
+            "direction": "down",
+            "showactive": True,
+        }
+    ]
+
+    default_x, default_y, default_z = None, None, None
+
+    for metric1 in cost:
+        config_temp = cost[metric1]
+        for metric2 in config_temp:
+            config = config_temp[metric2]
+
+            for inner_key in config["cost"]:
+                x = metrics[metric1]
+                y = metrics[metric2]
+                if len(x) < 2 or len(y) < 2:
+                    continue
+
+                z = config["cost"][inner_key]
+
+                if default_x is None and default_y is None and default_z is None:
+                    default_x, default_y, default_z = x, y, z
+
+                updatemenus[0]["buttons"].append(
+                    {
+                        "label": config["label"] + inner_key,
+                        "method": "update",
+                        "args": [
+                            {"x": [x], "y": [y], "z": [z]},
+                            {"xaxis": {"title": metric1}, "yaxis": {"title": metric2}},
+                        ],
+                    }
+                )
+
+    if default_x is not None and default_y is not None and default_z is not None:
+        fig.add_trace(
+            go.Contour(
+                z=default_z,
+                x=default_x,
+                y=default_y,
+                colorscale="Viridis",
+            )
+        )
+
+    fig.update_layout(
+        updatemenus=updatemenus
+    )
+
+    try:
+        button_template_path = Path(__file__).parent / "index_graph_button_template.html"
+        with open(button_template_path, "r") as f:
+            button_template = f.read()
+
+    except Exception as e:
+        print(f"Error loading button template: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    write_html_with_button(fig, "contour_graph.html", button_template, output_dir_path)
 
 def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file="", single_file=False):
     """Create html from simulation data and save to experiment directory."""
@@ -500,13 +847,30 @@ def create_browser_index(experiments_root):
             with open(summary_file, "r") as f:
                 summary_lines = f.readlines()
                 experiments_html += '<div class="summary-info"><h3>Summary</h3><pre>'
-                for line in summary_lines[:15]:  # Show first 15 lines
+                for line in summary_lines[:10]:  # Show first 10 lines
                     experiments_html += line
                 experiments_html += "</pre></div>"
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
         if json_files:
+            # Insert shared part here
+
+            experiments_html += '<div class="run-grid">'
+            experiments_html += f"""
+                <div class="config-item">
+                    <a href="{exp_name}/contour_graph.html" class="config-link">
+                        <div class="config-name">{exp_name.capitalize()} Contour Graph</div>
+                    </a>
+                </div>
+                <div class="config-item">
+                    <a href="{exp_name}/bar_graph.html" class="config-link">
+                        <div class="config-name">{exp_name.capitalize()} Bar Graph</div>
+                    </a>
+                </div>
+                """
+
+            experiments_html += "</div>"
             experiments_html += '<h3>Configurations</h3><div class="run-grid">'
             
             for json_file in json_files:
@@ -514,11 +878,17 @@ def create_browser_index(experiments_root):
                 
                 duration = "Unknown"
                 rate = "Unknown"
-                if config_name.startswith("d") and "-r" in config_name:
-                    parts = config_name.split("-r")
-                    if len(parts) == 2:
+                arrival = "Unknown"
+                if config_name.startswith("d") and "-A" in config_name and "-r" in config_name:
+                    delimiters = ["-A", "-r"]
+                    temp_config_name = config_name
+                    for delimiter in delimiters:
+                            temp_config_name = " ".join(temp_config_name.split(delimiter))
+                    parts = temp_config_name.split()
+                    if len(parts) == 3:
                         duration = parts[0][1:]  # Remove the "d" prefix
-                        rate = parts[1]
+                        arrival = parts[1]
+                        rate = parts[2]
                 
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
@@ -528,6 +898,7 @@ def create_browser_index(experiments_root):
                         <div class="config-name">{config_name}</div>
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
+                            <div class="config-detail">Early Arrival: {arrival} min</div>
                             <div class="config-detail">Rate: {rate}</div>
                         </div>
                     </a>
@@ -568,6 +939,10 @@ def process_experiments(env, experiments_dir):
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
+        cost = extract_cost_object(json_files)
+        create_contour_graph_html(cost, report_root / exp_name)
+        create_bar_graph_html(cost, report_root / exp_name)
+
         for json_file in json_files:
             config_name = os.path.basename(json_file).replace(".json", "")
 

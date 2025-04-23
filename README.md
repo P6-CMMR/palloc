@@ -28,7 +28,7 @@ cmake ..; cmake --build .
 ## Run Experiments
 To run experiments use
 ```bash
-./scripts/run_experiment.sh [options]
+python3 analysis/run_experiments [options]
 ```
 
 ## Generating Report
