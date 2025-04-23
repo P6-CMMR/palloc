@@ -13,6 +13,9 @@ from pathlib import Path
 import itertools
 import numpy as np
 
+
+UNUSED_SETTINGS = ["seed"]
+
 def load_results(result_file):
     """Load simulation results from a JSON file."""
     try:
@@ -221,10 +224,10 @@ def add_non_duplicate(arr, el):
         arr.append(el)
     return arr
 
-def extract_cost_object(json_files):
+def extract_cost_object(json_files, unused_metrics):
     """Create and object with the results of all the configurations as an object nested for every metric"""
 
-    metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
+    metrics = {}
 
     cost = {}
 
@@ -234,10 +237,9 @@ def extract_cost_object(json_files):
         settings = data.get("settings")
         simulation_cost = data.get("global_avg_cost")
 
-        metrics["Request Rate"] = settings.get("request_rate")
-        metrics["Max Duration"] = settings.get("max_request_duration")
-        metrics["Max Arrival"] = settings.get("max_time_till_arrival")
-        metrics["Batching Interval"] = settings.get("batch_interval")
+        for setting in settings:
+            if setting not in unused_metrics:
+                metrics[setting.replace('_', ' ').capitalize()] = settings.get(setting)
 
         metric_keys = list(metrics.keys())
         key_amount = len(metric_keys)
@@ -942,7 +944,7 @@ def process_experiments(env, experiments_dir):
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
-        cost = extract_cost_object(json_files)
+        cost = extract_cost_object(json_files, UNUSED_SETTINGS)
         create_contour_graph_html(cost, report_root / exp_name)
         create_bar_graph_html(cost, report_root / exp_name)
 
