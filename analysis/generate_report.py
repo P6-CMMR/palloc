@@ -341,7 +341,8 @@ def create_bar_graph_html(cost,  output_dir_path):
          
             remaining_str = ""
             for i in range(0, len(remaining_metrics)):
-                remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+                if len(metrics[remaining_metrics[i]]) > 1:
+                    remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
             
             result = get_cost_list_one_metric(cost, metric1, other_metrics_list)
 
@@ -470,7 +471,9 @@ def create_contour_graph_html(cost, output_dir_path):
 
                 remaining_str = ""
                 for i in range(0, len(remaining_metrics)):
-                    remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+                    if len(metrics[remaining_metrics[i]]) > 1:
+                        remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+            
 
                 for key in metrics[metric2]:
                     temp_idx = metric2_idx if metric2_idx < metric1_idx else metric2_idx - 1
