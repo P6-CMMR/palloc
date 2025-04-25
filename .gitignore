@@ -13,3 +13,4 @@ summary.txt
 .progress_lock
 job_list.txt
 *.supp
+__pycache__
