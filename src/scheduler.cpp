@@ -81,7 +81,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
             if (useWeightedParking) {
                 const auto &parkingWeights = env.getParkingWeights();
                 assert(parkingWeights[j] >= 0.0 && parkingWeights[j] <= 1.0);
-                cost *= parkingWeights[j];
+                cost *= 1 + parkingWeights[j];
             }
 
             objective += std::lround(cost) * sat::LinearExpr(var[i][j]);
