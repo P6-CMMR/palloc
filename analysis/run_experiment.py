@@ -27,7 +27,7 @@ def get_palloc_path():
         print(f"Unsupported operating system: {system}")
         sys.exit(1)
 
-def check_environment():
+def check_environment(env_path: str):
     """Check if required files exist"""
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
@@ -37,43 +37,23 @@ def check_environment():
         print("Please compile the project first.")
         sys.exit(1)
     
-    env_file = os.path.join(project_root, "aalborg_env.json")
+    env_file = os.path.join(project_root, env_path)
     if not os.path.isfile(env_file):
         print("Error: aalborg_env.json not found in project root.")
         print("Please run the setup script to create the environment file.")
         sys.exit(1)
     
     return True
-
-def show_help():
-    """Show help message with examples"""
-    script_name = os.path.basename(__file__)
-    print(f"Usage: {script_name} [options]")
-    print("Options:")
-    print("  -h, --help              Show help message")
-    print("  -d, --duration          Max duration in minutes of requests (can be a range: MIN-MAX), default: 600")
-    print("  -A, --arrival           Max time till arrival in minutes of requests (can be a range: MIN-MAX), default: 60")
-    print("  -r, --request-rate      Request rate per timestep (can be a range: MIN-MAX), default: 10.0")
-    print("  -t, --timesteps         Number of timesteps to simulate, default: 1440")
-    print("  -j, --jobs              Number of parallel jobs to run (default: number of CPU cores)")
-    print("  -w, --weights           Use weights for distance to parking")
-    print("  -a, --aggregations      Number of runs per configuration, default: 3")
-    print("  -s, --seed              Random seed for reproducibility")
-    print("")
-    print("Examples:")
-    print(f"  {script_name} -d 600-1200          # Run simulations in the range 600-1200 max duration")
-    print(f"  {script_name} -r 5.0-15.0          # Run simulations in the range 5.0-15.0 request rate")
-    print(f"  {script_name} -A 10-60             # Run simulations in the range 10-60 max time till arrival")
-    print(f"  {script_name} -j 4                 # Run 4 simulations in parallel")
     
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(add_help=False)
     
+    parser.add_argument("-e", "--environment", help="Path to the environment file")
     parser.add_argument("-h", "--help", action="store_true", help="Show help message")
-    parser.add_argument("-d", "--duration", default="600", help="Max duration in minutes")
-    parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes")
-    parser.add_argument("-r", "--request-rate", default="10.0", help="Request rate per timestep")
+    parser.add_argument("-d", "--duration", default="600", help="Max duration in minutes or range")
+    parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes or range")
+    parser.add_argument("-r", "--request-rate", default="10.0", help="Request rate per timestep or range")
     parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
     parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
@@ -83,8 +63,10 @@ def parse_arguments():
     args = parser.parse_args()
     
     if args.help:
-        show_help()
         sys.exit(0)
+    
+    if not args.environment:
+        sys.exit("Error: Environment file path is required. Use -e or --environment to specify it.")
     
     return args
 
@@ -183,7 +165,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
     
     return total_configs, (duration_step, arrival_step, rate_step)
         
-def run_job(job_tuple, args, exp_dir, progress_queue):
+def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
     duration, arrival, rate, seed, output_file = job_tuple
     
@@ -215,8 +197,8 @@ def run_job(job_tuple, args, exp_dir, progress_queue):
         progress_queue.put(0)
     
 def run_job_wrapper(args_tuple):
-    job_tuple, args, exp_dir, progress_queue = args_tuple
-    run_job(job_tuple, args, exp_dir, progress_queue)
+    job_tuple, args, _, progress_queue = args_tuple
+    run_job(job_tuple, args, progress_queue)
 
 def display_progress(progress_dict, total):
     """Thread function to display progress"""
@@ -272,9 +254,8 @@ def main():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     os.chdir(project_root)
     
-    check_environment()
-    
     args = parse_arguments()
+    check_environment(args.environment)
     
     duration_range = parse_range(args.duration)
     arrival_range = parse_range(args.arrival)

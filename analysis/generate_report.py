@@ -228,9 +228,7 @@ def extract_cost_object(json_files, unused_metrics):
     """Create and object with the results of all the configurations as an object nested for every metric"""
 
     metrics = {}
-
     cost = {}
-
     for json_file in json_files:
         temp_cost = cost
         data = load_results(json_file)
@@ -243,7 +241,6 @@ def extract_cost_object(json_files, unused_metrics):
 
         metric_keys = list(metrics.keys())
         key_amount = len(metric_keys)
-
         for i in range(0, key_amount):
             if "metric" not in temp_cost:
                 temp_cost["metric"] = metric_keys[i]
@@ -413,7 +410,6 @@ def create_bar_graph_html(cost,  output_dir_path):
         sys.exit(1)
 
     write_html_with_button(fig, "bar_graph.html", button_template, output_dir_path)
-
 
 def create_contour_graph_html(cost, output_dir_path):
     """Create contour graph from cost and metric object and save as html"""
