@@ -13,6 +13,9 @@ from pathlib import Path
 import itertools
 import numpy as np
 
+
+UNUSED_SETTINGS = ["seed"]
+
 def load_results(result_file):
     """Load simulation results from a JSON file."""
     try:
@@ -221,27 +224,23 @@ def add_non_duplicate(arr, el):
         arr.append(el)
     return arr
 
-def extract_cost_object(json_files):
+def extract_cost_object(json_files, unused_metrics):
     """Create and object with the results of all the configurations as an object nested for every metric"""
 
-    metrics = {"Request Rate": None, "Max Duration": None, "Max Arrival": None, "Batching Interval": None}
-
+    metrics = {}
     cost = {}
-
     for json_file in json_files:
         temp_cost = cost
         data = load_results(json_file)
         settings = data.get("settings")
         simulation_cost = data.get("global_avg_cost")
 
-        metrics["Request Rate"] = settings.get("request_rate")
-        metrics["Max Duration"] = settings.get("max_request_duration")
-        metrics["Max Arrival"] = settings.get("max_time_till_arrival")
-        metrics["Batching Interval"] = settings.get("batch_interval")
+        for setting in settings:
+            if setting not in unused_metrics:
+                metrics[setting.replace('_', ' ').capitalize()] = settings.get(setting)
 
         metric_keys = list(metrics.keys())
         key_amount = len(metric_keys)
-
         for i in range(0, key_amount):
             if "metric" not in temp_cost:
                 temp_cost["metric"] = metric_keys[i]
@@ -341,7 +340,8 @@ def create_bar_graph_html(cost,  output_dir_path):
          
             remaining_str = ""
             for i in range(0, len(remaining_metrics)):
-                remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+                if len(metrics[remaining_metrics[i]]) > 1:
+                    remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
             
             result = get_cost_list_one_metric(cost, metric1, other_metrics_list)
 
@@ -411,7 +411,6 @@ def create_bar_graph_html(cost,  output_dir_path):
 
     write_html_with_button(fig, "bar_graph.html", button_template, output_dir_path)
 
-
 def create_contour_graph_html(cost, output_dir_path):
     """Create contour graph from cost and metric object and save as html"""
     os.makedirs(output_dir_path, exist_ok=True)
@@ -470,7 +469,9 @@ def create_contour_graph_html(cost, output_dir_path):
 
                 remaining_str = ""
                 for i in range(0, len(remaining_metrics)):
-                    remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+                    if len(metrics[remaining_metrics[i]]) > 1:
+                        remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
+            
 
                 for key in metrics[metric2]:
                     temp_idx = metric2_idx if metric2_idx < metric1_idx else metric2_idx - 1
@@ -939,7 +940,7 @@ def process_experiments(env, experiments_dir):
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
-        cost = extract_cost_object(json_files)
+        cost = extract_cost_object(json_files, UNUSED_SETTINGS)
         create_contour_graph_html(cost, report_root / exp_name)
         create_bar_graph_html(cost, report_root / exp_name)
 
