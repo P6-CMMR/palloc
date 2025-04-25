@@ -15,6 +15,7 @@ TEST_CASE("Base case - [Simulator]") {
     GeneralSettings generalSettings{.numberOfThreads = 1};
 
     constexpr auto timesteps = 1000;
+    constexpr auto startTime = 0;
     constexpr auto maxRequestDuration = 5;
     constexpr auto requestRate = 10;
     constexpr auto maxTimeTillArrival = 5;
@@ -23,6 +24,7 @@ TEST_CASE("Base case - [Simulator]") {
     constexpr auto seed = 1;
     constexpr auto useWeightedParking = false;
     SimulatorSettings simSettings{.timesteps = timesteps,
+                                  .startTime = startTime,
                                   .maxRequestDuration = maxRequestDuration,
                                   .requestRate = requestRate,
                                   .maxTimeTillArrival = maxTimeTillArrival,
