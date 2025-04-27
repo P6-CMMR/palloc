@@ -136,13 +136,6 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
     min_lat, max_lat = np.min(lats), np.max(lats)
     min_lon, max_lon = np.min(lons), np.max(lons)
     
-    # Small buffer for points on the edges
-    BUFFER = 0.0005
-    min_lat -= BUFFER
-    max_lat += BUFFER
-    min_lon -= BUFFER
-    max_lon += BUFFER
-    
     lat_range = max_lat - min_lat
     lon_range = max_lon - min_lon
     
@@ -182,7 +175,7 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
         i = int(np.floor((lat - min_lat) / lat_range * (GRID_SIZE - 1)))
         j = int(np.floor((lon - min_lon) / lon_range * (GRID_SIZE - 1)))
         
-        weight = density_normalized[i][j]
+        weight = 1 + density_normalized[i][j]
         parking_weights.append(weight)
         
     density_grid = []

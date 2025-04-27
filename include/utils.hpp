@@ -23,7 +23,7 @@ class utils {
             volatile const Fp z = t - sum;
             c = z - y;
             sum = t;
-        };
+        }
 
         return sum;
     }
