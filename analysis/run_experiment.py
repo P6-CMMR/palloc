@@ -58,6 +58,7 @@ def parse_arguments():
     parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
     parser.add_argument("-a", "--aggregations", default="3", help="Number of runs per configuration")
+    parser.add_argument("-b", "--batch-delay", default="3", help="interval in minutes before processing requests")
     parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
     
     args = parser.parse_args()
@@ -106,13 +107,14 @@ def get_next_experiment_dir():
     
     return exp_dir
 
-def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range):
+def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range):
     """Create a summary file with experiment parameters"""
     summary_path = os.path.join(exp_dir, "summary.txt")
     
     duration_step = 10
     arrival_step = 10
     rate_step = 0.5
+    batch_step = 1
     
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
@@ -121,6 +123,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         duration_start, duration_end = duration_range
         arrival_start, arrival_end = arrival_range
         rate_start, rate_end = rate_range
+        batch_start, batch_end = batch_range
         
         duration_count = 1
         if duration_end > 0:
@@ -154,8 +157,19 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
             f.write(f"Request rate range: {rate_start}-{rate_end} (step: {rate_step})\n")
         else:
             f.write(f"Request rate: {rate_start}\n")
+
+        batch_count = 1
+        if batch_end > 0:
+            batch_count = 0
+            current_batch = batch_start
+            while current_batch <= batch_end:
+                batch_count += 1
+                current_batch += batch_step
+            f.write(f"Batching interval range: {rate_start}-{rate_end} (step: {rate_step})\n")
+        else:
+            f.write(f"Batching interval: {rate_start}\n")
         
-        total_configs = duration_count * arrival_count * rate_count
+        total_configs = duration_count * arrival_count * rate_count * batch_count
         
         f.write(f"Total configurations: {total_configs}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
@@ -163,11 +177,11 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         f.write(f"Timesteps: {args.timesteps}\n")
         f.write("----------------------------------------\n")
     
-    return total_configs, (duration_step, arrival_step, rate_step)
+    return total_configs, (duration_step, arrival_step, rate_step, batch_step)
         
 def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
-    duration, arrival, rate, seed, output_file = job_tuple
+    duration, arrival, rate, batch, seed, output_file = job_tuple
     
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     palloc_path = get_palloc_path()
@@ -179,6 +193,7 @@ def run_job(job_tuple, args, progress_queue):
         "-d", duration,
         "-A", arrival,
         "-r", rate,
+        "-b", batch,
         "-s", seed,
         "-a", args.aggregations,
         "-t", args.timesteps
@@ -260,11 +275,12 @@ def main():
     duration_range = parse_range(args.duration)
     arrival_range = parse_range(args.arrival)
     rate_range = parse_range(args.request_rate, is_float=True)
+    batch_range = parse_range(args.batch_delay)
     
     exp_dir = get_next_experiment_dir()
     
-    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range)
-    duration_step, arrival_step, rate_step = steps
+    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range)
+    duration_step, arrival_step, rate_step, batch_step = steps
     
     print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
     print("Parameters:")
@@ -285,24 +301,41 @@ def main():
         print(f"  - Request rate range: {rate_start}-{rate_end} (step: {rate_step})")
     else:
         print(f"  - Request rate: {rate_start}")
+
+    batch_start, batch_end = batch_range
+    if batch_end > 0:
+        print(f"  - Batch interval range: {batch_start}-{batch_end} (step: {batch_step})")
+    else:
+        print(f"  - Batch interval: {batch_start}")
     
     print(f"  - Timesteps: {args.timesteps}")
     print(f"  - Output directory: {exp_dir}")
     print("----------------------------------------")
     
     jobs = []
+
+    # you got here Mads
     current_duration = duration_start
     while current_duration <= duration_end or duration_end == 0:
         current_arrival = arrival_start
         while current_arrival <= arrival_end or arrival_end == 0:
             current_rate = rate_start
             while current_rate <= rate_end or rate_end == 0:
-                config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}"
-                seed = args.seed
-                output_file = os.path.join(exp_dir, f"{config_name}.json")
-                
-                jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(seed), output_file))
-                
+                current_batch = batch_start
+                while current_batch <= batch_end or batch_end == 0:
+
+
+                    config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-b{current_batch}"
+                    seed = args.seed
+                    output_file = os.path.join(exp_dir, f"{config_name}.json")
+                    
+                    jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(seed), output_file))
+
+                    if batch_end == 0:
+                        break
+
+                    current_batch += batch_step
+                    
                 if rate_end == 0:
                     break
                 
