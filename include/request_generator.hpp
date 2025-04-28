@@ -56,14 +56,7 @@ class RequestGenerator {
      * Uniformly sample the time till arrival
      */
     uint32_t getArrival();
-
-    /**
-     * Normally poisson is in interval [0, ∞]. When rate > 100 then it becomes a decent
-     * approximation of the central limit theorem for gaussian distirbution so we limit it to r
-     * ate + 3σ. When rate <= 100 we act like its 100 and limit it to 100 + 3σ
-     */
-    static uint32_t getPoissonUpperBound(double rate);
-
+    
     /**
      * Function that returns a multiplier which changes during the day to represent parking requests
      * as a function of time

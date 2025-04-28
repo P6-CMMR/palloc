@@ -17,7 +17,7 @@ uint32_t RequestGenerator::getCount(uint32_t currentTimeOfDay) {
     const auto multiplier = getTimeMultiplier(currentTimeOfDay);
     const double adjustedRate = _requestRate * multiplier;
     std::poisson_distribution<uint32_t> requestCountDist(adjustedRate);
-    return std::min(getPoissonUpperBound(_requestRate), requestCountDist(_rng));
+    return requestCountDist(_rng);
 }
 
 size_t RequestGenerator::getDropoff() { return _dropoffDist(_rng); }
@@ -32,16 +32,6 @@ uint32_t RequestGenerator::getDuration() {
     std::uniform_int_distribution<uint32_t> uniformDist(start, end);
 
     return uniformDist(_rng);
-}
-
-uint32_t RequestGenerator::getPoissonUpperBound(double rate) {
-    constexpr double rateThreshold = 100;
-    constexpr double rateThresholdStddev = 10;
-    constexpr double numStddevs = 3.0;
-    constexpr double defaultUpperBound = rateThreshold + numStddevs * rateThresholdStddev;
-    return static_cast<uint32_t>((rate > rateThreshold)
-                                     ? std::ceil(rate + numStddevs * std::sqrt(rate))
-                                     : defaultUpperBound);
 }
 
 double RequestGenerator::getTimeMultiplier(uint32_t currentTimeOfDay) {
