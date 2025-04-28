@@ -59,6 +59,7 @@ def parse_arguments():
     parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
     parser.add_argument("-a", "--aggregations", default="3", help="Number of runs per configuration")
     parser.add_argument("-b", "--batch-delay", default="3", help="interval in minutes before processing requests")
+    parser.add_argument("-c", "--commit-interval", default="0", help="interval before arriving a request can be committed to a parking spot")
     parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
     
     args = parser.parse_args()
@@ -107,7 +108,7 @@ def get_next_experiment_dir():
     
     return exp_dir
 
-def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range):
+def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range, commit_range):
     """Create a summary file with experiment parameters"""
     summary_path = os.path.join(exp_dir, "summary.txt")
     
@@ -115,6 +116,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
     arrival_step = 10
     rate_step = 0.5
     batch_step = 1
+    commit_step = 10
     
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
@@ -124,6 +126,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         arrival_start, arrival_end = arrival_range
         rate_start, rate_end = rate_range
         batch_start, batch_end = batch_range
+        commit_start, commit_end = commit_range
         
         duration_count = 1
         if duration_end > 0:
@@ -168,8 +171,20 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
             f.write(f"Batching interval range: {rate_start}-{rate_end} (step: {rate_step})\n")
         else:
             f.write(f"Batching interval: {rate_start}\n")
+
+        commit_count = 1
+        if commit_end > 0:
+            commit_count = 0
+            current_commit = commit_start
+            while current_commit <= commit_end:
+                commit_count += 1
+                current_commit += commit_step
+            f.write(f"Commit interval range: {rate_start}-{rate_end} (step: {rate_step})\n")
+        else:
+            f.write(f"Commit interval: {rate_start}\n")
         
-        total_configs = duration_count * arrival_count * rate_count * batch_count
+        
+        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_step
         
         f.write(f"Total configurations: {total_configs}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
@@ -177,11 +192,11 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         f.write(f"Timesteps: {args.timesteps}\n")
         f.write("----------------------------------------\n")
     
-    return total_configs, (duration_step, arrival_step, rate_step, batch_step)
+    return total_configs, (duration_step, arrival_step, rate_step, batch_step, commit_step)
         
 def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
-    duration, arrival, rate, batch, seed, output_file = job_tuple
+    duration, arrival, rate, batch, commit, seed, output_file = job_tuple
     
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     palloc_path = get_palloc_path()
@@ -194,6 +209,7 @@ def run_job(job_tuple, args, progress_queue):
         "-A", arrival,
         "-r", rate,
         "-b", batch,
+        "-c", commit,
         "-s", seed,
         "-a", args.aggregations,
         "-t", args.timesteps
@@ -276,11 +292,12 @@ def main():
     arrival_range = parse_range(args.arrival)
     rate_range = parse_range(args.request_rate, is_float=True)
     batch_range = parse_range(args.batch_delay)
+    commit_range = parse_range(args.commit_interval)
     
     exp_dir = get_next_experiment_dir()
     
-    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range)
-    duration_step, arrival_step, rate_step, batch_step = steps
+    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range, commit_range)
+    duration_step, arrival_step, rate_step, batch_step, commit_step = steps
     
     print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
     print("Parameters:")
@@ -308,13 +325,19 @@ def main():
     else:
         print(f"  - Batch interval: {batch_start}")
     
+    commit_start, commit_end = commit_range
+    if commit_end > 0:
+        print(f"  - Commit interval range: {commit_start}-{commit_end} (step: {commit_step})")
+    else:
+        print(f"  - Commit interval: {commit_start}")
+    
+
     print(f"  - Timesteps: {args.timesteps}")
     print(f"  - Output directory: {exp_dir}")
     print("----------------------------------------")
     
     jobs = []
 
-    # you got here Mads
     current_duration = duration_start
     while current_duration <= duration_end or duration_end == 0:
         current_arrival = arrival_start
@@ -323,13 +346,20 @@ def main():
             while current_rate <= rate_end or rate_end == 0:
                 current_batch = batch_start
                 while current_batch <= batch_end or batch_end == 0:
+                    current_commit = commit_start
+                    while current_commit <= commit_end or commit_end == 0:
 
 
-                    config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-b{current_batch}"
-                    seed = args.seed
-                    output_file = os.path.join(exp_dir, f"{config_name}.json")
-                    
-                    jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(seed), output_file))
+                        config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
+                        seed = args.seed
+                        output_file = os.path.join(exp_dir, f"{config_name}.json")
+                        
+                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(current_commit), str(seed), output_file))
+
+                        if commit_end == 0:
+                            break
+
+                        current_commit += commit_step
 
                     if batch_end == 0:
                         break

@@ -397,6 +397,8 @@ def create_bar_graph_html(cost,  output_dir_path):
         )
         for trace in bar_fig.data:
             fig.add_trace(trace)
+    else: 
+        return
 
     fig.update_layout(
         updatemenus=updatemenus
@@ -536,6 +538,8 @@ def create_contour_graph_html(cost, output_dir_path):
                 colorscale="Viridis",
             )
         )
+    else: 
+        return
 
     fig.update_layout(
         updatemenus=updatemenus
@@ -549,7 +553,7 @@ def create_contour_graph_html(cost, output_dir_path):
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
         sys.exit(1)
-
+   
     write_html_with_button(fig, "contour_graph.html", button_template, output_dir_path)
 
 def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file="", single_file=False):
@@ -858,15 +862,16 @@ def create_browser_index(experiments_root):
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
         if json_files:
-            # Insert shared part here
-
             experiments_html += '<div class="run-grid">'
+           
             experiments_html += f"""
                 <div class="config-item">
                     <a href="{exp_name}/contour_graph.html" class="config-link">
                         <div class="config-name">{exp_name.capitalize()} Contour Graph</div>
                     </a>
                 </div>
+                """
+            experiments_html += f"""
                 <div class="config-item">
                     <a href="{exp_name}/bar_graph.html" class="config-link">
                         <div class="config-name">{exp_name.capitalize()} Bar Graph</div>
@@ -883,17 +888,20 @@ def create_browser_index(experiments_root):
                 duration = "Unknown"
                 rate = "Unknown"
                 arrival = "Unknown"
-                if config_name.startswith("d") and "-A" in config_name and "-r" in config_name:
-                    delimiters = ["-A", "-r"]
+                commit = "Unknown"
+                if config_name.startswith("d") and "-A" in config_name and "-r" in config_name and  "-c" in config_name:
+                    delimiters = ["-A", "-r", "-c"]
                     temp_config_name = config_name
                     for delimiter in delimiters:
                             temp_config_name = " ".join(temp_config_name.split(delimiter))
                     parts = temp_config_name.split()
-                    if len(parts) == 3:
+                    if len(parts) == 4:
                         duration = parts[0][1:]  # Remove the "d" prefix
                         arrival = parts[1]
                         rate = parts[2]
+                        commit = parts[3]
                 
+
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
                 experiments_html += f"""
@@ -904,6 +912,7 @@ def create_browser_index(experiments_root):
                             <div class="config-detail">Duration: {duration} min</div>
                             <div class="config-detail">Early Arrival: {arrival} min</div>
                             <div class="config-detail">Rate: {rate}</div>
+                            <div class="config-detail">commit: {commit}</div>
                         </div>
                     </a>
                 </div>

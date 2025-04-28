@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
                                       .maxTimeTillArrival = 0,
                                       .minParkingTime = 0,
                                       .batchInterval = 2,
+                                      .commitInterval = 0,
                                       .useWeightedParking = false};
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
@@ -42,6 +43,9 @@ int main(int argc, char **argv) {
             {{"batch-delay", 'b'},
              simSettings.batchInterval,
              "interval in minutes before processing requests"},
+            {{"commit-interval", 'c'},
+            simSettings.commitInterval,
+            "interval before arriving a request can be committed to a parking spot"}, 
             {{"weighted-parking", 'w'},
              simSettings.useWeightedParking,
              "use weighted parking cost depending on dropoff node density"},
