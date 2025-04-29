@@ -56,14 +56,7 @@ class RequestGenerator {
      * Uniformly sample the time till arrival
      */
     uint32_t getArrival();
-
-    /**
-     * Normally poisson is in interval [0, ∞]. When rate > 100 then it becomes a decent
-     * approximation of the central limit theorem for gaussian distirbution so we limit it to r
-     * ate + 3σ. When rate <= 100 we act like its 100 and limit it to 100 + 3σ
-     */
-    static uint32_t getPoissonUpperBound(double rate);
-
+    
     /**
      * Function that returns a multiplier which changes during the day to represent parking requests
      * as a function of time
@@ -84,14 +77,14 @@ class RequestGenerator {
     static constexpr std::array<std::array<uint32_t, 2>, 7> DURATION_BUCKETS{
         {{{0, 60}},                                         // 14%
          {{61, 120}},                                       // 13%
-         {{121, 240}},                                      // 10%
-         {{241, 480}},                                      // 16%
-         {{481, 1440}},                                     // 21%
+         {{121, 240}},                                      // 11%
+         {{241, 480}},                                      // 17%
+         {{481, 1440}},                                     // 28%
          {{1441, 2880}},                                    // 9%
-         {{2881, std::numeric_limits<uint32_t>::max()}}}};  // 7%
+         {{2881, std::numeric_limits<uint32_t>::max()}}}};  // 8%
 
     // Weights based on COWI
-    static constexpr std::array<double, 7> originalWeights{14.0, 13.0, 10.0, 16.0, 21.0, 9.0, 7.0};
+    static constexpr std::array<double, 7> originalWeights{0.14, 0.13, 0.11, 0.17, 0.28, 0.09, 0.08};
 
     uint32_t _maxRequestDuration;
     double _requestRate;
