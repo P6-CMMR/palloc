@@ -313,8 +313,6 @@ def main():
     print("----------------------------------------")
     
     jobs = []
-
-    # you got here Mads
     current_duration = duration_start
     while current_duration <= duration_end or duration_end == 0:
         current_arrival = arrival_start
@@ -323,8 +321,6 @@ def main():
             while current_rate <= rate_end or rate_end == 0:
                 current_batch = batch_start
                 while current_batch <= batch_end or batch_end == 0:
-
-
                     config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-b{current_batch}"
                     seed = args.seed
                     output_file = os.path.join(exp_dir, f"{config_name}.json")
