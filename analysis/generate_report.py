@@ -15,6 +15,7 @@ import numpy as np
 
 
 UNUSED_SETTINGS = ["seed"]
+ENABLE_EXTRA_GRAPH_CONFIGS = False
 
 def load_results(result_file):
     """Load simulation results from a JSON file."""
@@ -345,7 +346,8 @@ def create_bar_graph_html(cost,  output_dir_path):
             
             result = get_cost_list_one_metric(cost, metric1, other_metrics_list)
 
-            bar_cost[metric1]["cost"][remaining_str] = result
+            if (ENABLE_EXTRA_GRAPH_CONFIGS):
+                bar_cost[metric1]["cost"][remaining_str] = result
             all_result_lists.append(result)
 
         bar_cost[metric1]["cost"][" | Average"] = np.mean(np.array(all_result_lists), axis=0)
@@ -478,7 +480,8 @@ def create_contour_graph_html(cost, output_dir_path):
                     other_metrics_list = el[:temp_idx] + [key] + el[temp_idx:]
                     result_list.append(get_cost_list_one_metric(cost, metric1, other_metrics_list))
 
-                contour_cost[metric1][metric2]["cost"][remaining_str] = result_list
+                if (ENABLE_EXTRA_GRAPH_CONFIGS):
+                    contour_cost[metric1][metric2]["cost"][remaining_str] = result_list
                 all_result_lists.append(result_list)
 
             contour_cost[metric1][metric2]["cost"][" | Average"] = np.mean(np.array(all_result_lists), axis=0)
