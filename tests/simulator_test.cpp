@@ -23,6 +23,8 @@ TEST_CASE("Base case - [Simulator]") {
     constexpr auto batchInterval = 2;
     constexpr auto seed = 1;
     constexpr auto useWeightedParking = false;
+    constexpr auto commitInterval = 0;
+
     SimulatorSettings simSettings{.timesteps = timesteps,
                                   .startTime = startTime,
                                   .maxRequestDuration = maxRequestDuration,
@@ -30,6 +32,7 @@ TEST_CASE("Base case - [Simulator]") {
                                   .maxTimeTillArrival = maxTimeTillArrival,
                                   .minParkingTime = minParkingTime,
                                   .batchInterval = batchInterval,
+                                  .commitInterval = commitInterval,
                                   .seed = seed,
                                   .useWeightedParking = useWeightedParking
                                 };

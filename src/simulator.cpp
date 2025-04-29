@@ -22,9 +22,13 @@ uint32_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
 
 uint32_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
 
+uint32_t Simulation::getEarlyTimeLeft() const noexcept { return _earlyTimeLeft; }
+
 bool Simulation::isInDropoff() const noexcept { return _inDropoff; }
 
 bool Simulation::hasVisitedParking() const noexcept { return _visitedParking; }
+
+bool Simulation::isEarly() const noexcept { return _earlyTimeLeft > 0; }
 
 void Simulation::setIsInDropoff(bool inDropoff) noexcept { this->_inDropoff = inDropoff; }
 
@@ -33,6 +37,8 @@ void Simulation::setHasVisitedParking(bool visitedParking) noexcept {
 }
 
 void Simulation::decrementDuration() noexcept { --_durationLeft; }
+
+void Simulation::decrementEarlyArrival() noexcept { --_earlyTimeLeft; }
 
 void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                          const OutputSettings &outputSettings,
@@ -248,11 +254,17 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
             ++availableParkingSpots[parkingNode];
         }
 
+        if (simulation.isEarly()) {
+            simulation.decrementEarlyArrival();
+            return false;
+        }
+
         simulation.decrementDuration();
         if (simulation.getDurationLeft() == 0 && !simulation.isInDropoff() && timeToDrive == 0) {
             simulation.setIsInDropoff(true);
             ++availableParkingSpots[parkingNode];
         }
+        
 
         assert(simulation.getDurationLeft() ||
                (simulation.getDurationLeft() == 0 && simulation.isInDropoff()));
