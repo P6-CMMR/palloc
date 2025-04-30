@@ -13,7 +13,6 @@ from pathlib import Path
 import itertools
 import numpy as np
 
-
 UNUSED_SETTINGS = ["seed"]
 ENABLE_EXTRA_GRAPH_CONFIGS = False
 
@@ -605,7 +604,18 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                 timestep_data[timestep]["values"].append(row[metric_name])
             
             if metric_name == "average_duration":
-                df = df[df[metric_name] > 0]
+                prev_valid_value = None
+                new_avg_duration = []
+                for val in df[metric_name]:
+                    if val > 0:
+                        prev_valid_value = val
+                        new_avg_duration.append(val)
+                    elif prev_valid_value is not None:
+                        new_avg_duration.append(prev_valid_value)
+                    else:
+                        new_avg_duration.append(val)
+                        
+                df[metric_name] = new_avg_duration
                 
             fig.add_scatter(
                 x=df["time_labels"],
@@ -880,6 +890,17 @@ def create_browser_index(experiments_root):
                 """
 
             experiments_html += "</div>"
+            
+            best_config, best_cost, dropped_in_best = find_best_config(json_files)
+            experiments_html += f"""
+                <div>
+                    <h3>Best Configuration</h3>
+                    <p>Config: <strong>{best_config}</strong></p>
+                    <p>Global Average Cost: <strong>{best_cost:.2f}</strong></p>
+                    <p>Total Dropped Requests: <strong>{dropped_in_best}</strong></p>
+                </div>
+                """
+            
             experiments_html += '<h3>Configurations</h3><div class="run-grid">'
             
             for json_file in json_files:
@@ -900,7 +921,6 @@ def create_browser_index(experiments_root):
                         arrival = parts[1]
                         rate = parts[2]
                         commit = parts[3]
-                
 
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
@@ -933,6 +953,25 @@ def create_browser_index(experiments_root):
     print(f"Experiments browser created at {index_path}")
     return index_path
 
+def find_best_config(json_files):
+    best_config = None
+    best_cost = float("inf")
+    
+    for json_file in json_files:
+        config_name = os.path.basename(json_file).replace(".json", "")
+        try:
+            with open(json_file, 'r') as f:
+                data = json.load(f)
+                cost = float(data["global_avg_cost"])
+                if cost < best_cost:
+                    best_cost = cost
+                    best_config = config_name
+                    dropped_in_best = data.get("total_dropped_requests", 0)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error reading {json_file}: {e}")
+            continue
+    return best_config, best_cost, dropped_in_best
+    
 def process_experiments(env, experiments_dir, experiment_list=None):
     """Process all experiments in the directory"""
     report_root = Path("report")

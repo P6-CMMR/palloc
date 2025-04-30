@@ -112,11 +112,11 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
     """Create a summary file with experiment parameters"""
     summary_path = os.path.join(exp_dir, "summary.txt")
     
-    duration_step = 10
-    arrival_step = 10
+    duration_step = 15
+    arrival_step = 5
     rate_step = 0.5
     batch_step = 1
-    commit_step = 10
+    commit_step = 5
     
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
@@ -154,7 +154,8 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         if rate_end > 0:
             rate_count = 0
             current_rate = rate_start
-            while current_rate <= rate_end:
+            eps = 1e-6
+            while current_rate <= rate_end + eps:
                 rate_count += 1
                 current_rate += rate_step
             f.write(f"Request rate range: {rate_start}-{rate_end} (step: {rate_step})\n")
@@ -183,9 +184,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Commit interval: {rate_start}\n")
         
-        
-        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_step
-        
+        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_count
         f.write(f"Total configurations: {total_configs}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
         f.write(f"Parallel jobs: {args.jobs}\n")
@@ -337,7 +336,6 @@ def main():
     print("----------------------------------------")
     
     jobs = []
-
     current_duration = duration_start
     while current_duration <= duration_end or duration_end == 0:
         current_arrival = arrival_start

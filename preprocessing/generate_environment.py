@@ -113,7 +113,7 @@ def calculate_shortest_roundtrips(dropoff_to_parking: list, parking_to_dropoff: 
     print("Generating shortest round trips...")
     smallest_round_trips = []
     for i in range(len(dropoff_to_parking)):
-        min_round_trip = 2**64 - 1
+        min_round_trip = 2**32 - 1
         for j in range(len(parking_to_dropoff)):
             round_trip_time = dropoff_to_parking[i][j] + parking_to_dropoff[j][i]
             
