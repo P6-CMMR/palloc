@@ -996,7 +996,6 @@ def main():
     
     # Check if the results argument is a directory or a file
     if os.path.isdir(args.results):
-        print(f"Processing experiments in directory: {args.results}")
         process_experiments(env, args.results, args.experiments)
         index_path = create_browser_index(args.results)
         
