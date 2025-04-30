@@ -56,7 +56,7 @@ class RequestGenerator {
      * Uniformly sample the time till arrival
      */
     uint32_t getArrival();
-    
+
     /**
      * Function that returns a multiplier which changes during the day to represent parking requests
      * as a function of time
@@ -84,7 +84,8 @@ class RequestGenerator {
          {{2881, std::numeric_limits<uint32_t>::max()}}}};  // 8%
 
     // Weights based on COWI
-    static constexpr std::array<double, 7> originalWeights{0.14, 0.13, 0.11, 0.17, 0.28, 0.09, 0.08};
+    static constexpr std::array<double, 7> originalWeights{0.14, 0.13, 0.11, 0.17,
+                                                           0.28, 0.09, 0.08};
 
     uint32_t _maxRequestDuration;
     double _requestRate;

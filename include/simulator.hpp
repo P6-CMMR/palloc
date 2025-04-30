@@ -17,11 +17,12 @@ namespace palloc {
 class Simulation {
    public:
     explicit Simulation(uint32_t dropoffNode, uint32_t parkingNode, uint32_t requestDuration,
-                        uint32_t routeDuration)
+                        uint32_t earlyTimeLeft, uint32_t routeDuration)
         : _dropoffNode(dropoffNode),
           _parkingNode(parkingNode),
           _requestDuration(requestDuration),
           _durationLeft(requestDuration),
+          _earlyTimeLeft(earlyTimeLeft),
           _routeDuration(routeDuration) {}
 
     uint32_t getDropoffNode() const noexcept;
@@ -32,17 +33,21 @@ class Simulation {
 
     bool isInDropoff() const noexcept;
     bool hasVisitedParking() const noexcept;
+    bool isEarly() const noexcept;
+    bool isDead() const noexcept;
 
     void setIsInDropoff(bool inDropoff) noexcept;
     void setHasVisitedParking(bool visitedParking) noexcept;
 
     void decrementDuration() noexcept;
+    void decrementEarlyArrival() noexcept;
 
    private:
     uint32_t _dropoffNode;
     uint32_t _parkingNode;
     uint32_t _requestDuration;
     uint32_t _durationLeft;
+    uint32_t _earlyTimeLeft;
     uint32_t _routeDuration;
 
     bool _inDropoff{true};

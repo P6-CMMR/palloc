@@ -19,6 +19,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     const auto requestCount = requests.size();
     auto &availableParkingSpots = env.getAvailableParkingSpots();
 
+    const auto commitInterval = simSettings.commitInterval;
+
     // Binary variables from request to parkings
     std::vector<std::vector<sat::BoolVar>> var(requestCount);
     for (size_t i = 0; i < requestCount; ++i) {
@@ -129,14 +131,19 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
             }
 
             sumDuration += routeDuration;
-            if (tillArrival > 0) {
+            if (tillArrival > commitInterval) {
                 earlyRequests.push_back(request);
             } else if (assigned) {
                 --availableParkingSpots[parkingNode];
-                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, routeDuration);
+                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, tillArrival,
+                                         routeDuration);
             } else {
-                unassignedRequests.push_back(request);
-                request.incrementTimesDropped();
+                if (tillArrival > 0) {
+                    earlyRequests.push_back(request);
+                } else {
+                    unassignedRequests.push_back(request);
+                    request.incrementTimesDropped();
+                }
             }
         }
     }
