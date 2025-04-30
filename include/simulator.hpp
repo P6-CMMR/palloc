@@ -29,12 +29,12 @@ class Simulation {
     uint32_t getParkingNode() const noexcept;
     uint32_t getRequestDuration() const noexcept;
     uint32_t getDurationLeft() const noexcept;
-    uint32_t getEarlyTimeLeft() const noexcept;
     uint32_t getRouteDuration() const noexcept;
 
     bool isInDropoff() const noexcept;
     bool hasVisitedParking() const noexcept;
     bool isEarly() const noexcept;
+    bool isDead() const noexcept;
 
     void setIsInDropoff(bool inDropoff) noexcept;
     void setHasVisitedParking(bool visitedParking) noexcept;
@@ -47,8 +47,8 @@ class Simulation {
     uint32_t _parkingNode;
     uint32_t _requestDuration;
     uint32_t _durationLeft;
-    uint32_t _routeDuration;
     uint32_t _earlyTimeLeft;
+    uint32_t _routeDuration;
 
     bool _inDropoff{true};
     bool _visitedParking{false};

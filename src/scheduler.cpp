@@ -135,7 +135,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
                 earlyRequests.push_back(request);
             } else if (assigned) {
                 --availableParkingSpots[parkingNode];
-                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, tillArrival, routeDuration);
+                simulations.emplace_back(dropoffNode, parkingNode, requestDuration, tillArrival,
+                                         routeDuration);
             } else {
                 if (tillArrival > 0) {
                     earlyRequests.push_back(request);

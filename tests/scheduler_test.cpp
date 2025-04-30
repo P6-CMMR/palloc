@@ -16,6 +16,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         .maxTimeTillArrival = 0,
         .minParkingTime = 0,
         .batchInterval = 0,
+        .commitInterval = 0,
         .seed = 0,
         .useWeightedParking = false
     };
@@ -67,6 +68,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         .maxTimeTillArrival = 0,
         .minParkingTime = 0,
         .batchInterval = 0,
+        .commitInterval = 0,
         .seed = 0,
         .useWeightedParking = false
     };

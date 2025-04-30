@@ -41,6 +41,7 @@ else()
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Wpedantic -Wconversion -Wsign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_CXX_FLAGS_PERF "${CMAKE_CXX_FLAGS_RELEASE} -g -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -50,6 +51,7 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UPPER)
 message(STATUS "${CMAKE_BUILD_TYPE} CXX Flags: ${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}")
+message(STATUS "${CMAKE_BUILD_TYPE} Linker Flags: ${CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER}}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
