@@ -393,7 +393,7 @@ def main():
     env_file = os.path.join(project_root, "aalborg_env.json") 
     experiments_dir = os.path.join(project_root, "experiments")
     
-    subprocess.run(["python", report_script, env_file, experiments_dir])
+    subprocess.run(["python", report_script, env_file, experiments_dir, "--experiments", exp_dir])
 
 if __name__ == "__main__":
     main()

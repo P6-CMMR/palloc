@@ -933,13 +933,14 @@ def create_browser_index(experiments_root):
     print(f"Experiments browser created at {index_path}")
     return index_path
 
-def process_experiments(env, experiments_dir):
+def process_experiments(env, experiments_dir, experiment_list=None):
     """Process all experiments in the directory"""
     report_root = Path("report")
     os.makedirs(report_root, exist_ok=True)
     
-    # Get all experiment directories
     exp_dirs = sorted(glob.glob(os.path.join(experiments_dir, "experiment-*")))
+    if experiment_list:
+        exp_dirs = [exp_dir for exp_dir in exp_dirs if exp_dir in experiment_list]
     
     if not exp_dirs:
         print(f"No experiment directories found in {experiments_dir}")
@@ -988,14 +989,15 @@ def main():
     parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
     parser.add_argument("env_file", help="Path to environment file")
     parser.add_argument("results", help="Path to experiment directory or a single JSON result file")
+    parser.add_argument("--experiments", nargs="*", help="List of specific experiments to process")
     args = parser.parse_args()
     
     env = load_env(args.env_file)
     
     # Check if the results argument is a directory or a file
     if os.path.isdir(args.results):
-        # Process all experiments
-        process_experiments(env, args.results)
+        print(f"Processing experiments in directory: {args.results}")
+        process_experiments(env, args.results, args.experiments)
         index_path = create_browser_index(args.results)
         
         if index_path:
