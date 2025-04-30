@@ -348,8 +348,6 @@ def main():
                 while current_batch <= batch_end or batch_end == 0:
                     current_commit = commit_start
                     while current_commit <= commit_end or commit_end == 0:
-
-
                         config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
                         seed = args.seed
                         output_file = os.path.join(exp_dir, f"{config_name}.json")

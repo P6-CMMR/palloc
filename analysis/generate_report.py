@@ -677,18 +677,18 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     start_time = format_minutes_to_time(start_time_raw)
     
     max_request_duration_raw = settings.get("max_request_duration", "N/A")
-    max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
+    max_request_duration = f"{max_request_duration_raw} min" if max_request_duration_raw != "N/A" else "N/A"
 
     max_request_arrival_raw = settings.get("max_request_arrival", "N/A")
-    max_request_arrival = f"{max_request_arrival_raw}m" if max_request_arrival_raw != "N/A" else "N/A"
+    max_request_arrival = f"{max_request_arrival_raw} min" if max_request_arrival_raw != "N/A" else "N/A"
     
     min_parking_time_raw = settings.get("min_parking_time", "N/A")
-    min_parking_time = f"{min_parking_time_raw}m" if min_parking_time_raw != "N/A" else "N/A"
+    min_parking_time = f"{min_parking_time_raw} min" if min_parking_time_raw != "N/A" else "N/A"
     
     request_rate = settings.get("request_rate", "N/A")
     
     batch_interval_raw = settings.get("batch_interval", "N/A")
-    batch_interval = f"{batch_interval_raw}m" if batch_interval_raw != "N/A" else "N/A"
+    batch_interval = f"{batch_interval_raw} min" if batch_interval_raw != "N/A" else "N/A"
     
     using_weighted_parking = settings.get("using_weighted_parking", "N/A")
     
@@ -912,7 +912,7 @@ def create_browser_index(experiments_root):
                             <div class="config-detail">Duration: {duration} min</div>
                             <div class="config-detail">Early Arrival: {arrival} min</div>
                             <div class="config-detail">Rate: {rate}</div>
-                            <div class="config-detail">commit: {commit}</div>
+                            <div class="config-detail">Commit Interval: {commit} min</div>
                         </div>
                     </a>
                 </div>
