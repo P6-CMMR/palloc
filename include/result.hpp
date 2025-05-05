@@ -65,8 +65,8 @@ struct glz::meta<palloc::Result> {
     using T = palloc::Result;
     static constexpr auto value = glz::object(
         "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
-        &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "settings", &T::_simSettings,
-        "traces", &T::_traceLists, "requests_generated", &T::_requestsGenerated);
+        &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
+        &T::_requestsGenerated, "settings", &T::_simSettings, "traces", &T::_traceLists);
 };
 
 #endif

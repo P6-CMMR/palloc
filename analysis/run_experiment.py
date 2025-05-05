@@ -53,7 +53,7 @@ def parse_arguments():
     parser.add_argument("-h", "--help", action="store_true", help="Show help message")
     parser.add_argument("-d", "--duration", default="600", help="Max duration in minutes or range")
     parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes or range")
-    parser.add_argument("-r", "--request-rate", default="10.0", help="Request rate per timestep or range")
+    parser.add_argument("-r", "--request-rate", default="8.0", help="Request rate per timestep or range")
     parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
     parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
