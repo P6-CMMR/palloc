@@ -1,7 +1,6 @@
 #ifndef SIMULATOR_HPP
 #define SIMULATOR_HPP
 
-#include <cstdint>
 #include <filesystem>
 #include <list>
 #include <mutex>
@@ -12,12 +11,13 @@
 #include "result.hpp"
 #include "settings.hpp"
 #include "trace.hpp"
+#include "types.hpp"
 
 namespace palloc {
 class Simulation {
    public:
-    explicit Simulation(uint32_t dropoffNode, uint32_t parkingNode, uint32_t requestDuration,
-                        uint32_t earlyTimeLeft, uint32_t routeDuration)
+    explicit Simulation(Uint dropoffNode, Uint parkingNode, Uint requestDuration,
+                        Uint earlyTimeLeft, Uint routeDuration)
         : _dropoffNode(dropoffNode),
           _parkingNode(parkingNode),
           _requestDuration(requestDuration),
@@ -25,11 +25,11 @@ class Simulation {
           _earlyTimeLeft(earlyTimeLeft),
           _routeDuration(routeDuration) {}
 
-    uint32_t getDropoffNode() const noexcept;
-    uint32_t getParkingNode() const noexcept;
-    uint32_t getRequestDuration() const noexcept;
-    uint32_t getDurationLeft() const noexcept;
-    uint32_t getRouteDuration() const noexcept;
+    Uint getDropoffNode() const noexcept;
+    Uint getParkingNode() const noexcept;
+    Uint getRequestDuration() const noexcept;
+    Uint getDurationLeft() const noexcept;
+    Uint getRouteDuration() const noexcept;
 
     bool isInDropoff() const noexcept;
     bool hasVisitedParking() const noexcept;
@@ -43,12 +43,12 @@ class Simulation {
     void decrementEarlyArrival() noexcept;
 
    private:
-    uint32_t _dropoffNode;
-    uint32_t _parkingNode;
-    uint32_t _requestDuration;
-    uint32_t _durationLeft;
-    uint32_t _earlyTimeLeft;
-    uint32_t _routeDuration;
+    Uint _dropoffNode;
+    Uint _parkingNode;
+    Uint _requestDuration;
+    Uint _durationLeft;
+    Uint _earlyTimeLeft;
+    Uint _routeDuration;
 
     bool _inDropoff{true};
     bool _visitedParking{false};
@@ -64,14 +64,14 @@ class Simulator {
 
    private:
     static void simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
-                            std::mutex &resultsMutex, uint32_t runNumber);
+                            std::mutex &resultsMutex, Uint runNumber);
 
     static void updateSimulations(Simulations &simulations, Environment &env);
-    static void insertNewRequests(RequestGenerator &generator, uint32_t currentTimeOfDay,
+    static void insertNewRequests(RequestGenerator &generator, Uint currentTimeOfDay,
                                   Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void decrementArrivalTime(Requests &earlyRequests);
-    static void seperateTooEarlyRequests(Requests &requests, uint32_t maxDuration,
+    static void seperateTooEarlyRequests(Requests &requests, Uint maxDuration,
                                          Requests &earlyRequests);
     static void cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips);
 };

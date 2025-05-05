@@ -16,8 +16,8 @@ TEST_CASE("Base case - [Request Generator]") {
                                 .seed = 1,
                                 .requestRate = requestRate});
 
-    constexpr uint32_t testRequestAmount = 1000;
-    for (uint32_t i = 0; i < testRequestAmount; ++i) {
+    constexpr Uint testRequestAmount = 1000;
+    for (Uint i = 0; i < testRequestAmount; ++i) {
         const auto newRequests = generator.generate(i);
         for (const Request &request : newRequests) {
             REQUIRE(request.getArrival() <= maxTimeTillArrival);

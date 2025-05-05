@@ -10,9 +10,9 @@ size_t Trace::getEarlyRequests() const noexcept { return _earlyRequests; }
 
 size_t Trace::getNumberOfRequests() const noexcept { return _numberOfRequests; }
 
-uint32_t Trace::getAvailableParkingSpots() const noexcept { return _availableParkingSpots; }
+Uint Trace::getAvailableParkingSpots() const noexcept { return _availableParkingSpots; }
 
-uint32_t Trace::getTimeStep() const noexcept { return _timestep; }
+Uint Trace::getTimeStep() const noexcept { return _timestep; }
 
 double Trace::getCost() const noexcept { return _cost; }
 

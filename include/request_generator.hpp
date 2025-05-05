@@ -2,7 +2,6 @@
 #define REQUEST_GENERATOR_HPP
 
 #include <array>
-#include <cstdint>
 #include <random>
 
 #include "request.hpp"
@@ -13,9 +12,9 @@ class RequestGenerator {
    public:
     struct Options {
         size_t dropoffNodes;
-        uint32_t maxTimeTillArrival;
-        uint32_t maxRequestDuration;
-        uint32_t seed;
+        Uint maxTimeTillArrival;
+        Uint maxRequestDuration;
+        Uint seed;
         double requestRate;
     };
 
@@ -27,10 +26,20 @@ class RequestGenerator {
           _requestRate(options.requestRate) {
         DoubleVector durationWeights = getDurationBuckets(options.maxRequestDuration);
         _durationDist =
-            std::discrete_distribution<uint32_t>(durationWeights.begin(), durationWeights.end());
+            std::discrete_distribution<Uint>(durationWeights.begin(), durationWeights.end());
     }
 
-    Requests generate(uint32_t currentTimeOfDay);
+    /**
+     * Generate requests based on the current time of day
+     *
+     * @param currentTimeOfDay time of day in minutes from midnight
+     */
+    Requests generate(Uint currentTimeOfDay);
+
+    /**
+     * Get the number of requests generated
+     */
+    Uint getRequestsGenerated() const noexcept;
 
    private:
     /**
@@ -39,7 +48,7 @@ class RequestGenerator {
      *
      * @param currentTimeOfDay time of day in minutes from midnight
      */
-    uint32_t getCount(uint32_t currentTimeOfDay);
+    Uint getCount(Uint currentTimeOfDay);
 
     /**
      * Uniformly sample one of the dropoffs
@@ -50,27 +59,27 @@ class RequestGenerator {
     /**
      * Uniformly sample duration from a random weighted bucket
      */
-    uint32_t getDuration();
+    Uint getDuration();
 
     /**
      * Uniformly sample the time till arrival
      */
-    uint32_t getArrival();
+    Uint getArrival();
 
     /**
      * Function that returns a multiplier which changes during the day to represent parking requests
      * as a function of time
      */
-    static double getTimeMultiplier(uint32_t currentTimeOfDay);
+    static double getTimeMultiplier(Uint currentTimeOfDay);
 
     /**
      * Get viable duration buckets
      */
-    static DoubleVector getDurationBuckets(uint32_t maxDuration);
+    static DoubleVector getDurationBuckets(Uint maxDuration);
 
     std::uniform_int_distribution<size_t> _dropoffDist;
-    std::discrete_distribution<uint32_t> _durationDist;
-    std::uniform_int_distribution<uint32_t> _arrivalDist;
+    std::discrete_distribution<Uint> _durationDist;
+    std::uniform_int_distribution<Uint> _arrivalDist;
     std::minstd_rand _rng;
 
     // Traffic weights for Aalborg based on tomtom
@@ -102,21 +111,22 @@ class RequestGenerator {
     };
 
     // Bucket intervals based on COWI
-    static constexpr std::array<std::array<uint32_t, 2>, 7> DURATION_BUCKETS{
-        {{{0, 60}},                                         // 14%
-         {{61, 120}},                                       // 13%
-         {{121, 240}},                                      // 11%
-         {{241, 480}},                                      // 17%
-         {{481, 1440}},                                     // 28%
-         {{1441, 2880}},                                    // 9%
-         {{2881, std::numeric_limits<uint32_t>::max()}}}};  // 8%
+    static constexpr std::array<std::array<Uint, 2>, 7> DURATION_BUCKETS{
+        {{{0, 60}},                                     // 14%
+         {{61, 120}},                                   // 13%
+         {{121, 240}},                                  // 11%
+         {{241, 480}},                                  // 17%
+         {{481, 1440}},                                 // 28%
+         {{1441, 2880}},                                // 9%
+         {{2881, std::numeric_limits<Uint>::max()}}}};  // 8%
 
     // Weights based on COWI
     static constexpr std::array<double, 7> originalWeights{0.14, 0.13, 0.11, 0.17,
                                                            0.28, 0.09, 0.08};
 
-    uint32_t _maxRequestDuration;
+    Uint _maxRequestDuration;
     double _requestRate;
+    Uint _requestsGenerated = 0;
 };
 }  // namespace palloc
 

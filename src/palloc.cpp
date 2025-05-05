@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
         std::string outputPathStr;
         SimulatorSettings simSettings{.timesteps = 1440,
                                       .maxRequestDuration = 600,
-                                      .requestRate = 10,
+                                      .requestRate = 8,
                                       .maxTimeTillArrival = 0,
                                       .minParkingTime = 0,
                                       .batchInterval = 2,
@@ -19,10 +19,10 @@ int main(int argc, char **argv) {
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
-        std::optional<uint32_t> seedOpt;
+        std::optional<Uint> seedOpt;
         std::string startTimeStr = "08:00";
 
-        std::optional<uint32_t> numberOfThreadsOpt;
+        std::optional<Uint> numberOfThreadsOpt;
 
         argz::options opts{
             {{"environment", 'e'}, environmentPathStr, "the environment file to simulate"},

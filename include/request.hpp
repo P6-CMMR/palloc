@@ -1,19 +1,20 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
-#include <cstdint>
 #include <vector>
+
+#include "types.hpp"
 
 namespace palloc {
 class Request {
    public:
-    explicit Request(uint32_t dropoffNode, uint32_t requestDuration, uint32_t tillArrival)
+    explicit Request(Uint dropoffNode, Uint requestDuration, Uint tillArrival)
         : _dropoffNode(dropoffNode), _requestDuration(requestDuration), _tillArrival(tillArrival) {}
 
-    uint32_t getDropoffNode() const noexcept;
-    uint32_t getRequestDuration() const noexcept;
-    uint32_t getTimesDropped() const noexcept;
-    uint32_t getArrival() const noexcept;
+    Uint getDropoffNode() const noexcept;
+    Uint getRequestDuration() const noexcept;
+    Uint getTimesDropped() const noexcept;
+    Uint getArrival() const noexcept;
 
     void decrementDuration() noexcept;
     void decrementTillArrival() noexcept;
@@ -23,10 +24,10 @@ class Request {
     bool isEarly() const noexcept;
 
    private:
-    uint32_t _dropoffNode;
-    uint32_t _requestDuration;
-    uint32_t _timesDropped = 0;
-    uint32_t _tillArrival;
+    Uint _dropoffNode;
+    Uint _requestDuration;
+    Uint _timesDropped = 0;
+    Uint _tillArrival;
 };
 
 using Requests = std::vector<Request>;

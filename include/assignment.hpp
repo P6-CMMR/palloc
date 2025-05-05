@@ -1,24 +1,24 @@
 #ifndef ASSIGNMENT_HPP
 #define ASSIGNMENT_HPP
 
-#include <cstdint>
 #include <vector>
 
 #include "environment.hpp"
 #include "glaze/glaze.hpp"
+#include "types.hpp"
 
 namespace palloc {
 class Assignment {
    public:
     explicit Assignment() {}
     explicit Assignment(Coordinate dropoffCoordinate, Coordinate parkingCoordinate,
-                        uint32_t requestDuration, uint32_t routeDuration)
+                        Uint requestDuration, Uint routeDuration)
         : _dropoffCoordinate(dropoffCoordinate),
           _parkingCoordinate(parkingCoordinate),
           _requestDuration(requestDuration),
           _routeDuration(routeDuration) {}
 
-    uint32_t getRequestDuration() const noexcept;
+    Uint getRequestDuration() const noexcept;
 
    private:
     friend struct glz::meta<Assignment>;
@@ -26,8 +26,8 @@ class Assignment {
     Coordinate _dropoffCoordinate{};
     Coordinate _parkingCoordinate{};
 
-    uint32_t _requestDuration{};
-    uint32_t _routeDuration{};
+    Uint _requestDuration{};
+    Uint _routeDuration{};
 };
 
 using Assignments = std::vector<Assignment>;

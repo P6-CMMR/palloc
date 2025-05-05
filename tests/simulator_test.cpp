@@ -47,7 +47,7 @@ TEST_CASE("Base case - [Simulator]") {
     REQUIRE(traces.size() == timesteps);
 
     Trace earlierTrace = traces.front();
-    std::vector<std::pair<uint32_t, Assignment>> assignements;
+    std::vector<std::pair<Uint, Assignment>> assignements;
 
     const size_t parkingAmount =
         earlierTrace.getAvailableParkingSpots() + earlierTrace.getNumberOfOngoingSimulations();
@@ -57,7 +57,7 @@ TEST_CASE("Base case - [Simulator]") {
         if (trace.getTimeStep() == earlierTrace.getTimeStep()) {
             continue;
         }
-        uint32_t timestep = trace.getTimeStep();
+        Uint timestep = trace.getTimeStep();
         size_t totalTraceRequests = trace.getNumberOfRequests() + trace.getDroppedRequests() +
                                     trace.getNumberOfOngoingSimulations() +
                                     trace.getEarlyRequests();

@@ -2,14 +2,15 @@
 #define DATE_PARSER_HPP
 
 #include <chrono>
-#include <cstdint>
 #include <sstream>
 #include <string_view>
+
+#include "types.hpp"
 
 namespace palloc {
 class DateParser {
    public:
-    static uint32_t parseTimeToMinutes(const std::string_view &startTimeStr);
+    static Uint parseTimeToMinutes(const std::string_view &startTimeStr);
 };
 }  // namespace palloc
 
