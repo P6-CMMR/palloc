@@ -1,5 +1,8 @@
 #include "request_generator.hpp"
 
+#include <cassert>
+#include <iostream>
+
 using namespace palloc;
 
 Requests RequestGenerator::generate(uint32_t currentTimeOfDay) {
@@ -35,37 +38,9 @@ uint32_t RequestGenerator::getDuration() {
 }
 
 double RequestGenerator::getTimeMultiplier(uint32_t currentTimeOfDay) {
-    double timeInHours = static_cast<double>(currentTimeOfDay % 1440) / 60.0;
-
-    constexpr double baseline = 0.4;
-
-    // Morning peak parameters
-    constexpr double morningAmplitude = 0.95;
-    constexpr double morningCenter = 9.0;
-    constexpr double morningWidth = 3.0;
-
-    constexpr double morningFactor = 1.0 / (2.0 * morningWidth * morningWidth);
-    constexpr double morningScale = morningAmplitude - baseline;
-
-    // Evening peak parameters
-    constexpr double eveningAmplitude = 0.9;
-    constexpr double eveningCenter = 17.0;
-    constexpr double eveningWidth = 3.0;
-
-    constexpr double eveningFactor = 1.0 / (2.0 * eveningWidth * eveningWidth);
-    constexpr double eveningScale = eveningAmplitude - baseline;
-
-    double morningDiff = timeInHours - morningCenter;
-    double morningTerm = morningScale * std::exp(-morningDiff * morningDiff * morningFactor);
-
-    double eveningDiff = timeInHours - eveningCenter;
-    double eveningTerm = eveningScale * std::exp(-eveningDiff * eveningDiff * eveningFactor);
-
-    double multiplier = baseline + morningTerm + eveningTerm;
-
-    multiplier = std::min(1.0, multiplier);
-
-    return multiplier;
+    const uint hour = currentTimeOfDay / 60;
+    assert(hour < 24);
+    return TRAFFIC_WEIGHTS[hour];
 }
 
 DoubleVector RequestGenerator::getDurationBuckets(uint32_t maxDuration) {
