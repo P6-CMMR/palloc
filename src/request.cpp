@@ -2,13 +2,13 @@
 
 using namespace palloc;
 
-uint32_t Request::getDropoffNode() const noexcept { return _dropoffNode; }
+Uint Request::getDropoffNode() const noexcept { return _dropoffNode; }
 
-uint32_t Request::getRequestDuration() const noexcept { return _requestDuration; }
+Uint Request::getRequestDuration() const noexcept { return _requestDuration; }
 
-uint32_t Request::getArrival() const noexcept { return _tillArrival; }
+Uint Request::getArrival() const noexcept { return _tillArrival; }
 
-uint32_t Request::getTimesDropped() const noexcept { return _timesDropped; }
+Uint Request::getTimesDropped() const noexcept { return _timesDropped; }
 
 void Request::decrementDuration() noexcept { --_requestDuration; }
 

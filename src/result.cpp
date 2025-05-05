@@ -29,7 +29,13 @@ Result Result::aggregateResults(const Results &results) {
     globalAvgDuration /= static_cast<double>(numResults);
     globalAvgCost /= static_cast<double>(numResults);
 
-    return Result(traceLists, simSettings, droppedRequests, globalAvgDuration, globalAvgCost);
+    Uint requestsGenerated = 0;
+    for (const Result &result : results) {
+        requestsGenerated += result.getRequestsGenerated();
+    }
+
+    return Result(traceLists, simSettings, droppedRequests, globalAvgDuration, globalAvgCost,
+                  requestsGenerated);
 }
 
 void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) const {
@@ -71,3 +77,5 @@ size_t Result::getDroppedRequests() const noexcept { return _droppedRequests; }
 double Result::getGlobalAvgDuration() const noexcept { return _globalAvgDuration; }
 
 double Result::getGlobalAvgCost() const noexcept { return _globalAvgCost; }
+
+Uint Result::getRequestsGenerated() const noexcept { return _requestsGenerated; }

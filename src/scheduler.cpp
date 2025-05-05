@@ -82,7 +82,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
             double cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
             if (useWeightedParking) {
                 const auto &parkingWeights = env.getParkingWeights();
-                assert(parkingWeights[j] >= 0.0 && parkingWeights[j] <= 1.0);
+                assert(parkingWeights[j] >= 0.0 && parkingWeights[j] <= 2.0);
                 cost *= parkingWeights[j];
             }
 
@@ -104,7 +104,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     Requests unassignedRequests;
     Requests earlyRequests;
 
-    uint32_t sumDuration = 0;
+    Uint sumDuration = 0;
     double averageDuration = 0.0;
     double cost = 0.0;
 
@@ -118,7 +118,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
             const auto dropoffNode = request.getDropoffNode();
             const auto requestDuration = request.getRequestDuration();
             const auto tillArrival = request.getArrival();
-            uint32_t routeDuration = 0;
+            Uint routeDuration = 0;
 
             for (size_t j = 0; j < numberOfParkings; ++j) {
                 if (sat::SolutionBooleanValue(response, var[i][j])) {

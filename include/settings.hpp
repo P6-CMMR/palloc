@@ -1,33 +1,33 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
-#include <cstdint>
 #include <filesystem>
 
 #include "glaze/glaze.hpp"
+#include "types.hpp"
 
 namespace palloc {
 struct SimulatorSettings {
-    uint32_t timesteps;
-    uint32_t startTime;
-    uint32_t maxRequestDuration;
+    Uint timesteps;
+    Uint startTime;
+    Uint maxRequestDuration;
     double requestRate;
-    uint32_t maxTimeTillArrival;
-    uint32_t minParkingTime;
-    uint32_t batchInterval;
-    uint32_t commitInterval;
-    uint32_t seed;
+    Uint maxTimeTillArrival;
+    Uint minParkingTime;
+    Uint batchInterval;
+    Uint commitInterval;
+    Uint seed;
     bool useWeightedParking;
 };
 
 struct OutputSettings {
     std::filesystem::path outputPath;
-    uint32_t numberOfRunsToAggregate;
+    Uint numberOfRunsToAggregate;
     bool prettify;
 };
 
 struct GeneralSettings {
-    uint32_t numberOfThreads;
+    Uint numberOfThreads;
 };
 }  // namespace palloc
 
