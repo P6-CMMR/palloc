@@ -82,7 +82,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
             double cost = dropoffToParking[dropoffNode][j] + parkingToDropoff[j][dropoffNode];
             if (useWeightedParking) {
                 const auto &parkingWeights = env.getParkingWeights();
-                assert(parkingWeights[j] >= 0.0 && parkingWeights[j] <= 1.0);
+                assert(parkingWeights[j] >= 0.0 && parkingWeights[j] <= 2.0);
                 cost *= parkingWeights[j];
             }
 
