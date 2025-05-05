@@ -12,15 +12,15 @@
 
 using namespace palloc;
 
-uint32_t Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
+Uint Simulation::getDropoffNode() const noexcept { return _dropoffNode; }
 
-uint32_t Simulation::getParkingNode() const noexcept { return _parkingNode; }
+Uint Simulation::getParkingNode() const noexcept { return _parkingNode; }
 
-uint32_t Simulation::getRequestDuration() const noexcept { return _requestDuration; }
+Uint Simulation::getRequestDuration() const noexcept { return _requestDuration; }
 
-uint32_t Simulation::getDurationLeft() const noexcept { return _durationLeft; }
+Uint Simulation::getDurationLeft() const noexcept { return _durationLeft; }
 
-uint32_t Simulation::getRouteDuration() const noexcept { return _routeDuration; }
+Uint Simulation::getRouteDuration() const noexcept { return _routeDuration; }
 
 bool Simulation::isInDropoff() const noexcept { return _inDropoff; }
 
@@ -60,15 +60,15 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     const auto seed = simSettings.seed;
     std::println("Using seed: {}", seed);
 
-    uint32_t startHour = simSettings.startTime / 60;
-    uint32_t startMin = simSettings.startTime % 60;
+    Uint startHour = simSettings.startTime / 60;
+    Uint startMin = simSettings.startTime % 60;
     std::println("Starting simulation from start time: {} ({:02d}:{:02d})", simSettings.startTime,
                  startHour, startMin);
 
-    uint32_t timesteps = simSettings.timesteps;
-    uint32_t numberOfRuns = outputSettings.numberOfRunsToAggregate;
+    Uint timesteps = simSettings.timesteps;
+    Uint numberOfRuns = outputSettings.numberOfRunsToAggregate;
 
-    uint32_t numberOfThreads = generalSettings.numberOfThreads;
+    Uint numberOfThreads = generalSettings.numberOfThreads;
     if (numberOfRuns > 1) {
         std::println("Simulating {} timesteps aggregating {} runs using {} threads...", timesteps,
                      numberOfRuns, numberOfThreads);
@@ -79,9 +79,9 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     Results results;
     results.reserve(numberOfRuns);
     std::mutex resultsMutex;
-    std::atomic<uint32_t> atomicRunCounter{0};
+    std::atomic<Uint> atomicRunCounter{0};
     auto worker = [&]() {
-        for (uint32_t run = atomicRunCounter.fetch_add(1); run < numberOfRuns;
+        for (Uint run = atomicRunCounter.fetch_add(1); run < numberOfRuns;
              run = atomicRunCounter.fetch_add(1)) {
             Simulator::simulateRun(env, simSettings, results, resultsMutex, run);
         }
@@ -90,7 +90,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::vector<std::thread> threads;
     threads.reserve(numberOfRuns);
     const auto start = std::chrono::high_resolution_clock::now();
-    for (uint32_t run = 0; run < numberOfThreads; ++run) {
+    for (Uint run = 0; run < numberOfThreads; ++run) {
         threads.emplace_back(worker);
     }
 
@@ -105,13 +105,14 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     const Result result = Result::aggregateResults(results);
 
+    std::println("Total requests generated: {}", result.getRequestsGenerated());
+
     const double globalAvgDuration = result.getGlobalAvgDuration();
     const int minutes = static_cast<int>(globalAvgDuration);
     const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    const double globalAvgCost = result.getGlobalAvgCost();
-    std::println("Average objective cost: {}", globalAvgCost);
+    std::println("Average objective cost: {}", result.getGlobalAvgCost());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
     if (!outputSettings.outputPath.empty()) {
@@ -119,8 +120,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     }
 }
 
-static uint32_t calculateMaxDuration(const Requests &requests) {
-    uint32_t maxDuration = 0;
+static Uint calculateMaxDuration(const Requests &requests) {
+    Uint maxDuration = 0;
     for (const Request &request : requests) {
         if (!request.isEarly() && request.getRequestDuration() > maxDuration) {
             maxDuration = request.getRequestDuration();
@@ -143,7 +144,7 @@ static Assignments createAssignments(const Simulations &newSimulations, const En
 }
 
 void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
-                            std::mutex &resultsMutex, uint32_t runNumber) {
+                            std::mutex &resultsMutex, Uint runNumber) {
     const auto &availableParkingSpots = env.getAvailableParkingSpots();
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
 
@@ -153,7 +154,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                                 .seed = simSettings.seed + runNumber,
                                 .requestRate = simSettings.requestRate});
 
-    const uint32_t timesteps = simSettings.timesteps;
+    const Uint timesteps = simSettings.timesteps;
 
     Requests requests;
     requests.reserve(static_cast<size_t>(timesteps) *
@@ -169,8 +170,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     size_t droppedRequests = 0;
     double runCost = 0.0;
     double runDuration = 0.0;
-    for (uint32_t timestep = 1; timestep <= timesteps; ++timestep) {
-        uint32_t currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
+    for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
+        Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
 
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
@@ -190,7 +191,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             unassignedRequests.clear();
             earlyRequests.clear();
 
-            uint32_t maxDuration = calculateMaxDuration(requests);
+            Uint maxDuration = calculateMaxDuration(requests);
             seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
             if (!requests.empty()) {
@@ -225,8 +226,11 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const double runAvgDuration = runDuration / static_cast<double>(timesteps);
     const double runAvgCost = runCost / static_cast<double>(timesteps);
 
+    const Uint requestsGenerated = generator.getRequestsGenerated();
+
     const std::lock_guard<std::mutex> guard(resultsMutex);
-    results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost);
+    results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
+                         requestsGenerated);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
@@ -272,7 +276,7 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     std::erase_if(simulations, simulate);
 }
 
-void Simulator::seperateTooEarlyRequests(Requests &requests, uint32_t maxDuration,
+void Simulator::seperateTooEarlyRequests(Requests &requests, Uint maxDuration,
                                          Requests &earlyRequests) {
     const auto end = requests.rend();
     for (auto it = requests.rbegin(); it != end; ++it) {
@@ -288,7 +292,7 @@ void Simulator::seperateTooEarlyRequests(Requests &requests, uint32_t maxDuratio
     }
 }
 
-void Simulator::insertNewRequests(RequestGenerator &generator, uint32_t currentTimeOfDay,
+void Simulator::insertNewRequests(RequestGenerator &generator, Uint currentTimeOfDay,
                                   Requests &requests) {
     const auto newRequests = generator.generate(currentTimeOfDay);
     requests.insert(requests.end(), newRequests.begin(), newRequests.end());

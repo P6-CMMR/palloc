@@ -1,20 +1,20 @@
 #ifndef TRACE_HPP
 #define TRACE_HPP
 
-#include <cstdint>
 #include <list>
 #include <vector>
 
 #include "assignment.hpp"
 #include "environment.hpp"
 #include "glaze/glaze.hpp"
+#include "types.hpp"
 
 namespace palloc {
 class Trace {
    public:
     explicit Trace() {}
-    explicit Trace(uint32_t timestep, uint32_t currentTimeOfDay, size_t numberOfRequests,
-                   size_t numberOfOngoingSimulations, uint32_t availableParkingSpots, double cost,
+    explicit Trace(Uint timestep, Uint currentTimeOfDay, size_t numberOfRequests,
+                   size_t numberOfOngoingSimulations, Uint availableParkingSpots, double cost,
                    double averageDuration, size_t droppedRequests, size_t earlyRequests,
                    Assignments assignments)
         : _assignments(std::move(assignments)),
@@ -33,9 +33,9 @@ class Trace {
     size_t getEarlyRequests() const noexcept;
     size_t getNumberOfRequests() const noexcept;
 
-    uint32_t getAvailableParkingSpots() const noexcept;
+    Uint getAvailableParkingSpots() const noexcept;
 
-    uint32_t getTimeStep() const noexcept;
+    Uint getTimeStep() const noexcept;
 
     double getCost() const noexcept;
     double getAverageDuration() const noexcept;
@@ -49,12 +49,12 @@ class Trace {
 
     size_t _numberOfRequests{};
     size_t _numberOfOngoingSimulations{};
-    uint32_t _availableParkingSpots{};
+    Uint _availableParkingSpots{};
     size_t _droppedRequests{};
     size_t _earlyRequests{};
 
-    uint32_t _timestep{};
-    uint32_t _currentTimeOfDay{};
+    Uint _timestep{};
+    Uint _currentTimeOfDay{};
 
     double _cost{};
     double _averageDuration{};

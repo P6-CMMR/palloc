@@ -1,7 +1,6 @@
 #ifndef ENVIRONMENT_HPP
 #define ENVIRONMENT_HPP
 
-#include <cstdint>
 #include <filesystem>
 #include <vector>
 

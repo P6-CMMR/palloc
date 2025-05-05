@@ -709,6 +709,8 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     global_avg_duration = format_duration_min_sec(data.get("global_avg_duration", 0))
     global_avg_cost = round(data.get("global_avg_cost", 0), 2)
     
+    requests_generated = data.get("requests_generated", "N/A")
+    
     try:
         template_path = Path(__file__).parent / "experiment_template.html"
         with open(template_path, "r") as f:
@@ -816,6 +818,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
     html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
+    html_content = html_content.replace("{{requests_generated}}", str(requests_generated))
     html_content = html_content.replace("{{run_tabs}}", run_tabs_html)
     html_content = html_content.replace("{{assignments_list}}", assignments_html)
     html_content = html_content.replace("{{map_link}}", map_html_link)
