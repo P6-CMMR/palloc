@@ -9,8 +9,8 @@ int main(int argc, char **argv) {
         std::string environmentPathStr;
         std::string outputPathStr;
         SimulatorSettings simSettings{.timesteps = 1440,
-                                      .maxRequestDuration = 600,
-                                      .requestRate = 8,
+                                      .maxRequestDuration = 2880,
+                                      .requestRate = 4.0,
                                       .maxTimeTillArrival = 0,
                                       .minParkingTime = 0,
                                       .batchInterval = 2,

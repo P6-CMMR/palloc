@@ -51,9 +51,10 @@ def parse_arguments():
     
     parser.add_argument("-e", "--environment", help="Path to the environment file")
     parser.add_argument("-h", "--help", action="store_true", help="Show help message")
-    parser.add_argument("-d", "--duration", default="600", help="Max duration in minutes or range")
+    parser.add_argument("-d", "--duration", default="2880", help="Max duration in minutes or range")
     parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes or range")
-    parser.add_argument("-r", "--request-rate", default="8.0", help="Request rate per timestep or range")
+
+    parser.add_argument("-r", "--request-rate", default="4.0", help="Request rate per timestep or range")
     parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
     parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
@@ -112,11 +113,11 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
     """Create a summary file with experiment parameters"""
     summary_path = os.path.join(exp_dir, "summary.txt")
     
-    duration_step = 10
-    arrival_step = 10
+    duration_step = 15
+    arrival_step = 5
     rate_step = 0.5
     batch_step = 1
-    commit_step = 10
+    commit_step = 5
     
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
@@ -154,7 +155,8 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         if rate_end > 0:
             rate_count = 0
             current_rate = rate_start
-            while current_rate <= rate_end:
+            eps = 1e-6
+            while current_rate <= rate_end + eps:
                 rate_count += 1
                 current_rate += rate_step
             f.write(f"Request rate range: {rate_start}-{rate_end} (step: {rate_step})\n")
@@ -183,9 +185,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Commit interval: {rate_start}\n")
         
-        
-        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_step
-        
+        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_count
         f.write(f"Total configurations: {total_configs}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
         f.write(f"Parallel jobs: {args.jobs}\n")
@@ -337,7 +337,6 @@ def main():
     print("----------------------------------------")
     
     jobs = []
-
     current_duration = duration_start
     while current_duration <= duration_end or duration_end == 0:
         current_arrival = arrival_start
@@ -348,8 +347,6 @@ def main():
                 while current_batch <= batch_end or batch_end == 0:
                     current_commit = commit_start
                     while current_commit <= commit_end or commit_end == 0:
-
-
                         config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
                         seed = args.seed
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
@@ -393,7 +390,7 @@ def main():
     env_file = os.path.join(project_root, "aalborg_env.json") 
     experiments_dir = os.path.join(project_root, "experiments")
     
-    subprocess.run(["python", report_script, env_file, experiments_dir])
+    subprocess.run(["python", report_script, env_file, experiments_dir, "--experiments", exp_dir])
 
 if __name__ == "__main__":
     main()

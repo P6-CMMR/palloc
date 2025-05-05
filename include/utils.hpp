@@ -5,7 +5,7 @@
 #include <ranges>
 
 namespace palloc {
-class utils {
+class Utils {
    public:
     /**
      * Generic implementation of: https://en.wikipedia.org/wiki/Kahan_summation_algorithm

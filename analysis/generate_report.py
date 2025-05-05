@@ -13,7 +13,6 @@ from pathlib import Path
 import itertools
 import numpy as np
 
-
 UNUSED_SETTINGS = ["seed"]
 ENABLE_EXTRA_GRAPH_CONFIGS = False
 
@@ -605,7 +604,18 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                 timestep_data[timestep]["values"].append(row[metric_name])
             
             if metric_name == "average_duration":
-                df = df[df[metric_name] > 0]
+                prev_valid_value = None
+                new_avg_duration = []
+                for val in df[metric_name]:
+                    if val > 0:
+                        prev_valid_value = val
+                        new_avg_duration.append(val)
+                    elif prev_valid_value is not None:
+                        new_avg_duration.append(prev_valid_value)
+                    else:
+                        new_avg_duration.append(val)
+                        
+                df[metric_name] = new_avg_duration
                 
             fig.add_scatter(
                 x=df["time_labels"],
@@ -677,18 +687,18 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     start_time = format_minutes_to_time(start_time_raw)
     
     max_request_duration_raw = settings.get("max_request_duration", "N/A")
-    max_request_duration = f"{max_request_duration_raw}m" if max_request_duration_raw != "N/A" else "N/A"
+    max_request_duration = f"{max_request_duration_raw} min" if max_request_duration_raw != "N/A" else "N/A"
 
     max_request_arrival_raw = settings.get("max_request_arrival", "N/A")
-    max_request_arrival = f"{max_request_arrival_raw}m" if max_request_arrival_raw != "N/A" else "N/A"
+    max_request_arrival = f"{max_request_arrival_raw} min" if max_request_arrival_raw != "N/A" else "N/A"
     
     min_parking_time_raw = settings.get("min_parking_time", "N/A")
-    min_parking_time = f"{min_parking_time_raw}m" if min_parking_time_raw != "N/A" else "N/A"
+    min_parking_time = f"{min_parking_time_raw} min" if min_parking_time_raw != "N/A" else "N/A"
     
     request_rate = settings.get("request_rate", "N/A")
     
     batch_interval_raw = settings.get("batch_interval", "N/A")
-    batch_interval = f"{batch_interval_raw}m" if batch_interval_raw != "N/A" else "N/A"
+    batch_interval = f"{batch_interval_raw} min" if batch_interval_raw != "N/A" else "N/A"
     
     using_weighted_parking = settings.get("using_weighted_parking", "N/A")
     
@@ -883,6 +893,17 @@ def create_browser_index(experiments_root):
                 """
 
             experiments_html += "</div>"
+            
+            best_config, best_cost, dropped_in_best = find_best_config(json_files)
+            experiments_html += f"""
+                <div>
+                    <h3>Best Configuration</h3>
+                    <p>Config: <strong>{best_config}</strong></p>
+                    <p>Global Average Cost: <strong>{best_cost:.2f}</strong></p>
+                    <p>Total Dropped Requests: <strong>{dropped_in_best}</strong></p>
+                </div>
+                """
+            
             experiments_html += '<h3>Configurations</h3><div class="run-grid">'
             
             for json_file in json_files:
@@ -903,7 +924,6 @@ def create_browser_index(experiments_root):
                         arrival = parts[1]
                         rate = parts[2]
                         commit = parts[3]
-                
 
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
@@ -915,7 +935,7 @@ def create_browser_index(experiments_root):
                             <div class="config-detail">Duration: {duration} min</div>
                             <div class="config-detail">Early Arrival: {arrival} min</div>
                             <div class="config-detail">Rate: {rate}</div>
-                            <div class="config-detail">commit: {commit}</div>
+                            <div class="config-detail">Commit Interval: {commit} min</div>
                         </div>
                     </a>
                 </div>
@@ -936,13 +956,33 @@ def create_browser_index(experiments_root):
     print(f"Experiments browser created at {index_path}")
     return index_path
 
-def process_experiments(env, experiments_dir):
+def find_best_config(json_files):
+    best_config = None
+    best_cost = float("inf")
+    
+    for json_file in json_files:
+        config_name = os.path.basename(json_file).replace(".json", "")
+        try:
+            with open(json_file, 'r') as f:
+                data = json.load(f)
+                cost = float(data["global_avg_cost"])
+                if cost < best_cost:
+                    best_cost = cost
+                    best_config = config_name
+                    dropped_in_best = data.get("total_dropped_requests", 0)
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error reading {json_file}: {e}")
+            continue
+    return best_config, best_cost, dropped_in_best
+    
+def process_experiments(env, experiments_dir, experiment_list=None):
     """Process all experiments in the directory"""
     report_root = Path("report")
     os.makedirs(report_root, exist_ok=True)
     
-    # Get all experiment directories
     exp_dirs = sorted(glob.glob(os.path.join(experiments_dir, "experiment-*")))
+    if experiment_list:
+        exp_dirs = [exp_dir for exp_dir in exp_dirs if exp_dir in experiment_list]
     
     if not exp_dirs:
         print(f"No experiment directories found in {experiments_dir}")
@@ -991,14 +1031,14 @@ def main():
     parser = argparse.ArgumentParser(description="Create plots from Palloc simulation results")
     parser.add_argument("env_file", help="Path to environment file")
     parser.add_argument("results", help="Path to experiment directory or a single JSON result file")
+    parser.add_argument("--experiments", nargs="*", help="List of specific experiments to process")
     args = parser.parse_args()
     
     env = load_env(args.env_file)
     
     # Check if the results argument is a directory or a file
     if os.path.isdir(args.results):
-        # Process all experiments
-        process_experiments(env, args.results)
+        process_experiments(env, args.results, args.experiments)
         index_path = create_browser_index(args.results)
         
         if index_path:
