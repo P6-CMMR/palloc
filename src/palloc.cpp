@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
             {{"request-rate", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
-            {{"batch-delay", 'b'},
+            {{"batch-interval", 'b'},
              simSettings.batchInterval,
              "interval in minutes before processing requests"},
             {{"commit-interval", 'c'},
