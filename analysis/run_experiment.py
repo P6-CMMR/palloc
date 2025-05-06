@@ -140,15 +140,18 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Duration: {duration_start}\n")
         
+        arrival_values = []
         arrival_count = 1
         if arrival_end > 0:
             arrival_count = 0
             current_arv = arrival_start
             while current_arv <= arrival_end:
+                arrival_values.append(current_arv)
                 arrival_count += 1
                 current_arv += arrival_step
             f.write(f"Arrival range: {arrival_start}-{arrival_end} (step: {arrival_step})\n")
         else:
+            arrival_values.append(arrival_start)
             f.write(f"Arrival: {arrival_start}\n")
         
         rate_count = 1
@@ -174,18 +177,29 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Batching interval: {rate_start}\n")
 
+        commit_values = []
         commit_count = 1
         if commit_end > 0:
             commit_count = 0
             current_commit = commit_start
             while current_commit <= commit_end:
+                commit_values.append(current_commit)
                 commit_count += 1
                 current_commit += commit_step
             f.write(f"Commit interval range: {rate_start}-{rate_end} (step: {rate_step})\n")
         else:
+            commit_values.append(commit_start)
             f.write(f"Commit interval: {rate_start}\n")
         
-        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_count
+        total_configs = 0
+        for _ in range(duration_count):
+            for arrival in arrival_values:
+                for _ in range(rate_count):
+                    for _ in range(batch_count):
+                        for commit in commit_values:
+                            if commit <= arrival:
+                                total_configs += 1
+            
         f.write(f"Total configurations: {total_configs}\n")
         f.write(f"Seed: {args.seed}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
@@ -295,6 +309,16 @@ def main():
     batch_range = parse_range(args.batch_delay)
     commit_range = parse_range(args.commit_interval)
     
+    # If commit larger then its the same as if it was equal to arrival
+    if commit_range[0] > arrival_range[1]:
+        commit_range = (arrival_range[1], 0)  
+    elif commit_range[1] > arrival_range[1]:
+        is_same = commit_range[0] == arrival_range[1]
+        if is_same:
+            commit_range = (arrival_range[1], 0)
+        else:
+            commit_range = (commit_range[0], arrival_range[1])
+        
     exp_dir = get_next_experiment_dir()
     
     total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range, commit_range)
@@ -350,6 +374,10 @@ def main():
                 while current_batch <= batch_end or batch_end == 0:
                     current_commit = commit_start
                     while current_commit <= commit_end or commit_end == 0:
+                        if current_commit > current_arrival:
+                            current_commit += commit_step
+                            continue
+                        
                         config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
                         seed = args.seed
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
