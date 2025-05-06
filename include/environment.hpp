@@ -21,6 +21,7 @@ class Environment {
 
     explicit Environment(const std::filesystem::path &environmentPath) {
         loadEnvironment(environmentPath);
+        _totalAvailableParkingSpots = std::reduce(_availableParkingSpots.begin(), _availableParkingSpots.end());
     }
 
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
