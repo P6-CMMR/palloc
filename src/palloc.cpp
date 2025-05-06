@@ -15,7 +15,8 @@ int main(int argc, char **argv) {
                                       .minParkingTime = 0,
                                       .batchInterval = 2,
                                       .commitInterval = 0,
-                                      .useWeightedParking = false};
+                                      .useWeightedParking = false,
+                                      .randomGenerator = "pcg"};
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
@@ -60,7 +61,10 @@ int main(int argc, char **argv) {
             {{"jobs", 'j'},
              numberOfThreadsOpt,
              "number of threads to use for aggregation, default: min(number of hardware threads, "
-             "number of aggregates)"}};
+             "number of aggregates)"},
+            {{"random-generator", 'g'},
+             simSettings.randomGenerator,
+             "random generator to use (options: pcg, pcg-fast)"}};
 
         argz::parse(about, opts, argc, argv);
         if (about.printed_help || about.printed_version) {
@@ -91,6 +95,11 @@ int main(int argc, char **argv) {
 
         if (simSettings.requestRate <= 0) {
             std::println(stderr, "Error: Request rate must be a positive real");
+            return EXIT_FAILURE;
+        }
+
+        if (!random::availableGenerators.contains(simSettings.randomGenerator)) {
+            std::println(stderr, "Error: Random generator must be either pcg or pcg-fast");
             return EXIT_FAILURE;
         }
 

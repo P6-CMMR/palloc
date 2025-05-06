@@ -10,7 +10,8 @@ TEST_CASE("Base case - [Request Generator]") {
     constexpr int maxRequestDuration = 10;
     constexpr int dropoffNodes = 3;
 
-    RequestGenerator generator({.dropoffNodes = dropoffNodes,
+    RequestGenerator generator({.randomGenerator = "pcg",
+                                .dropoffNodes = dropoffNodes,
                                 .maxTimeTillArrival = maxTimeTillArrival,
                                 .maxRequestDuration = maxRequestDuration,
                                 .seed = 1,

@@ -19,9 +19,7 @@ class Environment {
     using DurationMatrix = std::vector<UintVector>;
     using Coordinates = std::vector<Coordinate>;
 
-    explicit Environment(const std::filesystem::path &environmentPath) {
-        loadEnvironment(environmentPath);
-    }
+    explicit Environment(const std::filesystem::path &environmentPath);
 
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
     const Environment::DurationMatrix &getParkingToDropoff() const noexcept;

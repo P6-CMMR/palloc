@@ -2,28 +2,33 @@
 #define REQUEST_GENERATOR_HPP
 
 #include <array>
+#include <memory>
 #include <random>
+#include <string>
 
+#include "random.hpp"
 #include "request.hpp"
 #include "types.hpp"
 
 namespace palloc {
+struct RequestGeneratorOptions {
+    std::string randomGenerator;
+    size_t dropoffNodes;
+    Uint maxTimeTillArrival;
+    Uint maxRequestDuration;
+    Uint seed;
+    double requestRate;
+};
+
 class RequestGenerator {
    public:
-    struct Options {
-        size_t dropoffNodes;
-        Uint maxTimeTillArrival;
-        Uint maxRequestDuration;
-        Uint seed;
-        double requestRate;
-    };
-
-    explicit RequestGenerator(const RequestGenerator::Options &options)
+    explicit RequestGenerator(const RequestGeneratorOptions &options)
         : _dropoffDist(0, options.dropoffNodes - 1),
           _arrivalDist(0, options.maxTimeTillArrival),
-          _rng(options.seed),
           _maxRequestDuration(options.maxRequestDuration),
           _requestRate(options.requestRate) {
+        _rng = random::RandomEngineFactory::create(options.randomGenerator, options.seed);
+
         DoubleVector durationWeights = getDurationBuckets(options.maxRequestDuration);
         _durationDist =
             std::discrete_distribution<Uint>(durationWeights.begin(), durationWeights.end());
@@ -80,7 +85,7 @@ class RequestGenerator {
     std::uniform_int_distribution<size_t> _dropoffDist;
     std::discrete_distribution<Uint> _durationDist;
     std::uniform_int_distribution<Uint> _arrivalDist;
-    std::minstd_rand _rng;
+    std::unique_ptr<random::RandomEngine> _rng;
 
     // Traffic weights for Aalborg based on tomtom
     static constexpr std::array<double, 24> TRAFFIC_WEIGHTS{

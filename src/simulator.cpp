@@ -57,8 +57,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::println("Total parking capacity: {}",
                  std::reduce(availableParkingSpots.begin(), availableParkingSpots.end()));
 
-    const auto seed = simSettings.seed;
-    std::println("Using seed: {}", seed);
+    std::println("Using {} generator with seed: {}", simSettings.randomGenerator, simSettings.seed);
 
     Uint startHour = simSettings.startTime / 60;
     Uint startMin = simSettings.startTime % 60;
@@ -148,7 +147,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const auto &availableParkingSpots = env.getAvailableParkingSpots();
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
 
-    RequestGenerator generator({.dropoffNodes = numberOfDropoffs,
+    RequestGenerator generator({.randomGenerator = simSettings.randomGenerator,
+                                .dropoffNodes = numberOfDropoffs,
                                 .maxTimeTillArrival = simSettings.maxTimeTillArrival,
                                 .maxRequestDuration = simSettings.maxRequestDuration,
                                 .seed = simSettings.seed + runNumber,

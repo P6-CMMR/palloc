@@ -34,8 +34,8 @@ TEST_CASE("Base case - [Simulator]") {
                                   .batchInterval = batchInterval,
                                   .commitInterval = commitInterval,
                                   .seed = seed,
-                                  .useWeightedParking = useWeightedParking
-                                };
+                                  .useWeightedParking = useWeightedParking,
+                                  .randomGenerator = "pcg"};
 
     Environment env(testDataPath);
 
@@ -57,6 +57,7 @@ TEST_CASE("Base case - [Simulator]") {
         if (trace.getTimeStep() == earlierTrace.getTimeStep()) {
             continue;
         }
+        
         Uint timestep = trace.getTimeStep();
         size_t totalTraceRequests = trace.getNumberOfRequests() + trace.getDroppedRequests() +
                                     trace.getNumberOfOngoingSimulations() +
@@ -69,7 +70,6 @@ TEST_CASE("Base case - [Simulator]") {
 
         if (trace.getNumberOfRequests() == 0) {
             Assignments traceAssignments = trace.getAssignments();
-
             for (auto &traceAssignment : traceAssignments) {
                 assignements.push_back(std::make_pair(
                     traceAssignment.getRequestDuration() + timestep, traceAssignment));

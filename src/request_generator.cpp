@@ -21,21 +21,21 @@ Uint RequestGenerator::getCount(Uint currentTimeOfDay) {
     const auto multiplier = getTimeMultiplier(currentTimeOfDay);
     const double adjustedRate = _requestRate * multiplier;
     std::poisson_distribution<Uint> requestCountDist(adjustedRate);
-    return requestCountDist(_rng);
+    return requestCountDist(*_rng);
 }
 
-size_t RequestGenerator::getDropoff() { return _dropoffDist(_rng); }
+size_t RequestGenerator::getDropoff() { return _dropoffDist(*_rng); }
 
-Uint RequestGenerator::getArrival() { return _arrivalDist(_rng); }
+Uint RequestGenerator::getArrival() { return _arrivalDist(*_rng); }
 
 Uint RequestGenerator::getDuration() {
-    const Uint selectedBucket = _durationDist(_rng);
+    const Uint selectedBucket = _durationDist(*_rng);
     const Uint start = DURATION_BUCKETS[selectedBucket][0];
     const Uint end = std::min(DURATION_BUCKETS[selectedBucket][1], _maxRequestDuration);
 
     std::uniform_int_distribution<Uint> uniformDist(start, end);
 
-    return uniformDist(_rng);
+    return uniformDist(*_rng);
 }
 
 Uint RequestGenerator::getRequestsGenerated() const noexcept { return _requestsGenerated; }
