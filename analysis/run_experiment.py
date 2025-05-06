@@ -204,7 +204,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_pa
         
 def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
-    duration, arrival, rate, commit, output_file = job_tuple
+    duration, arrival, min_parking_time, rate, commit, output_file = job_tuple
     
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     palloc_path = get_palloc_path()
@@ -216,7 +216,7 @@ def run_job(job_tuple, args, progress_queue):
         "-S", args.start_time,
         "-d", duration,
         "-A", arrival,
-        "-m", args.minimum_parking_time,
+        "-m", min_parking_time,
         "-r", rate,
         "-b", args.batch_interval,
         "-c", commit,
@@ -378,7 +378,7 @@ def main():
                         config_name = f"d{current_duration}-A{current_arrival}-m{current_min_parking_time}-r{current_rate}-c{current_commit}"
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
                         
-                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_commit), output_file))
+                        jobs.append((str(current_duration), str(current_arrival), str(current_min_parking_time), str(current_rate), str(current_commit), output_file))
 
                         if commit_end == 0:
                             break
