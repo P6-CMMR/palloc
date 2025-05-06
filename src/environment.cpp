@@ -16,6 +16,18 @@ size_t Environment::getNumberOfDropoffs() const noexcept { return _dropoffToPark
 
 size_t Environment::getNumberOfParkings() const noexcept { return _parkingToDropoff.size(); }
 
+void Environment::decrementParkingFor(size_t parkingIndex) {
+    --_availableParkingSpots[parkingIndex];
+    --_totalAvailableParkingSpots;
+}
+
+void Environment::incrementParkingFor(size_t parkingIndex) {
+    ++_availableParkingSpots[parkingIndex];
+    ++_totalAvailableParkingSpots;
+}
+
+Uint Environment::getTotalAvailableParkingSpots() { return _totalAvailableParkingSpots;}
+
 const Environment::Coordinates &Environment::getDropoffCoordinates() const noexcept {
     return _dropoffCoords;
 }

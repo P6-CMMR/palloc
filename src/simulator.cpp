@@ -187,36 +187,46 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
         if (isBatchingStep) {
             requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
             requests.insert(requests.end(), earlyRequests.begin(), earlyRequests.end());
-
+            
             unassignedRequests.clear();
             earlyRequests.clear();
-
+            
             Uint maxDuration = calculateMaxDuration(requests);
             seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
-            if (!requests.empty()) {
-                const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
-                requests.clear();
+            bool isFullParking = env.getTotalAvailableParkingSpots() == 0;
+            
+            if (!requests.empty()) { 
+                if (!isFullParking) { 
+                    const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
+                    requests.clear();
 
-                batchCost = batchResult.cost;
-                batchAverageDuration = batchResult.averageDurations;
+                    batchCost = batchResult.cost;
+                    batchAverageDuration = batchResult.averageDurations;
 
-                unassignedRequests = batchResult.unassignedRequests;
-                droppedRequests += unassignedRequests.size();
+                    unassignedRequests = batchResult.unassignedRequests;
+                    droppedRequests += unassignedRequests.size();
 
-                earlyRequests = batchResult.earlyRequests;
+                    earlyRequests = batchResult.earlyRequests;
 
-                const auto &newSimulations = batchResult.simulations;
-                assignments = createAssignments(newSimulations, env);
+                    const auto &newSimulations = batchResult.simulations;
+                    assignments = createAssignments(newSimulations, env);
 
-                simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
-            }
+                    simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
+                } else {
+                    for (auto request : requests) {
+                        const auto dropFactor = 1 + request.getTimesDropped();
+                        const auto penalty = Scheduler::UNASSIGNED_PENALTY * dropFactor;
+                        batchCost += penalty;
+                        request.incrementTimesDropped();
+                    }
+                    droppedRequests += requests.size();
+                }
+            } 
         }
 
-        const auto totalAvailableParkingSpots =
-            std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
         traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-                            totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                            env.getTotalAvailableParkingSpots(), batchCost, batchAverageDuration,
                             droppedRequests, earlyRequests.size(), assignments);
 
         runCost += batchCost;
@@ -236,9 +246,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     const auto &dropoffToParking = env.getDropoffToParking();
     const auto &parkingToDropoff = env.getParkingToDropoff();
-    auto &availableParkingSpots = env.getAvailableParkingSpots();
-    const auto simulate = [&dropoffToParking, &parkingToDropoff,
-                           &availableParkingSpots](auto &simulation) {
+    const auto simulate = [&dropoffToParking, &parkingToDropoff, &env](auto &simulation) {
         if (simulation.isEarly()) {
             simulation.decrementEarlyArrival();
             return false;
@@ -259,13 +267,13 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
         const auto timeToDrive = parkingToDropoff[parkingNode][dropoffNode];
         if (!simulation.isInDropoff() && simulation.getDurationLeft() == timeToDrive) {
             simulation.setIsInDropoff(true);
-            ++availableParkingSpots[parkingNode];
+            env.incrementParkingFor(parkingNode);
         }
 
         simulation.decrementDuration();
         if (simulation.isDead() && !simulation.isInDropoff() && timeToDrive == 0) {
             simulation.setIsInDropoff(true);
-            ++availableParkingSpots[parkingNode];
+            env.incrementParkingFor(parkingNode);
         }
 
         assert(!simulation.isDead() || (simulation.isDead() && simulation.isInDropoff()));

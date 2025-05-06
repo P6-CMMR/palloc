@@ -17,7 +17,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     const auto &dropoffToParking = env.getDropoffToParking();
     const auto numberOfParkings = env.getNumberOfParkings();
     const auto requestCount = requests.size();
-    auto &availableParkingSpots = env.getAvailableParkingSpots();
+    auto availableParkingSpots = env.getAvailableParkingSpots();
 
     const auto commitInterval = simSettings.commitInterval;
 
@@ -134,7 +134,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
             if (tillArrival > commitInterval) {
                 earlyRequests.push_back(request);
             } else if (assigned) {
-                --availableParkingSpots[parkingNode];
+                env.decrementParkingFor(parkingNode);
                 simulations.emplace_back(dropoffNode, parkingNode, requestDuration, tillArrival,
                                          routeDuration);
             } else {
