@@ -80,7 +80,7 @@ class RequestGenerator {
     std::uniform_int_distribution<size_t> _dropoffDist;
     std::discrete_distribution<Uint> _durationDist;
     std::uniform_int_distribution<Uint> _arrivalDist;
-    std::mt19937_64 _rng;
+    std::minstd_rand _rng;
 
     // Traffic weights for Aalborg based on tomtom
     static constexpr std::array<double, 24> TRAFFIC_WEIGHTS{
