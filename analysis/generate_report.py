@@ -429,6 +429,7 @@ def create_contour_graph_html(cost, output_dir_path):
         metrics[temp_cost["metric"]] = metric_keys[1:]
         temp_cost = temp_cost[first_metric_key]
         metric_keys = list(temp_cost.keys())
+        first_metric_key = metric_keys[1]
 
     metrics[temp_cost["metric"]] = metric_keys[1:]
 
