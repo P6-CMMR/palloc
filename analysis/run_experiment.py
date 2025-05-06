@@ -49,20 +49,21 @@ def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(add_help=False)
     
-    parser.add_argument("-e", "--environment", help="Path to the environment file")
     parser.add_argument("-h", "--help", action="store_true", help="Show help message")
+    parser.add_argument("-e", "--environment", help="Path to the environment file")
+    parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
+    parser.add_argument("-S", "--start-time", "default=08:00", help="Start time in HH:MM format")
     parser.add_argument("-d", "--duration", default="2880", help="Max duration in minutes or range")
     parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes or range")
-
+    parser.add_argument("-m", "--minimum-parking-time", default="0", help="Minimum parking time in minutes")
     parser.add_argument("-r", "--request-rate", default="4.0", help="Request rate per timestep or range")
-    parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
-    parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
-    parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
-    parser.add_argument("-a", "--aggregations", default="3", help="Number of runs per configuration")
     parser.add_argument("-b", "--batch-delay", default="3", help="interval in minutes before processing requests")
     parser.add_argument("-c", "--commit-interval", default="0", help="interval before arriving a request can be committed to a parking spot")
+    parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
     parser.add_argument("-g", "--random-generator", default="pcg", help="Random number generator to use (options: pcg, pcg-fast)")
     parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
+    parser.add_argument("-a", "--aggregate", default="3", help="Number of runs per configuration")
+    parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     
     args = parser.parse_args()
     
@@ -123,7 +124,9 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
         f.write(f"Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n")
-        
+        f.write(f"Timesteps: {args.timesteps}\n")
+        f.write(f"Start time: {args.start_time}\n")
+    
         duration_start, duration_end = duration_range
         arrival_start, arrival_end = arrival_range
         rate_start, rate_end = rate_range
@@ -151,6 +154,8 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
             f.write(f"Arrival range: {arrival_start}-{arrival_end} (step: {arrival_step})\n")
         else:
             f.write(f"Arrival: {arrival_start}\n")
+        
+        f.write(f"Minimum parking time: {args.minimum_parking_time}\n")
         
         rate_count = 1
         if rate_end > 0:
@@ -193,14 +198,13 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         f.write(f"Seed: {args.seed}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
         f.write(f"Parallel jobs: {args.jobs}\n")
-        f.write(f"Timesteps: {args.timesteps}\n")
         f.write("----------------------------------------\n")
     
     return total_configs, (duration_step, arrival_step, rate_step, batch_step, commit_step)
         
 def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
-    duration, arrival, rate, batch, commit, seed, random_generator, output_file = job_tuple
+    duration, arrival, rate, batch, commit, output_file = job_tuple
     
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     palloc_path = get_palloc_path()
@@ -208,16 +212,18 @@ def run_job(job_tuple, args, progress_queue):
     cmd = [
         palloc_path,
         "-e", os.path.join(project_root, "aalborg_env.json"),
-        "-o", output_file,
+        "-t", args.timesteps,
+        "-S", args.start_time,
         "-d", duration,
         "-A", arrival,
+        "-m", args.minimum_parking_time,
         "-r", rate,
         "-b", batch,
         "-c", commit,
-        "-g", random_generator,
-        "-s", seed,
+        "-g", args.random_generator,
+        "-s", args.seed,
+        "-o", output_file,
         "-a", args.aggregations,
-        "-t", args.timesteps
     ]
     
     if args.weights:
@@ -316,6 +322,8 @@ def main():
     
     print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
     print("Parameters:")
+    print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Start time: {args.start_time}")
     duration_start, duration_end = duration_range
     if duration_end > 0:
         print(f"  - Duration range: {duration_start}-{duration_end} (step: {duration_step})")
@@ -327,6 +335,8 @@ def main():
         print(f"  - Arrival range: {arrival_start}-{arrival_end} (step: {arrival_step})")
     else:
         print(f"  - Arrival: {arrival_start}")
+    
+    print(f"  - Minimum parking time: {args.minimum_parking_time}")
     
     rate_start, rate_end = rate_range
     if rate_end > 0:
@@ -346,12 +356,12 @@ def main():
     else:
         print(f"  - Commit interval: {commit_start}")
     
-    print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Weighted Parking: {args.weights}")
     print(f"  - Random generator: {args.random_generator}")
     print(f"  - Seed: {args.seed}")
+    print(f"  - Output directory: {exp_dir}")
     print(f"  - Number of runs per configuration: {args.aggregations}")
     print(f"  - Parallel jobs: {args.jobs}")
-    print(f"  - Output directory: {exp_dir}")
     print("----------------------------------------")
     
     jobs = []
@@ -366,11 +376,9 @@ def main():
                     current_commit = commit_start
                     while current_commit <= commit_end or commit_end == 0:                    
                         config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
-                        random_generator = args.random_generator
-                        seed = args.seed
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
                         
-                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(current_commit), str(seed), random_generator, output_file))
+                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(current_commit), output_file))
 
                         if commit_end == 0:
                             break
