@@ -38,7 +38,7 @@ class RandomEngineFactory {
 };
 
 /**
- * Permuted Congruential Generator
+ * Permuted Congruential Generator (PCG-XSH-RR-32)
  *
  * Implementation based on: https://en.wikipedia.org/wiki/Permuted_congruential_generator
  */
@@ -58,7 +58,7 @@ class PcgEngine : public RandomEngine {
 };
 
 /**
- * Fast Permuted Congruential Generator
+ * Fast Permuted Congruential Generator (PCG-XSH-RS-32)
  *
  * Implementation based on: https://en.wikipedia.org/wiki/Permuted_congruential_generator
  */
