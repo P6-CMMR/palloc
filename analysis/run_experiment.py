@@ -187,6 +187,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         
         total_configs = duration_count * arrival_count * rate_count * batch_count * commit_count
         f.write(f"Total configurations: {total_configs}\n")
+        f.write(f"Seed: {args.seed}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
         f.write(f"Parallel jobs: {args.jobs}\n")
         f.write(f"Timesteps: {args.timesteps}\n")
@@ -331,8 +332,10 @@ def main():
     else:
         print(f"  - Commit interval: {commit_start}")
     
-
     print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Seed: {args.seed}")
+    print(f"  - Number of runs per configuration: {args.aggregations}")
+    print(f"  - Parallel jobs: {args.jobs}")
     print(f"  - Output directory: {exp_dir}")
     print("----------------------------------------")
     
