@@ -7,7 +7,8 @@ std::unique_ptr<RandomEngine> RandomEngineFactory::create(std::string_view gener
                                                           Uint seed) {
     if (generatorName == "pcg") {
         return std::make_unique<PcgEngine>(seed);
-    } if (generatorName == "pcg-fast") {
+    }
+    if (generatorName == "pcg-fast") {
         return std::make_unique<PcgEngineFast>(seed);
     } else {
         throw std::invalid_argument("Unknown random generator: " + std::string(generatorName));

@@ -702,6 +702,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     using_weighted_parking = settings.get("using_weighted_parking", "N/A")
     
+    random_generator = settings.get("random_generator", "N/A")
     seed = settings.get("seed", "N/A")
 
     # Stats
@@ -814,6 +815,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
+    html_content = html_content.replace("{{random_generator}}", str(random_generator))
     html_content = html_content.replace("{{seed}}", str(seed))
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)

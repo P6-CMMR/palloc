@@ -50,6 +50,9 @@ int main(int argc, char **argv) {
             {{"weighted-parking", 'w'},
              simSettings.useWeightedParking,
              "use weighted parking cost depending on dropoff node density"},
+            {{"random-generator", 'g'},
+             simSettings.randomGenerator,
+             "random generator to use (options: pcg, pcg-fast)"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
             {{"output", 'o'},
              outputPathStr,
@@ -61,10 +64,7 @@ int main(int argc, char **argv) {
             {{"jobs", 'j'},
              numberOfThreadsOpt,
              "number of threads to use for aggregation, default: min(number of hardware threads, "
-             "number of aggregates)"},
-            {{"random-generator", 'g'},
-             simSettings.randomGenerator,
-             "random generator to use (options: pcg, pcg-fast)"}};
+             "number of aggregates)"}};
 
         argz::parse(about, opts, argc, argv);
         if (about.printed_help || about.printed_version) {

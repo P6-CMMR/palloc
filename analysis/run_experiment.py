@@ -61,6 +61,7 @@ def parse_arguments():
     parser.add_argument("-a", "--aggregations", default="3", help="Number of runs per configuration")
     parser.add_argument("-b", "--batch-delay", default="3", help="interval in minutes before processing requests")
     parser.add_argument("-c", "--commit-interval", default="0", help="interval before arriving a request can be committed to a parking spot")
+    parser.add_argument("-g", "--random-generator", default="pcg", help="Random number generator to use (options: pcg, pcg-fast)")
     parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
     
     args = parser.parse_args()
@@ -188,6 +189,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         total_configs = duration_count * arrival_count * rate_count * batch_count * commit_count
             
         f.write(f"Total configurations: {total_configs}\n")
+        f.write(f"Random generator: {args.random_generator}\n")
         f.write(f"Seed: {args.seed}\n")
         f.write(f"Number of runs per configuration: {args.aggregations}\n")
         f.write(f"Parallel jobs: {args.jobs}\n")
@@ -198,7 +200,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         
 def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
-    duration, arrival, rate, batch, commit, seed, output_file = job_tuple
+    duration, arrival, rate, batch, commit, seed, random_generator, output_file = job_tuple
     
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     palloc_path = get_palloc_path()
@@ -212,6 +214,7 @@ def run_job(job_tuple, args, progress_queue):
         "-r", rate,
         "-b", batch,
         "-c", commit,
+        "-g", random_generator,
         "-s", seed,
         "-a", args.aggregations,
         "-t", args.timesteps
@@ -344,6 +347,7 @@ def main():
         print(f"  - Commit interval: {commit_start}")
     
     print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Random generator: {args.random_generator}")
     print(f"  - Seed: {args.seed}")
     print(f"  - Number of runs per configuration: {args.aggregations}")
     print(f"  - Parallel jobs: {args.jobs}")
@@ -362,10 +366,11 @@ def main():
                     current_commit = commit_start
                     while current_commit <= commit_end or commit_end == 0:                    
                         config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
+                        random_generator = args.random_generator
                         seed = args.seed
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
                         
-                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(current_commit), str(seed), output_file))
+                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(current_commit), str(seed), random_generator, output_file))
 
                         if commit_end == 0:
                             break
