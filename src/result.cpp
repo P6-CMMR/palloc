@@ -21,8 +21,8 @@ Result Result::aggregateResults(const Results &results) {
         avgCostVec.push_back(result.getGlobalAvgCost());
     }
 
-    auto globalAvgDuration = Utils::kahanSum(avgDurationVec);
-    auto globalAvgCost = Utils::kahanSum(avgCostVec);
+    auto globalAvgDuration = utils::KahanSum(avgDurationVec);
+    auto globalAvgCost = utils::KahanSum(avgCostVec);
 
     const size_t numResults = results.size();
     droppedRequests /= numResults;

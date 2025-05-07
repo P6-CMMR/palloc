@@ -18,7 +18,8 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         .batchInterval = 0,
         .commitInterval = 0,
         .seed = 0,
-        .useWeightedParking = false
+        .useWeightedParking = false,
+        .randomGenerator = "pcg"
     };
 
     SECTION("Request being simulated") {
@@ -70,7 +71,8 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         .batchInterval = 0,
         .commitInterval = 0,
         .seed = 0,
-        .useWeightedParking = false
+        .useWeightedParking = false,
+        .randomGenerator = "pcg"
     };
 
     SECTION("Parking is filled") {

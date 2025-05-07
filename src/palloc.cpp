@@ -15,7 +15,8 @@ int main(int argc, char **argv) {
                                       .minParkingTime = 0,
                                       .batchInterval = 2,
                                       .commitInterval = 0,
-                                      .useWeightedParking = false};
+                                      .useWeightedParking = false,
+                                      .randomGenerator = "pcg"};
 
         OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
 
@@ -40,7 +41,7 @@ int main(int argc, char **argv) {
             {{"request-rate", 'r'},
              simSettings.requestRate,
              "rate of requests to generate per timestep"},
-            {{"batch-delay", 'b'},
+            {{"batch-interval", 'b'},
              simSettings.batchInterval,
              "interval in minutes before processing requests"},
             {{"commit-interval", 'c'},
@@ -49,6 +50,9 @@ int main(int argc, char **argv) {
             {{"weighted-parking", 'w'},
              simSettings.useWeightedParking,
              "use weighted parking cost depending on dropoff node density"},
+            {{"random-generator", 'g'},
+             simSettings.randomGenerator,
+             "random generator to use (options: pcg, pcg-fast)"},
             {{"seed", 's'}, seedOpt, "seed for randomization, default: unix timestamp"},
             {{"output", 'o'},
              outputPathStr,
@@ -91,6 +95,11 @@ int main(int argc, char **argv) {
 
         if (simSettings.requestRate <= 0) {
             std::println(stderr, "Error: Request rate must be a positive real");
+            return EXIT_FAILURE;
+        }
+
+        if (!random::availableGenerators.contains(simSettings.randomGenerator)) {
+            std::println(stderr, "Error: Random generator must be either pcg or pcg-fast");
             return EXIT_FAILURE;
         }
 

@@ -2,6 +2,10 @@
 
 using namespace palloc;
 
+Environment::Environment(const std::filesystem::path &environmentPath) {
+    loadEnvironment(environmentPath);
+}
+
 const Environment::DurationMatrix &Environment::getDropoffToParking() const noexcept {
     return _dropoffToParking;
 }

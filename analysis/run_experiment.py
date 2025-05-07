@@ -49,19 +49,21 @@ def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(add_help=False)
     
-    parser.add_argument("-e", "--environment", help="Path to the environment file")
     parser.add_argument("-h", "--help", action="store_true", help="Show help message")
+    parser.add_argument("-e", "--environment", help="Path to the environment file")
+    parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
+    parser.add_argument("-S", "--start-time", default="08:00", help="Start time in HH:MM format")
     parser.add_argument("-d", "--duration", default="2880", help="Max duration in minutes or range")
     parser.add_argument("-A", "--arrival", default="0", help="Max time till arrival in minutes or range")
-
+    parser.add_argument("-m", "--minimum-parking-time", default="0", help="Minimum parking time in minutes")
     parser.add_argument("-r", "--request-rate", default="4.0", help="Request rate per timestep or range")
-    parser.add_argument("-t", "--timesteps", default="1440", help="Number of timesteps")
-    parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
-    parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
-    parser.add_argument("-a", "--aggregations", default="3", help="Number of runs per configuration")
-    parser.add_argument("-b", "--batch-delay", default="3", help="interval in minutes before processing requests")
+    parser.add_argument("-b", "--batch-interval", default="3", help="interval in minutes before processing requests")
     parser.add_argument("-c", "--commit-interval", default="0", help="interval before arriving a request can be committed to a parking spot")
+    parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
+    parser.add_argument("-g", "--random-generator", default="pcg", help="Random number generator to use (options: pcg, pcg-fast)")
     parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
+    parser.add_argument("-a", "--aggregate", default="3", help="Number of runs per configuration")
+    parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     
     args = parser.parse_args()
     
@@ -109,24 +111,26 @@ def get_next_experiment_dir():
     
     return exp_dir
 
-def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range, commit_range):
+def create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_parking_time_range, rate_range, commit_range):
     """Create a summary file with experiment parameters"""
     summary_path = os.path.join(exp_dir, "summary.txt")
     
     duration_step = 15
     arrival_step = 5
+    minimum_parking_step = 5
     rate_step = 0.5
-    batch_step = 1
     commit_step = 5
     
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
         f.write(f"Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n")
-        
+        f.write(f"Timesteps: {args.timesteps}\n")
+        f.write(f"Start time: {args.start_time}\n")
+    
         duration_start, duration_end = duration_range
         arrival_start, arrival_end = arrival_range
+        minimum_parking_time_start, minimum_parking_time_end = minimum_parking_time_range
         rate_start, rate_end = rate_range
-        batch_start, batch_end = batch_range
         commit_start, commit_end = commit_range
         
         duration_count = 1
@@ -151,6 +155,17 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Arrival: {arrival_start}\n")
         
+        minimum_parking_time_count = 1
+        if minimum_parking_time_end > 0:
+            minimum_parking_time_count = 0
+            current_min_parking_time = minimum_parking_time_start
+            while current_min_parking_time <= minimum_parking_time_end:
+                minimum_parking_time_count += 1
+                current_min_parking_time += minimum_parking_step
+            f.write(f"Minimum parking time range: {minimum_parking_time_start}-{minimum_parking_time_end} (step: {minimum_parking_step})\n")
+        else:
+            f.write(f"Minimum parking time: {minimum_parking_time_start}\n")
+        
         rate_count = 1
         if rate_end > 0:
             rate_count = 0
@@ -163,16 +178,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Request rate: {rate_start}\n")
 
-        batch_count = 1
-        if batch_end > 0:
-            batch_count = 0
-            current_batch = batch_start
-            while current_batch <= batch_end:
-                batch_count += 1
-                current_batch += batch_step
-            f.write(f"Batching interval range: {rate_start}-{rate_end} (step: {rate_step})\n")
-        else:
-            f.write(f"Batching interval: {rate_start}\n")
+        f.write(f"Batch interval: {args.batch_interval}\n")
 
         commit_count = 1
         if commit_end > 0:
@@ -185,18 +191,20 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range
         else:
             f.write(f"Commit interval: {rate_start}\n")
         
-        total_configs = duration_count * arrival_count * rate_count * batch_count * commit_count
+        total_configs = duration_count * arrival_count * minimum_parking_time_count * rate_count * commit_count
+            
         f.write(f"Total configurations: {total_configs}\n")
-        f.write(f"Number of runs per configuration: {args.aggregations}\n")
+        f.write(f"Random generator: {args.random_generator}\n")
+        f.write(f"Seed: {args.seed}\n")
+        f.write(f"Number of runs per configuration: {args.aggregate}\n")
         f.write(f"Parallel jobs: {args.jobs}\n")
-        f.write(f"Timesteps: {args.timesteps}\n")
         f.write("----------------------------------------\n")
     
-    return total_configs, (duration_step, arrival_step, rate_step, batch_step, commit_step)
+    return total_configs, (duration_step, arrival_step, minimum_parking_step, rate_step, commit_step)
         
 def run_job(job_tuple, args, progress_queue):
     """Run a single simulation job"""
-    duration, arrival, rate, batch, commit, seed, output_file = job_tuple
+    duration, arrival, min_parking_time, rate, commit, output_file = job_tuple
     
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     palloc_path = get_palloc_path()
@@ -204,15 +212,18 @@ def run_job(job_tuple, args, progress_queue):
     cmd = [
         palloc_path,
         "-e", os.path.join(project_root, "aalborg_env.json"),
-        "-o", output_file,
+        "-t", args.timesteps,
+        "-S", args.start_time,
         "-d", duration,
         "-A", arrival,
+        "-m", min_parking_time,
         "-r", rate,
-        "-b", batch,
+        "-b", args.batch_interval,
         "-c", commit,
-        "-s", seed,
-        "-a", args.aggregations,
-        "-t", args.timesteps
+        "-g", args.random_generator,
+        "-s", args.seed,
+        "-o", output_file,
+        "-a", args.aggregate,
     ]
     
     if args.weights:
@@ -290,17 +301,29 @@ def main():
     
     duration_range = parse_range(args.duration)
     arrival_range = parse_range(args.arrival)
+    minimum_parking_time_range = parse_range(args.minimum_parking_time)
     rate_range = parse_range(args.request_rate, is_float=True)
-    batch_range = parse_range(args.batch_delay)
     commit_range = parse_range(args.commit_interval)
     
+    # If commit larger then its the same as if it was equal to arrival
+    if commit_range[0] > arrival_range[1]:
+        commit_range = (arrival_range[1], 0)  
+    elif commit_range[1] > arrival_range[1]:
+        is_same = commit_range[0] == arrival_range[1]
+        if is_same:
+            commit_range = (arrival_range[1], 0)
+        else:
+            commit_range = (commit_range[0], arrival_range[1])
+        
     exp_dir = get_next_experiment_dir()
     
-    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, rate_range, batch_range, commit_range)
-    duration_step, arrival_step, rate_step, batch_step, commit_step = steps
+    total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_parking_time_range, rate_range, commit_range)
+    duration_step, arrival_step, minimum_parking_step, rate_step, commit_step = steps
     
     print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
     print("Parameters:")
+    print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Start time: {args.start_time}")
     duration_start, duration_end = duration_range
     if duration_end > 0:
         print(f"  - Duration range: {duration_start}-{duration_end} (step: {duration_step})")
@@ -313,17 +336,19 @@ def main():
     else:
         print(f"  - Arrival: {arrival_start}")
     
+    minimum_parking_time_start, minimum_parking_time_end = minimum_parking_time_range
+    if minimum_parking_time_end > 0:
+        print(f"  - Minimum parking time range: {minimum_parking_time_start}-{minimum_parking_time_end} (step: {minimum_parking_step})")
+    else:
+        print(f"  - Minimum parking time: {minimum_parking_time_start}")
+    
     rate_start, rate_end = rate_range
     if rate_end > 0:
         print(f"  - Request rate range: {rate_start}-{rate_end} (step: {rate_step})")
     else:
         print(f"  - Request rate: {rate_start}")
 
-    batch_start, batch_end = batch_range
-    if batch_end > 0:
-        print(f"  - Batch interval range: {batch_start}-{batch_end} (step: {batch_step})")
-    else:
-        print(f"  - Batch interval: {batch_start}")
+    print(f"  - Batch interval: {args.batch_interval}")
     
     commit_start, commit_end = commit_range
     if commit_end > 0:
@@ -331,9 +356,12 @@ def main():
     else:
         print(f"  - Commit interval: {commit_start}")
     
-
-    print(f"  - Timesteps: {args.timesteps}")
+    print(f"  - Weighted parking: {args.weights}")
+    print(f"  - Random generator: {args.random_generator}")
+    print(f"  - Seed: {args.seed}")
     print(f"  - Output directory: {exp_dir}")
+    print(f"  - Number of runs per configuration: {args.aggregate}")
+    print(f"  - Parallel jobs: {args.jobs}")
     print("----------------------------------------")
     
     jobs = []
@@ -341,33 +369,32 @@ def main():
     while current_duration <= duration_end or duration_end == 0:
         current_arrival = arrival_start
         while current_arrival <= arrival_end or arrival_end == 0:
-            current_rate = rate_start
-            while current_rate <= rate_end or rate_end == 0:
-                current_batch = batch_start
-                while current_batch <= batch_end or batch_end == 0:
+            current_min_parking_time = minimum_parking_time_start
+            while current_min_parking_time <= minimum_parking_time_end or minimum_parking_time_end == 0:
+                current_rate = rate_start
+                while current_rate <= rate_end or rate_end == 0:
                     current_commit = commit_start
-                    while current_commit <= commit_end or commit_end == 0:
-                        config_name = f"d{current_duration}-A{current_arrival}-r{current_rate}-c{current_commit}"
-                        seed = args.seed
+                    while current_commit <= commit_end or commit_end == 0:                    
+                        config_name = f"d{current_duration}-A{current_arrival}-m{current_min_parking_time}-r{current_rate}-c{current_commit}"
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
                         
-                        jobs.append((str(current_duration), str(current_arrival), str(current_rate), str(current_batch), str(current_commit), str(seed), output_file))
+                        jobs.append((str(current_duration), str(current_arrival), str(current_min_parking_time), str(current_rate), str(current_commit), output_file))
 
                         if commit_end == 0:
                             break
 
                         current_commit += commit_step
-
-                    if batch_end == 0:
+                        
+                    if rate_end == 0:
                         break
-
-                    current_batch += batch_step
                     
-                if rate_end == 0:
+                    current_rate += rate_step
+                    current_rate = round(current_rate * 100) / 100
+
+                if minimum_parking_time_end == 0:
                     break
                 
-                current_rate += rate_step
-                current_rate = round(current_rate * 100) / 100
+                current_min_parking_time += minimum_parking_step
             
             if arrival_end == 0:
                 break

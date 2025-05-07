@@ -1,6 +1,7 @@
 #ifndef RESULT_HPP
 #define RESULT_HPP
 
+#include <utility>
 #include <vector>
 
 #include "settings.hpp"
@@ -17,7 +18,7 @@ class Result {
     explicit Result(TraceLists traceLists, SimulatorSettings simSettings, size_t droppedRequests,
                     double globalAvgDuration, double globalAvgCost, Uint requestsGenerated)
         : _traceLists(std::move(traceLists)),
-          _simSettings(simSettings),
+          _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
           _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost),
@@ -26,7 +27,7 @@ class Result {
     explicit Result(TraceList traceList, SimulatorSettings simSettings, size_t droppedRequests,
                     double globalAvgDuration, double globalAvgCost, Uint requestsGenerated)
         : _traceLists{std::move(traceList)},
-          _simSettings(simSettings),
+          _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
           _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost),
