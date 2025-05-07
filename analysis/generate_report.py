@@ -714,6 +714,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     requests_generated = data.get("requests_generated", "N/A")
     requests_scheduled = data.get("requests_scheduled", "N/A")
+    requests_unassigned = data.get("requests_unassigned", "N/A")
     
     try:
         template_path = Path(__file__).parent / "experiment_template.html"
@@ -824,6 +825,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
     html_content = html_content.replace("{{requests_generated}}", str(requests_generated))
     html_content = html_content.replace("{{requests_scheduled}}", str(requests_scheduled))
+    html_content = html_content.replace("{{requests_unassigned}}", str(requests_unassigned))
     html_content = html_content.replace("{{run_tabs}}", run_tabs_html)
     html_content = html_content.replace("{{assignments_list}}", assignments_html)
     html_content = html_content.replace("{{map_link}}", map_html_link)
@@ -903,9 +905,9 @@ def create_browser_index(experiments_root):
             experiments_html += f"""
                 <div>
                     <h3>Best Configuration</h3>
+                    <p>Total Dropped Requests: <strong>{dropped_in_best}</strong></p>
                     <p>Config: <strong>{best_config}</strong></p>
                     <p>Global Average Cost: <strong>{best_cost:.2f}</strong></p>
-                    <p>Total Dropped Requests: <strong>{dropped_in_best}</strong></p>
                 </div>
                 """
             
@@ -927,6 +929,7 @@ def create_browser_index(experiments_root):
                     parts = temp_config_name.split()
                     if len(parts) == 5:
                         duration = parts[0][1:]  # Remove the "d" prefix
+                        arrival = parts[1]
                         min_parking_time = parts[2]
                         rate = parts[3]
                         commit = parts[4]

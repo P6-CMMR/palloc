@@ -10,6 +10,7 @@ Result Result::aggregateResults(const Results &results) {
     size_t droppedRequests = 0;
     Uint requestsGenerated = 0;
     size_t requestsScheduled = 0;
+    size_t requestsUnassigned = 0;
 
     std::vector<double> avgDurationVec;
     avgDurationVec.reserve(results.size());
@@ -21,6 +22,7 @@ Result Result::aggregateResults(const Results &results) {
         droppedRequests += result.getDroppedRequests();
         requestsGenerated += result.getRequestsGenerated();
         requestsScheduled += result.getRequestsScheduled();
+        requestsUnassigned += requestsGenerated - requestsScheduled;
         avgDurationVec.push_back(result.getGlobalAvgDuration());
         avgCostVec.push_back(result.getGlobalAvgCost());
     }
@@ -33,7 +35,7 @@ Result Result::aggregateResults(const Results &results) {
     globalAvgCost /= static_cast<double>(numResults);
 
     return Result(traceLists, simSettings, droppedRequests, globalAvgDuration, globalAvgCost,
-                  requestsGenerated, requestsScheduled);
+                  requestsGenerated, requestsScheduled, requestsUnassigned);
 }
 
 void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) const {

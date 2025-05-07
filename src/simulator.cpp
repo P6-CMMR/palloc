@@ -106,8 +106,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::println("Total requests generated: {}", result.getRequestsGenerated());
     std::println("Total requests scheduled: {}", result.getRequestsScheduled());
-    std::println("Total requests unassigned: {}", result.getRequestsGenerated() -
-                 result.getRequestsScheduled());
+    std::println("Total requests unassigned: {}",
+                 result.getRequestsGenerated() - result.getRequestsScheduled());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
     const double globalAvgDuration = result.getGlobalAvgDuration();
@@ -237,9 +237,11 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     const Uint requestsGenerated = generator.getRequestsGenerated();
 
+    const size_t requestsUnassigned = requestsGenerated - requestsScheduled;
+
     const std::lock_guard<std::mutex> guard(resultsMutex);
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
-                         requestsGenerated, requestsScheduled);
+                         requestsGenerated, requestsScheduled, requestsUnassigned);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
