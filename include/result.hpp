@@ -16,22 +16,26 @@ using Results = std::vector<Result>;
 class Result {
    public:
     explicit Result(TraceLists traceLists, SimulatorSettings simSettings, size_t droppedRequests,
-                    double globalAvgDuration, double globalAvgCost, Uint requestsGenerated)
+                    double globalAvgDuration, double globalAvgCost, Uint requestsGenerated,
+                    size_t requestsScheduled)
         : _traceLists(std::move(traceLists)),
           _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
           _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost),
-          _requestsGenerated(requestsGenerated) {}
+          _requestsGenerated(requestsGenerated),
+          _requestsScheduled(requestsScheduled) {}
 
     explicit Result(TraceList traceList, SimulatorSettings simSettings, size_t droppedRequests,
-                    double globalAvgDuration, double globalAvgCost, Uint requestsGenerated)
+                    double globalAvgDuration, double globalAvgCost, Uint requestsGenerated,
+                    size_t requestsScheduled)
         : _traceLists{std::move(traceList)},
           _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
           _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost),
-          _requestsGenerated(requestsGenerated) {}
+          _requestsGenerated(requestsGenerated),
+          _requestsScheduled(requestsScheduled) {}
 
     explicit Result(const std::filesystem::path &inputPath) { loadResult(inputPath); };
 
@@ -46,6 +50,7 @@ class Result {
     double getGlobalAvgDuration() const noexcept;
     double getGlobalAvgCost() const noexcept;
     Uint getRequestsGenerated() const noexcept;
+    size_t getRequestsScheduled() const noexcept;
 
    private:
     friend struct glz::meta<Result>;
@@ -56,6 +61,7 @@ class Result {
     double _globalAvgDuration{};
     double _globalAvgCost{};
     Uint _requestsGenerated{};
+    size_t _requestsScheduled{};
 };
 
 using Results = std::vector<Result>;
@@ -67,7 +73,8 @@ struct glz::meta<palloc::Result> {
     static constexpr auto value = glz::object(
         "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
         &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
-        &T::_requestsGenerated, "settings", &T::_simSettings, "traces", &T::_traceLists);
+        &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "settings",
+        &T::_simSettings, "traces", &T::_traceLists);
 };
 
 #endif

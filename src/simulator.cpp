@@ -105,6 +105,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     const Result result = Result::aggregateResults(results);
 
     std::println("Total requests generated: {}", result.getRequestsGenerated());
+    std::println("Total requests scheduled: {}", result.getRequestsScheduled());
+    std::println("Total requests dropped: {}", result.getDroppedRequests());
 
     const double globalAvgDuration = result.getGlobalAvgDuration();
     const int minutes = static_cast<int>(globalAvgDuration);
@@ -112,7 +114,6 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
     std::println("Average objective cost: {}", result.getGlobalAvgCost());
-    std::println("Total requests dropped: {}", result.getDroppedRequests());
 
     if (!outputSettings.outputPath.empty()) {
         result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
@@ -170,6 +171,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     size_t droppedRequests = 0;
     double runCost = 0.0;
     double runDuration = 0.0;
+    size_t requestsScheduled = 0;
     for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
         Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
 
@@ -183,7 +185,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
         double batchAverageDuration = 0.0;
         Assignments assignments;
 
-        bool isBatchingStep = timestep % simSettings.batchInterval == 0;
+        bool isBatchingStep = timestep % simSettings.batchInterval == 0 || timestep == timesteps;
         if (isBatchingStep) {
             requests.insert(requests.end(), unassignedRequests.begin(), unassignedRequests.end());
             requests.insert(requests.end(), earlyRequests.begin(), earlyRequests.end());
@@ -210,6 +212,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                 assignments = createAssignments(newSimulations, env);
 
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
+                requestsScheduled += newSimulations.size();
             }
         }
 
@@ -223,14 +226,18 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
         runDuration += batchAverageDuration;
     }
 
-    const double runAvgDuration = runDuration / static_cast<double>(timesteps);
-    const double runAvgCost = runCost / static_cast<double>(timesteps);
+    assert(requests.empty());
+
+    const Uint numberOfScheduledSteps =
+        (timesteps + simSettings.batchInterval - 1) / simSettings.batchInterval;
+    const double runAvgDuration = runDuration / static_cast<double>(numberOfScheduledSteps);
+    const double runAvgCost = runCost / static_cast<double>(numberOfScheduledSteps);
 
     const Uint requestsGenerated = generator.getRequestsGenerated();
 
     const std::lock_guard<std::mutex> guard(resultsMutex);
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
-                         requestsGenerated);
+                         requestsGenerated, requestsScheduled);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {

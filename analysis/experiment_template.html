@@ -210,6 +210,14 @@
     <h2>General Statistics</h2>
     <div class="container stats-container">
         <div class="stat-item">
+            <span>Total Requests Generated:</span>
+            <span>{{requests_generated}}</span>
+        </div>
+        <div class="stat-item">
+            <span>Total Requests Scheduled:</span>
+            <span>{{requests_scheduled}}</span>
+        </div> 
+        <div class="stat-item">
             <span>Total Dropped Requests:</span>
             <span>{{total_dropped}}</span>
         </div>
@@ -220,11 +228,7 @@
         <div class="stat-item">
             <span>Global Average Cost:</span>
             <span>{{global_avg_cost}}</span>
-        </div>
-        <div class="stat-item">
-            <span>Requests Generated:</span>
-            <span>{{requests_generated}}</span>
-        </div>
+        </div> 
     </div>
     <h2>Map of Data</h2>
     <div class="plot-links">
