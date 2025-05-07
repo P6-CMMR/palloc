@@ -870,7 +870,7 @@ def create_browser_index(experiments_root):
             with open(summary_file, "r") as f:
                 summary_lines = f.readlines()
                 experiments_html += '<div class="summary-info"><h3>Summary</h3><pre>'
-                for line in summary_lines[:10]:  # Show first 10 lines
+                for line in summary_lines[:18]:  # Show first 18 lines
                     experiments_html += line
                 experiments_html += "</pre></div>"
         
