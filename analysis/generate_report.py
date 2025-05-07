@@ -704,6 +704,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     using_weighted_parking = settings.get("using_weighted_parking", "N/A")
     
+    random_generator = settings.get("random_generator", "N/A")
     seed = settings.get("seed", "N/A")
 
     # Stats
@@ -815,7 +816,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{request_rate}}", str(request_rate))
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
-    html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
+    html_content = html_content.replace("{{random_generator}}", str(random_generator))
     html_content = html_content.replace("{{seed}}", str(seed))
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
@@ -914,18 +915,19 @@ def create_browser_index(experiments_root):
                 duration = "Unknown"
                 rate = "Unknown"
                 arrival = "Unknown"
+                min_parking_time = "Unknown"
                 commit = "Unknown"
-                if config_name.startswith("d") and "-A" in config_name and "-r" in config_name and  "-c" in config_name:
-                    delimiters = ["-A", "-r", "-c"]
+                if config_name.startswith("d") and "-A" in config_name and "-m" in config_name and "-r" in config_name and  "-c" in config_name:
+                    delimiters = ["-A", "-m", "-r", "-c"]
                     temp_config_name = config_name
                     for delimiter in delimiters:
                             temp_config_name = " ".join(temp_config_name.split(delimiter))
                     parts = temp_config_name.split()
-                    if len(parts) == 4:
+                    if len(parts) == 5:
                         duration = parts[0][1:]  # Remove the "d" prefix
-                        arrival = parts[1]
-                        rate = parts[2]
-                        commit = parts[3]
+                        min_parking_time = parts[2]
+                        rate = parts[3]
+                        commit = parts[4]
 
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
@@ -936,6 +938,7 @@ def create_browser_index(experiments_root):
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
                             <div class="config-detail">Early Arrival: {arrival} min</div>
+                            <div class="config-detail">Min Parking Time: {min_parking_time} min</div>
                             <div class="config-detail">Rate: {rate}</div>
                             <div class="config-detail">Commit Interval: {commit} min</div>
                         </div>
