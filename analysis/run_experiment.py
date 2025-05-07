@@ -356,7 +356,7 @@ def main():
     else:
         print(f"  - Commit interval: {commit_start}")
     
-    print(f"  - Weighted Parking: {args.weights}")
+    print(f"  - Weighted parking: {args.weights}")
     print(f"  - Random generator: {args.random_generator}")
     print(f"  - Seed: {args.seed}")
     print(f"  - Output directory: {exp_dir}")

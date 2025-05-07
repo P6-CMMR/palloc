@@ -13,7 +13,7 @@ from pathlib import Path
 import itertools
 import numpy as np
 
-UNUSED_SETTINGS = ["seed"]
+UNUSED_SETTINGS = ["seed", "random_generator"]
 ENABLE_EXTRA_GRAPH_CONFIGS = False
 
 def load_results(result_file):
@@ -397,7 +397,6 @@ def create_bar_graph_html(cost,  output_dir_path):
         for trace in bar_fig.data:
             fig.add_trace(trace)
     else: 
-        os.rmdir(output_dir_path)
         return
 
     fig.update_layout(
@@ -426,7 +425,9 @@ def create_contour_graph_html(cost, output_dir_path):
     first_metric_key = metric_keys[1]
 
     while type(temp_cost[first_metric_key]) not in (int, float, complex):
-        metrics[temp_cost["metric"]] = metric_keys[1:]
+        values = metric_keys[1:]
+        if values[0].isnumeric():
+            metrics[temp_cost["metric"]] = sorted(values, key=float)
         temp_cost = temp_cost[first_metric_key]
         metric_keys = list(temp_cost.keys())
         first_metric_key = metric_keys[1]
@@ -539,7 +540,6 @@ def create_contour_graph_html(cost, output_dir_path):
             )
         )
     else: 
-        os.rmdir(output_dir_path)
         return
 
     fig.update_layout(
@@ -704,7 +704,6 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     using_weighted_parking = settings.get("using_weighted_parking", "N/A")
     
-    random_generator = settings.get("random_generator", "N/A")
     seed = settings.get("seed", "N/A")
 
     # Stats
@@ -817,7 +816,6 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{batch_interval}}", str(batch_interval))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
     html_content = html_content.replace("{{using_weighted_parking}}", str(using_weighted_parking))
-    html_content = html_content.replace("{{random_generator}}", str(random_generator))
     html_content = html_content.replace("{{seed}}", str(seed))
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
     html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
@@ -872,7 +870,7 @@ def create_browser_index(experiments_root):
             with open(summary_file, "r") as f:
                 summary_lines = f.readlines()
                 experiments_html += '<div class="summary-info"><h3>Summary</h3><pre>'
-                for line in summary_lines[:17]:  # Show first 17 lines
+                for line in summary_lines[:10]:  # Show first 10 lines
                     experiments_html += line
                 experiments_html += "</pre></div>"
         
@@ -914,22 +912,20 @@ def create_browser_index(experiments_root):
                 config_name = os.path.basename(json_file).replace(".json", "")
                 
                 duration = "Unknown"
-                arrival = "Unknown"
-                min_parking_time = "Unknown"
                 rate = "Unknown"
+                arrival = "Unknown"
                 commit = "Unknown"
-                if config_name.startswith("d") and "-A" in config_name and "-m" in config_name and "-r" in config_name and  "-c" in config_name:
-                    delimiters = ["-A", "-m", "-r", "-c"]
+                if config_name.startswith("d") and "-A" in config_name and "-r" in config_name and  "-c" in config_name:
+                    delimiters = ["-A", "-r", "-c"]
                     temp_config_name = config_name
                     for delimiter in delimiters:
                             temp_config_name = " ".join(temp_config_name.split(delimiter))
                     parts = temp_config_name.split()
-                    if len(parts) == 5:
+                    if len(parts) == 4:
                         duration = parts[0][1:]  # Remove the "d" prefix
                         arrival = parts[1]
-                        min_parking_time = parts[2]
-                        rate = parts[3]
-                        commit = parts[4]
+                        rate = parts[2]
+                        commit = parts[3]
 
                 exp_config_dir = f"{exp_name}_{config_name}"
                 
@@ -940,7 +936,6 @@ def create_browser_index(experiments_root):
                         <div class="config-details">
                             <div class="config-detail">Duration: {duration} min</div>
                             <div class="config-detail">Early Arrival: {arrival} min</div>
-                            <div class="config-detail">Min Parking Time: {min_parking_time} min</div>
                             <div class="config-detail">Rate: {rate}</div>
                             <div class="config-detail">Commit Interval: {commit} min</div>
                         </div>
