@@ -294,7 +294,102 @@ def get_cost_list_one_metric(cost, metric, other_metric_values):
                 break
 
     return out_list
-        
+
+def add_latex_bar_chart_to(file_path, x, y, title, x_title, y_title):
+    """
+    Generates LaTeX code for a bar chart and appends it to the specified file.
+
+    Args:
+        file_path (str): The path to the file where the LaTeX code will be appended.
+        x (list): The x-axis values (numbers).
+        y (list): The heights of the bars corresponding to each x-axis value.
+        title (str): The title of the chart.
+        x_title (str): The label for the x-axis.
+        y_title (str): The label for the y-axis.
+    """
+    string = f"""
+----------------------------------------------------------
+{title}       
+
+\\begin{{tikzpicture}}
+\\begin{{axis}}[
+    title={{{title}}},
+    xlabel={{{x_title}}},
+    ylabel={{{y_title}}},
+    xtick=data,
+    ybar,
+    ymin=0,
+    bar width=0.6cm,
+    nodes near coords,
+    every node near coord/.append style={{font=\\small}},
+    enlarge x limits=0.15,
+    width=\\linewidth,
+    height=0.6\\linewidth
+]
+
+\\addplot coordinates {{
+"""
+    for label, value in zip(x, y):
+        string += f"    ({label}, {value})\n"
+
+    string += """
+};
+
+\\end{axis}
+\\end{tikzpicture}
+"""
+
+    with open(file_path, "a") as f:
+        f.write(string)
+
+def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
+    x_len = len(x)
+    y_len = len(y)
+    string = f"""
+----------------------------------------------------------
+{title}       
+
+\\begin{{tikzpicture}}
+\\begin{{axis}}[
+    title={{{title}}},
+    xlabel={{{x_title}}},
+    ylabel={{{y_title}}},
+    width=\\columnwidth*0.9,
+    view={{0}}{{90}},
+    colormap/viridis,
+    colorbar,
+    colorbar style={{
+        at={{(1.1,0.5)}}, 
+        anchor=center, 
+        width=0.2cm,
+        yticklabel style={{font=\\small}}, 
+    }},
+    point meta min={min(map(max, z))},
+    point meta max={max(map(max, z))}
+]
+
+\\addplot3[
+    contour filled={{number=15}},
+    mesh/rows={x_len},
+    mesh/cols={y_len}
+] table {{
+    x        y        z
+"""
+    lines = []
+    for i in range(x_len):
+        for j in range(y_len):
+            lines.append(f"\t{x[i]:<8} {y[j]:<8} {z[j][i]}")
+    string += "\n".join(lines) + "\n"
+    
+    string += """
+};
+
+\\end{axis}
+\\end{tikzpicture}
+"""
+
+    with open(file_path, "a") as f:
+        f.write(string)
 
 def create_bar_graph_html(cost,  output_dir_path):
     """Create line graph from cost and metric object and save as html"""
@@ -305,6 +400,8 @@ def create_bar_graph_html(cost,  output_dir_path):
     temp_cost = cost
     metric_keys = list(cost.keys())
     first_metric_key = metric_keys[1]
+
+    latex_txt_output_path = output_dir_path / "latex_bar.txt"
 
     while type(temp_cost[first_metric_key]) not in (int, float, complex):
         metrics[temp_cost["metric"]] = metric_keys[1:]
@@ -374,11 +471,17 @@ def create_bar_graph_html(cost,  output_dir_path):
             y = config["cost"][inner_key]
 
             if default_x is None and default_y is None:
+                with open(latex_txt_output_path, "w") as f:
+                    f.write("")
                 default_x, default_y = x, y
+
+            title =  "x: " + metric1 + inner_key
+
+            add_latex_bar_chart_to(latex_txt_output_path, x, y, title, metric, "cost")
 
             updatemenus[0]["buttons"].append(
                 {
-                    "label": "x: " + metric1 + inner_key,
+                    "label": title,
                     "method": "update",
                     "args": [
                         {"x": [x], 
@@ -407,6 +510,8 @@ def create_bar_graph_html(cost,  output_dir_path):
         button_template_path = Path(__file__).parent / "index_graph_button_template.html"
         with open(button_template_path, "r") as f:
             button_template = f.read()
+            button_template = button_template.replace("{{BUTTON_HREF}}", "latex_bar.txt")
+            button_template = button_template.replace("{{DOWNLOAD_FILENAME}}", "latex_graph_bar.txt")
 
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
@@ -423,6 +528,8 @@ def create_contour_graph_html(cost, output_dir_path):
     temp_cost = cost
     metric_keys = list(cost.keys())
     first_metric_key = metric_keys[1]
+
+    latex_txt_output_path = output_dir_path / "latex_contour.txt"
 
     while type(temp_cost[first_metric_key]) not in (int, float, complex):
         values = metric_keys[1:]
@@ -493,13 +600,12 @@ def create_contour_graph_html(cost, output_dir_path):
 
     fig = go.Figure()
 
-    updatemenus = [
-        {
-            "buttons": [],
-            "direction": "down",
-            "showactive": True,
-        }
-    ]
+    dropdown =  {
+                    "buttons": [],
+                    "direction": "down",
+                    "showactive": True,
+                }
+    
 
     default_x, default_y, default_z = None, None, None
 
@@ -516,12 +622,18 @@ def create_contour_graph_html(cost, output_dir_path):
 
                 z = config["cost"][inner_key]
 
+
                 if default_x is None and default_y is None and default_z is None:
+                    with open(latex_txt_output_path, "w") as f:
+                        f.write("")
                     default_x, default_y, default_z = x, y, z
 
-                updatemenus[0]["buttons"].append(
+                title = config["label"] + inner_key
+                add_latex_contour_graph_to(latex_txt_output_path, x, y, z, title, metric1, metric2)
+
+                dropdown["buttons"].append(
                     {
-                        "label": config["label"] + inner_key,
+                        "label": title,
                         "method": "update",
                         "args": [
                             {"x": [x], "y": [y], "z": [z]},
@@ -543,13 +655,15 @@ def create_contour_graph_html(cost, output_dir_path):
         return
 
     fig.update_layout(
-        updatemenus=updatemenus
+        updatemenus=[dropdown]
     )
 
     try:
         button_template_path = Path(__file__).parent / "index_graph_button_template.html"
         with open(button_template_path, "r") as f:
             button_template = f.read()
+            button_template = button_template.replace("{{BUTTON_HREF}}", "latex_contour.txt")
+            button_template = button_template.replace("{{DOWNLOAD_FILENAME}}", "latex_graph_contour.txt")
 
     except Exception as e:
         print(f"Error loading button template: {e}", file=sys.stderr)
