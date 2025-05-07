@@ -106,6 +106,8 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::println("Total requests generated: {}", result.getRequestsGenerated());
     std::println("Total requests scheduled: {}", result.getRequestsScheduled());
+    std::println("Total requests unassigned: {}", result.getRequestsGenerated() -
+                 result.getRequestsScheduled());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
     const double globalAvgDuration = result.getGlobalAvgDuration();
@@ -127,6 +129,7 @@ static Uint calculateMaxDuration(const Requests &requests) {
             maxDuration = request.getRequestDuration();
         }
     }
+
     return maxDuration;
 }
 
@@ -167,7 +170,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     Simulations simulations;
 
     TraceList traces;
-
     size_t droppedRequests = 0;
     double runCost = 0.0;
     double runDuration = 0.0;
