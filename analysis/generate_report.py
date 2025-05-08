@@ -62,8 +62,8 @@ def format_minutes_to_time(minutes_raw):
 
 def create_map_visualization(env, data, output_dir_path):
     """Create an interactive map visualization of dropoff points, density, and parking spots."""
-    dropoff_points = [(point["latitude"], point["longitude"]) for point in env["dropoff_coords"]]
-    parking_points = [(point["latitude"], point["longitude"]) for point in env["parking_coords"]]
+    dropoff_points = [(point["lat"], point["lon"]) for point in env["dropoff_coords"]]
+    parking_points = [(point["lat"], point["lon"]) for point in env["parking_coords"]]
 
     all_points = dropoff_points + parking_points
     center_lat = sum(p[0] for p in all_points) / len(all_points)
@@ -87,14 +87,14 @@ def create_map_visualization(env, data, output_dir_path):
         # For each run, go through all traces
         for trace in run_traces:
             for assignment in trace["assignments"]:
-                dropoff_coord = assignment["dropoff_coordinate"]
-                dropoff_lat = dropoff_coord["latitude"]
-                dropoff_lon = dropoff_coord["longitude"]
+                dropoff_coord = assignment["dropoff_coord"]
+                dropoff_lat = dropoff_coord["lat"]
+                dropoff_lon = dropoff_coord["lon"]
                 dropoff_assignment_points.append([dropoff_lat, dropoff_lon, 1.0])
                 
-                parking_coord = assignment["parking_coordinate"]
-                parking_lat = parking_coord["latitude"]
-                parking_lon = parking_coord["longitude"]
+                parking_coord = assignment["parking_coord"]
+                parking_lat = parking_coord["lat"]
+                parking_lon = parking_coord["lon"]
                 parking_assignment_points.append([parking_lat, parking_lon, 1.0])
     
     dropoff_assignments_heatmap = HeatMap(
@@ -167,8 +167,8 @@ def create_map_visualization(env, data, output_dir_path):
     density_grid = env["density_grid"]
     density_points = []
     for point in density_grid:
-        lat = point["latitude"]
-        lon = point["longitude"]
+        lat = point["lat"]
+        lon = point["lon"]
         intensity = point["intensity"]
         
        
@@ -877,15 +877,15 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                 run_assignments_html += f"<p>Time of day: {current_time_of_day}</p>"
                 
                 for idx, assignment in enumerate(trace["assignments"]):
-                    dropoff = assignment.get("dropoff_coordinate", {})
-                    parking = assignment.get("parking_coordinate", {})
-                    request_duration = assignment.get("request_duration", "N/A")
+                    dropoff = assignment.get("dropoff_coord", {})
+                    parking = assignment.get("parking_coord", {})
+                    request_duration = assignment.get("req_duration", "N/A")
                     route_duration = assignment.get("route_duration", "N/A")
                     
-                    dropoff_lat = dropoff.get("latitude", "N/A")
-                    dropoff_lon = dropoff.get("longitude", "N/A")
-                    parking_lat = parking.get("latitude", "N/A")
-                    parking_lon = parking.get("longitude", "N/A")
+                    dropoff_lat = dropoff.get("lat", "N/A")
+                    dropoff_lon = dropoff.get("lon", "N/A")
+                    parking_lat = parking.get("lat", "N/A")
+                    parking_lon = parking.get("lon", "N/A")
                     
                     request_duration = f"{request_duration} min" if request_duration != "N/A" else "N/A"
                     route_duration = f"{route_duration} min" if route_duration != "N/A" else "N/A"
@@ -991,7 +991,7 @@ def create_browser_index(experiments_root):
             with open(summary_file, "r") as f:
                 summary_lines = f.readlines()
                 experiments_html += '<div class="summary-info"><h3>Summary</h3><pre>'
-                for line in summary_lines[:18]:  # Show first 18 lines
+                for line in summary_lines[:19]:  # Show first 19 lines
                     experiments_html += line
                 experiments_html += "</pre></div>"
         

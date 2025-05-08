@@ -184,8 +184,8 @@ def calculate_parking_weight(dropoff_coords: list[tuple], parking_coords: list[t
             intensity = float(density_normalized[i][j])
             if intensity > 0.05:
                 density_grid.append({
-                    "latitude": float(lat_mesh[i][j]),
-                    "longitude": float(lon_mesh[i][j]),
+                    "lat": float(lat_mesh[i][j]),
+                    "lon": float(lon_mesh[i][j]),
                     "intensity": intensity
                 })
 
@@ -205,15 +205,15 @@ def write_response_to_file(dropoff_to_parking: list,
     formatted_dropoff_coords = []
     for lat, lon in dropoff_coords:
         formatted_dropoff_coords.append({
-            "latitude": lat,
-            "longitude": lon
+            "lat": lat,
+            "lon": lon
         })
 
     formatted_parking_coords = []
     for lat, lon in parking_coords:
         formatted_parking_coords.append({
-            "latitude": lat,
-            "longitude": lon
+            "lat": lat,
+            "lon": lon
         })
     
     smallest_round_trips = calculate_shortest_roundtrips(dropoff_to_parking, parking_to_dropoff)

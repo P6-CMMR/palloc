@@ -129,6 +129,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_pa
         f.write("Experiment Summary\n")
         f.write(f"Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n")
         f.write(f"Environment file: {args.environment}\n")
+        f.write(f"Generate traces: {args.trace}\n")
         f.write(f"Timesteps: {args.timesteps}\n")
         f.write(f"Start time: {args.start_time}\n")
     
@@ -338,7 +339,7 @@ def copy_missing_commit_files(exp_dir, commit_range, commit_step):
                             data["settings"]["commit_interval"] = current_commit
                             
                             with open(target_file, 'w') as f:
-                                json.dump(data, f, indent=2)
+                                json.dump(data, f)
                         
                             commit_copies += 1
                         except Exception as e:
@@ -381,6 +382,7 @@ def main():
     print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
     print("Parameters:")
     print(f"  - Environment file: {args.environment}")
+    print(f"  - Generate traces: {args.trace}")
     print(f"  - Timesteps: {args.timesteps}")
     print(f"  - Start time: {args.start_time}")
     duration_start, duration_end = duration_range
