@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
                                       .useWeightedParking = false,
                                       .randomGenerator = "pcg"};
 
-        OutputSettings outputSettings{.numberOfRunsToAggregate = 1, .prettify = false};
+        OutputSettings outputSettings{.numberOfRunsToAggregate = 3, .prettify = false};
 
         std::optional<Uint> seedOpt;
         std::string startTimeStr = "08:00";

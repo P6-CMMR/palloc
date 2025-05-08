@@ -9,6 +9,8 @@ import multiprocessing
 import subprocess
 import threading
 import queue
+import shutil
+import json
 from progress_bar import print_progress_bar
 from datetime import datetime
 
@@ -39,7 +41,7 @@ def check_environment(env_path: str):
     
     env_file = os.path.join(project_root, env_path)
     if not os.path.isfile(env_file):
-        print("Error: aalborg_env.json not found in project root.")
+        print(f"Error: {env_path} not found in project root.")
         print("Please run the setup script to create the environment file.")
         sys.exit(1)
     
@@ -124,6 +126,7 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_pa
     with open(summary_path, "w") as f:
         f.write("Experiment Summary\n")
         f.write(f"Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n")
+        f.write(f"Environment file: {args.environment}\n")
         f.write(f"Timesteps: {args.timesteps}\n")
         f.write(f"Start time: {args.start_time}\n")
     
@@ -211,7 +214,7 @@ def run_job(job_tuple, args, progress_queue):
     
     cmd = [
         palloc_path,
-        "-e", os.path.join(project_root, "aalborg_env.json"),
+        "-e", os.path.join(project_root, args.environment),
         "-t", args.timesteps,
         "-S", args.start_time,
         "-d", duration,
@@ -292,6 +295,56 @@ def run_jobs(jobs, args, exp_dir):
     
     return total_jobs
 
+def copy_missing_commit_files(exp_dir, commit_range, commit_step):
+    existing_files = glob.glob(os.path.join(exp_dir, "*.json"))
+    existing_configs = {}
+    for file_path in existing_files:
+        file_name = os.path.basename(file_path)
+        match = re.match(r"d(\d+)-A(\d+)-m(\d+)-r([\d\.]+)-c(\d+)\.json", file_name)
+        if match:
+            duration, arrival, min_parking, rate, commit = match.groups()
+            key = (duration, arrival, min_parking, rate)
+            if key not in existing_configs:
+                existing_configs[key] = {}
+            existing_configs[key][commit] = file_path
+    
+    commit_copies = 0
+    for key, commits in existing_configs.items():
+        duration, arrival, min_parking, rate = key
+        arrival_int = int(arrival)
+        commit_start, commit_end = commit_range
+
+        current_commit = commit_start
+        while current_commit <= commit_end or commit_end == 0:
+            if current_commit > arrival_int:
+                commit_str = str(current_commit)
+                if commit_str not in commits:
+                    arrival_str = str(arrival_int)
+                    if arrival_str in commits:
+                        source_file = commits[arrival_str]
+                        target_name = f"d{duration}-A{arrival}-m{min_parking}-r{rate}-c{commit_str}.json"
+                        target_file = os.path.join(exp_dir, target_name)
+                        shutil.copy2(source_file, target_file)
+                        
+                        try:
+                            with open(target_file, 'r') as f:
+                                data = json.load(f)
+                            
+                            data["settings"]["commit_interval"] = current_commit
+                            
+                            with open(target_file, 'w') as f:
+                                json.dump(data, f, indent=2)
+                        
+                            commit_copies += 1
+                        except Exception as e:
+                            print(f"Error updating commit interval in {target_name}: {e}")
+                            os.remove(target_file)
+            if commit_end == 0:
+                break
+            current_commit += commit_step
+
+    print(f"Created {commit_copies} additional result files for commit")
+
 def main():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     os.chdir(project_root)
@@ -322,6 +375,7 @@ def main():
     
     print(f"Running {total_configs} simulations with {args.jobs} parallel jobs...")
     print("Parameters:")
+    print(f"  - Environment file: {args.environment}")
     print(f"  - Timesteps: {args.timesteps}")
     print(f"  - Start time: {args.start_time}")
     duration_start, duration_end = duration_range
@@ -374,10 +428,14 @@ def main():
                 current_rate = rate_start
                 while current_rate <= rate_end or rate_end == 0:
                     current_commit = commit_start
-                    while current_commit <= commit_end or commit_end == 0:                    
+                    while current_commit <= commit_end or commit_end == 0: 
+                        if current_commit > current_arrival:
+                            current_commit += commit_step
+                            continue
+                                           
                         config_name = f"d{current_duration}-A{current_arrival}-m{current_min_parking_time}-r{current_rate}-c{current_commit}"
                         output_file = os.path.join(exp_dir, f"{config_name}.json")
-                        
+                             
                         jobs.append((str(current_duration), str(current_arrival), str(current_min_parking_time), str(current_rate), str(current_commit), output_file))
 
                         if commit_end == 0:
@@ -408,13 +466,16 @@ def main():
     
     run_jobs(jobs, args, exp_dir)
     
+    print("\nCreating copies for commit larger than arrival...")
+    copy_missing_commit_files(exp_dir, commit_range, commit_step)
+        
     print("\nSimulations completed!")
     print(f"Created experiment directory: {exp_dir}")
     
     print("Generating reports...")
     
     report_script = os.path.join(project_root, "analysis", "generate_report.py")
-    env_file = os.path.join(project_root, "aalborg_env.json") 
+    env_file = os.path.join(project_root, args.environment) 
     experiments_dir = os.path.join(project_root, "experiments")
     
     subprocess.run(["python", report_script, env_file, experiments_dir, "--experiments", exp_dir])
