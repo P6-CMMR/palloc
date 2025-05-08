@@ -228,12 +228,14 @@ def run_job(job_tuple, args, progress_queue):
         "-g", args.random_generator,
         "-s", args.seed,
         "-o", output_file,
-        "-T", args.output_trace,
         "-a", args.aggregate,
     ]
     
     if args.weights:
         cmd.append("-w")
+        
+    if args.trace:
+        cmd.append("-T")
     
     try:
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)    
