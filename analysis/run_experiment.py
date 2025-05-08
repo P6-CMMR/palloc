@@ -467,7 +467,6 @@ def main():
     
     # Shuffle to make progress bar estimate better
     random.shuffle(jobs)
-    print(f"Shuffled {len(jobs)} jobs")
     
     run_jobs(jobs, args, exp_dir)
     
