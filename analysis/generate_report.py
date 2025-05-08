@@ -307,7 +307,9 @@ def create_bar_graph_html(cost,  output_dir_path):
     first_metric_key = metric_keys[1]
 
     while type(temp_cost[first_metric_key]) not in (int, float, complex):
-        metrics[temp_cost["metric"]] = metric_keys[1:]
+        values = metric_keys[1:]
+        if values[0].isnumeric():
+            metrics[temp_cost["metric"]] = sorted(values, key=float)
         temp_cost = temp_cost[first_metric_key]
         metric_keys = list(temp_cost.keys())
         first_metric_key = metric_keys[1]
