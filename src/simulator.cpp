@@ -146,7 +146,8 @@ static Assignments createAssignments(const Simulations &newSimulations, const En
     return assignments;
 }
 
-void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings, const OutputSettings &outputSettings, Results &results,
+void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings,
+                            const OutputSettings &outputSettings, Results &results,
                             std::mutex &resultsMutex, Uint runNumber) {
     const auto &availableParkingSpots = env.getAvailableParkingSpots();
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
@@ -223,10 +224,10 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
         if (outputSettings.outputTrace) {
             traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-            totalAvailableParkingSpots, batchCost, batchAverageDuration,
-                            droppedRequests, earlyRequests.size(), assignments);
+                                totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                                droppedRequests, earlyRequests.size(), assignments);
         }
-                            
+
         runCost += batchCost;
         runDuration += batchAverageDuration;
     }
@@ -245,7 +246,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const std::lock_guard<std::mutex> guard(resultsMutex);
 
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
-        requestsGenerated, requestsScheduled, requestsUnassigned);
+                         requestsGenerated, requestsScheduled, requestsUnassigned);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
