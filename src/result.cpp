@@ -8,6 +8,9 @@ Result Result::aggregateResults(const Results &results) {
     TraceLists traceLists;
     SimulatorSettings simSettings = results[0].getSimSettings();
     size_t droppedRequests = 0;
+    Uint requestsGenerated = 0;
+    size_t requestsScheduled = 0;
+    size_t requestsUnassigned = 0;
 
     std::vector<double> avgDurationVec;
     avgDurationVec.reserve(results.size());
@@ -17,6 +20,9 @@ Result Result::aggregateResults(const Results &results) {
     for (const Result &result : results) {
         traceLists.push_back(result.getTraceLists()[0]);
         droppedRequests += result.getDroppedRequests();
+        requestsGenerated += result.getRequestsGenerated();
+        requestsScheduled += result.getRequestsScheduled();
+        requestsUnassigned += requestsGenerated - requestsScheduled;
         avgDurationVec.push_back(result.getGlobalAvgDuration());
         avgCostVec.push_back(result.getGlobalAvgCost());
     }
@@ -25,17 +31,11 @@ Result Result::aggregateResults(const Results &results) {
     auto globalAvgCost = utils::KahanSum(avgCostVec);
 
     const size_t numResults = results.size();
-    droppedRequests /= numResults;
     globalAvgDuration /= static_cast<double>(numResults);
     globalAvgCost /= static_cast<double>(numResults);
 
-    Uint requestsGenerated = 0;
-    for (const Result &result : results) {
-        requestsGenerated += result.getRequestsGenerated();
-    }
-
     return Result(traceLists, simSettings, droppedRequests, globalAvgDuration, globalAvgCost,
-                  requestsGenerated);
+                  requestsGenerated, requestsScheduled, requestsUnassigned);
 }
 
 void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) const {
@@ -79,3 +79,5 @@ double Result::getGlobalAvgDuration() const noexcept { return _globalAvgDuration
 double Result::getGlobalAvgCost() const noexcept { return _globalAvgCost; }
 
 Uint Result::getRequestsGenerated() const noexcept { return _requestsGenerated; }
+
+size_t Result::getRequestsScheduled() const noexcept { return _requestsScheduled; }
