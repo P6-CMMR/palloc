@@ -82,7 +82,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     auto worker = [&]() {
         for (Uint run = atomicRunCounter.fetch_add(1); run < numberOfRuns;
              run = atomicRunCounter.fetch_add(1)) {
-            Simulator::simulateRun(env, simSettings, results, resultsMutex, run);
+            Simulator::simulateRun(env, simSettings, outputSettings, results, resultsMutex, run);
         }
     };
 
@@ -146,7 +146,7 @@ static Assignments createAssignments(const Simulations &newSimulations, const En
     return assignments;
 }
 
-void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings, Results &results,
+void Simulator::simulateRun(Environment env, const SimulatorSettings &simSettings, const OutputSettings &outputSettings, Results &results,
                             std::mutex &resultsMutex, Uint runNumber) {
     const auto &availableParkingSpots = env.getAvailableParkingSpots();
     const auto numberOfDropoffs = env.getNumberOfDropoffs();
@@ -220,10 +220,13 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
         const auto totalAvailableParkingSpots =
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
-        traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-                            totalAvailableParkingSpots, batchCost, batchAverageDuration,
-                            droppedRequests, earlyRequests.size(), assignments);
 
+        if (outputSettings.outputTrace) {
+            traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
+            totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                            droppedRequests, earlyRequests.size(), assignments);
+        }
+                            
         runCost += batchCost;
         runDuration += batchAverageDuration;
     }
@@ -240,8 +243,9 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const size_t requestsUnassigned = requestsGenerated - requestsScheduled;
 
     const std::lock_guard<std::mutex> guard(resultsMutex);
+
     results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
-                         requestsGenerated, requestsScheduled, requestsUnassigned);
+        requestsGenerated, requestsScheduled, requestsUnassigned);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {

@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
                                       .useWeightedParking = false,
                                       .randomGenerator = "pcg"};
 
-        OutputSettings outputSettings{.numberOfRunsToAggregate = 3, .prettify = false};
+        OutputSettings outputSettings{.numberOfRunsToAggregate = 3, .prettify = false, .outputTrace = false};
 
         std::optional<Uint> seedOpt;
         std::string startTimeStr = "08:00";
@@ -57,6 +57,7 @@ int main(int argc, char **argv) {
             {{"output", 'o'},
              outputPathStr,
              "the output file to store results in, default: no output"},
+            {{"trace", 'T'}, outputSettings.outputTrace, "whether to output trace or not"},
             {{"prettify", 'p'}, outputSettings.prettify, "whether to prettify output or not"},
             {{"aggregate", 'a'},
              outputSettings.numberOfRunsToAggregate,

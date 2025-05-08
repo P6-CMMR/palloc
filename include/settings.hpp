@@ -25,6 +25,7 @@ struct OutputSettings {
     std::filesystem::path outputPath;
     Uint numberOfRunsToAggregate;
     bool prettify;
+    bool outputTrace;
 };
 
 struct GeneralSettings {
