@@ -65,6 +65,7 @@ def parse_arguments():
     parser.add_argument("-w", "--weights", action="store_true", help="Use weights for distance to parking")
     parser.add_argument("-g", "--random-generator", default="pcg", help="Random number generator to use (options: pcg, pcg-fast)")
     parser.add_argument("-s", "--seed", default=str(int(time.time() * 1000) % 1000000), help="Random seed for reproducibility")
+    parser.add_argument("-T", "--trace", action="store_true", help="Output trace or not")
     parser.add_argument("-a", "--aggregate", default="3", help="Number of runs per configuration")
     parser.add_argument("-j", "--jobs", default=str(multiprocessing.cpu_count()), help="Number of parallel jobs")
     
@@ -227,6 +228,7 @@ def run_job(job_tuple, args, progress_queue):
         "-g", args.random_generator,
         "-s", args.seed,
         "-o", output_file,
+        "-T", args.output_trace,
         "-a", args.aggregate,
     ]
     
