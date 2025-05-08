@@ -11,6 +11,7 @@ import threading
 import queue
 import shutil
 import json
+import random
 from progress_bar import print_progress_bar
 from datetime import datetime
 
@@ -463,6 +464,10 @@ def main():
             break
         
         current_duration += duration_step
+    
+    # Shuffle to make progress bar estimate better
+    random.shuffle(jobs)
+    print(f"Shuffled {len(jobs)} jobs")
     
     run_jobs(jobs, args, exp_dir)
     
