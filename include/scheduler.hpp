@@ -12,6 +12,10 @@ struct SchedulerResult {
     Requests earlyRequests;
     Uint totalDuration;
     double totalCost;
+<<<<<<< Updated upstream
+=======
+    size_t processedRequests;
+>>>>>>> Stashed changes
 };
 
 class Scheduler {

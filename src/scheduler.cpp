@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "ortools/sat/cp_model.h"
+#include "utils.hpp"
 
 using namespace palloc;
 using namespace operations_research;
@@ -104,11 +105,16 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     Requests unassignedRequests;
     Requests earlyRequests;
 
+<<<<<<< Updated upstream
     Uint sumDuration = 0;
     double sumCost = 0.0;
     if (response.status() == sat::CpSolverStatus::OPTIMAL ||
         response.status() == sat::CpSolverStatus::FEASIBLE) {
         sumCost = response.objective_value();
+=======
+    if (response.status() == sat::CpSolverStatus::OPTIMAL ||
+        response.status() == sat::CpSolverStatus::FEASIBLE) {
+>>>>>>> Stashed changes
         for (size_t i = 0; i < requestCount; ++i) {
             auto &request = requests[i];
             size_t parkingNode = 0;
@@ -128,7 +134,6 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
                 }
             }
 
-            sumDuration += routeDuration;
             if (tillArrival > commitInterval) {
                 earlyRequests.push_back(request);
             } else if (assigned) {
@@ -146,5 +151,26 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
         }
     }
 
+<<<<<<< Updated upstream
     return {simulations, unassignedRequests, earlyRequests, sumDuration, sumCost};
+=======
+    Uint sumDuration = 0;
+    DoubleVector costVec;
+    size_t processedRequests = simulations.size() + unassignedRequests.size();
+    costVec.reserve(processedRequests);
+    for (const auto &simulation : simulations) {
+        sumDuration += simulation.getRouteDuration();
+        costVec.push_back(simulation.getRouteDuration() *
+                          env.getParkingWeights()[simulation.getParkingNode()]);
+    }
+
+    for (const auto &request : unassignedRequests) {
+        costVec.push_back(UNASSIGNED_PENALTY * request.getTimesDropped());
+    }
+
+    double sumCost = utils::KahanSum(costVec);
+
+    return {simulations, unassignedRequests, earlyRequests, sumDuration,
+            sumCost,     processedRequests};
+>>>>>>> Stashed changes
 }

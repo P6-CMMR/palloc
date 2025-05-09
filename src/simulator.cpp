@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "scheduler.hpp"
+#include "utils.hpp"
 
 using namespace palloc;
 
@@ -110,12 +111,16 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  result.getRequestsGenerated() - result.getRequestsScheduled());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
+<<<<<<< Updated upstream
     const double globalTotalDuration = result.getGlobalTotalDuration();
+=======
+    const double globalTotalDuration = result.getDuration();
+>>>>>>> Stashed changes
     const int minutes = static_cast<int>(globalTotalDuration);
     const int seconds = static_cast<int>((globalTotalDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    std::println("Average objective cost: {}", result.getGlobalAvgCost());
+    std::println("Average objective cost: {}", result.getCost());
 
     if (!outputSettings.outputPath.empty()) {
         result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
@@ -172,9 +177,18 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     TraceList traces;
     size_t droppedRequests = 0;
+<<<<<<< Updated upstream
     double runCost = 0.0;
     Uint runDuration = 0;
+=======
+
+    DoubleVector runCostVec;
+    runCostVec.reserve(timesteps);
+
+    Uint runDurationSum = 0;
+>>>>>>> Stashed changes
     size_t requestsScheduled = 0;
+    size_t totalProcessedRequests = 0;
     for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
         Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
 
@@ -186,6 +200,10 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
         double totalBatchCost = 0.0;
         Uint totalBatchDuration = 0;
+<<<<<<< Updated upstream
+=======
+        size_t processedRequests = 0;
+>>>>>>> Stashed changes
         Assignments assignments;
 
         bool isBatchingStep = timestep % simSettings.batchInterval == 0 || timestep == timesteps;
@@ -204,6 +222,11 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                 requests.clear();
 
                 totalBatchCost = batchResult.totalCost;
+<<<<<<< Updated upstream
+=======
+                processedRequests = batchResult.processedRequests;
+                totalProcessedRequests += processedRequests;
+>>>>>>> Stashed changes
                 totalBatchDuration = batchResult.totalDuration;
 
                 unassignedRequests = batchResult.unassignedRequests;
@@ -230,30 +253,49 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             double batchAverageCost =
                 simulations.empty()
                     ? 0.0
+<<<<<<< Updated upstream
                     : static_cast<double>(totalBatchCost) / static_cast<double>(simulations.size());
+=======
+                    : static_cast<double>(totalBatchCost) / static_cast<double>(processedRequests);
+>>>>>>> Stashed changes
             traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
                                 totalAvailableParkingSpots, batchAverageCost, batchAverageDuration,
                                 droppedRequests, earlyRequests.size(), assignments);
         }
 
+<<<<<<< Updated upstream
         runCost += totalBatchCost;
         runDuration += totalBatchDuration;
+=======
+        runCostVec.push_back(totalBatchCost);
+        runDurationSum += totalBatchDuration;
+>>>>>>> Stashed changes
     }
 
     assert(requests.empty());
 
+<<<<<<< Updated upstream
     const Uint numberOfScheduledSteps =
         (timesteps + simSettings.batchInterval - 1) / simSettings.batchInterval;
     const double runAvgCost = runCost / static_cast<double>(requestsScheduled);
 
+=======
+>>>>>>> Stashed changes
     const Uint requestsGenerated = generator.getRequestsGenerated();
 
     const size_t requestsUnassigned = requestsGenerated - requestsScheduled;
 
     const std::lock_guard<std::mutex> guard(resultsMutex);
 
+<<<<<<< Updated upstream
     results.emplace_back(traces, simSettings, droppedRequests, runDuration, runAvgCost,
                          requestsGenerated, requestsScheduled, requestsUnassigned);
+=======
+    double runCostSum = utils::KahanSum(runCostVec);
+    results.emplace_back(traces, simSettings, droppedRequests, runDurationSum, runCostSum,
+                         requestsGenerated, requestsScheduled, requestsUnassigned,
+                         totalProcessedRequests);
+>>>>>>> Stashed changes
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {

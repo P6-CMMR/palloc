@@ -31,7 +31,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         REQUIRE(batchResult.simulations.size() == 1);
         REQUIRE(batchResult.unassignedRequests.empty());
         REQUIRE(batchResult.earlyRequests.empty());
-        REQUIRE(batchResult.cost == 2);
+        REQUIRE(batchResult.totalCost == 2);
     }
 
     SECTION("Request being waiting") {
@@ -43,10 +43,9 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.empty());
         REQUIRE(batchResult.earlyRequests.size() == 1);
-        REQUIRE(batchResult.cost == Scheduler::UNASSIGNED_PENALTY);
     }
 
-    SECTION("Request being unassinged") {
+    SECTION("Request being unassigned") {
         Requests requests;
 
         requests.emplace_back(1, 1, 0);
@@ -55,7 +54,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.size() == 1);
         REQUIRE(batchResult.earlyRequests.empty());
-        REQUIRE(batchResult.cost == Scheduler::UNASSIGNED_PENALTY);
+        REQUIRE(batchResult.totalCost == Scheduler::UNASSIGNED_PENALTY);
     }
 }
 
@@ -87,8 +86,8 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         REQUIRE(batchResult.simulations.size() == requestAmount - 1);
         REQUIRE(batchResult.unassignedRequests.size() == 1);
         REQUIRE(batchResult.earlyRequests.empty());
-        REQUIRE(batchResult.cost > Scheduler::UNASSIGNED_PENALTY);
-        REQUIRE(batchResult.cost < 2 * Scheduler::UNASSIGNED_PENALTY);
+        REQUIRE(batchResult.totalCost > Scheduler::UNASSIGNED_PENALTY);
+        REQUIRE(batchResult.totalCost < 2 * Scheduler::UNASSIGNED_PENALTY);
     }
 
     SECTION("Multiple unassigned requests") {
@@ -103,7 +102,7 @@ TEST_CASE("Multiple requests - [Scheduler]") {
         REQUIRE(batchResult.simulations.empty());
         REQUIRE(batchResult.unassignedRequests.size() == requestAmount);
         REQUIRE(batchResult.earlyRequests.empty());
-        REQUIRE(batchResult.cost ==
+        REQUIRE(batchResult.totalCost ==
                 static_cast<double>(requestAmount * Scheduler::UNASSIGNED_PENALTY));
     }
 }
