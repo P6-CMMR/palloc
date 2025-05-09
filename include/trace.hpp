@@ -67,13 +67,13 @@ using TraceLists = std::vector<TraceList>;
 template <>
 struct glz::meta<palloc::Trace> {
     using T = palloc::Trace;
-    static constexpr auto value =
-        glz::object("timestep", &T::_timestep, "current_time_of_day", &T::_currentTimeOfDay,
-                    "number_of_requests", &T::_numberOfRequests, "number_of_ongoing_simulations",
-                    &T::_numberOfOngoingSimulations, "available_parking_spots",
-                    &T::_availableParkingSpots, "average_cost", &T::_averageCost, "average_duration",
-                    &T::_averageDuration, "dropped_requests", &T::_droppedRequests,
-                    "early_requests", &T::_earlyRequests, "assignments", &T::_assignments);
+    static constexpr auto value = glz::object(
+        "timestep", &T::_timestep, "current_time_of_day", &T::_currentTimeOfDay,
+        "number_of_requests", &T::_numberOfRequests, "number_of_ongoing_simulations",
+        &T::_numberOfOngoingSimulations, "available_parking_spots", &T::_availableParkingSpots,
+        "average_cost", &T::_averageCost, "average_duration", &T::_averageDuration,
+        "dropped_requests", &T::_droppedRequests, "early_requests", &T::_earlyRequests,
+        "assignments", &T::_assignments);
 };
 
 #endif

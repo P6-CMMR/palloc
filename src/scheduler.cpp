@@ -149,8 +149,9 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     costVec.reserve(processedRequests);
     for (const auto &simulation : simulations) {
         sumDuration += simulation.getRouteDuration();
-        costVec.push_back(simulation.getRouteDuration() *
-                          (useWeightedParking ? env.getParkingWeights()[simulation.getParkingNode()] : 1.0));
+        costVec.push_back(
+            simulation.getRouteDuration() *
+            (useWeightedParking ? env.getParkingWeights()[simulation.getParkingNode()] : 1.0));
     }
 
     for (const auto &request : unassignedRequests) {

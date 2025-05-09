@@ -685,7 +685,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     metrics = {
         "available_parking_spots": {"title": "Available Parking Spots Over Time", "y_label": "# available parking spots"},
         "number_of_ongoing_simulations": {"title": "Number of Ongoing Simulations Over Time", "y_label": "# simulations"},
-        "cost": {"title": "Average Cost Over Time", "y_label": "cost"},
+        "average_cost": {"title": "Average Cost Over Time", "y_label": "cost"},
         "average_duration": {"title": "Average Duration Over Time", "y_label": "average duration"},
         "dropped_requests": {"title": "Dropped Requests Over Time", "y_label": "# dropped requests"}
     }
@@ -794,7 +794,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     
     write_html_with_button(figures["available_parking_spots"], "parking_spots.html", button_template, output_dir_path)
     write_html_with_button(figures["number_of_ongoing_simulations"], "simulations.html", button_template, output_dir_path)
-    write_html_with_button(figures["cost"], "cost.html", button_template, output_dir_path)
+    write_html_with_button(figures["average_cost"], "cost.html", button_template, output_dir_path)
     write_html_with_button(figures["average_duration"], "duration.html", button_template, output_dir_path)
     write_html_with_button(figures["dropped_requests"], "dropped_requests.html", button_template, output_dir_path)
     
