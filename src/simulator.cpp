@@ -88,7 +88,7 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::vector<std::thread> threads;
     threads.reserve(numberOfRuns);
-    const auto start = std::chrono::high_resolution_clock::now();
+    const auto startClock = std::chrono::high_resolution_clock::now();
     for (Uint run = 0; run < numberOfThreads; ++run) {
         threads.emplace_back(worker);
     }
@@ -97,12 +97,14 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
         thread.join();
     }
 
-    const auto end = std::chrono::high_resolution_clock::now();
-    const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    const auto endClock = std::chrono::high_resolution_clock::now();
+    const auto timeElapsed = static_cast<Uint>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(endClock - startClock).count());
 
-    std::println("Finished after {}ms", time);
+    std::println("Finished after {}ms", timeElapsed);
 
-    const Result result = Result::aggregateResults(results);
+    Result result = Result::aggregateResults(results);
+    result.setTimeElapsed(timeElapsed);
 
     std::println("Total requests generated: {}", result.getRequestsGenerated());
     std::println("Total requests scheduled: {}", result.getRequestsScheduled());

@@ -55,6 +55,8 @@ class Result {
     size_t getRequestsScheduled() const noexcept;
     size_t getRequestsUnassigned() const noexcept;
 
+    void setTimeElapsed(Uint timeElapsed) noexcept;
+
    private:
     friend struct glz::meta<Result>;
 
@@ -66,6 +68,7 @@ class Result {
     Uint _requestsGenerated{};
     size_t _requestsScheduled{};
     size_t _requestsUnassigned{};
+    Uint _timeElapsed{};
 };
 
 using Results = std::vector<Result>;
@@ -78,7 +81,8 @@ struct glz::meta<palloc::Result> {
         "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
         &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
         &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "requests_unassigned",
-        &T::_requestsUnassigned, "settings", &T::_simSettings, "traces", &T::_traceLists);
+        &T::_requestsUnassigned, "time_elapsed", &T::_timeElapsed, "settings", &T::_simSettings,
+        "traces", &T::_traceLists);
 };
 
 #endif

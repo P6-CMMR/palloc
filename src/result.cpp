@@ -81,3 +81,5 @@ double Result::getGlobalAvgCost() const noexcept { return _globalAvgCost; }
 Uint Result::getRequestsGenerated() const noexcept { return _requestsGenerated; }
 
 size_t Result::getRequestsScheduled() const noexcept { return _requestsScheduled; }
+
+void Result::setTimeElapsed(Uint timeElapsed) noexcept { _timeElapsed = timeElapsed; }

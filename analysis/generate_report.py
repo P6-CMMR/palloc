@@ -832,6 +832,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     requests_scheduled = data.get("requests_scheduled", "N/A")
     requests_unassigned = data.get("requests_unassigned", "N/A")
     
+    time_elapsed_raw = data.get("time_elapsed", "N/A")
+    time_elapsed = f"{time_elapsed_raw} ms" if time_elapsed_raw != "N/A" else "N/A"
+    
     try:
         template_path = Path(__file__).parent / "experiment_template.html"
         with open(template_path, "r") as f:
@@ -942,6 +945,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{requests_generated}}", str(requests_generated))
     html_content = html_content.replace("{{requests_scheduled}}", str(requests_scheduled))
     html_content = html_content.replace("{{requests_unassigned}}", str(requests_unassigned))
+    html_content = html_content.replace("{{time_elapsed}}", str(time_elapsed))
     html_content = html_content.replace("{{run_tabs}}", run_tabs_html)
     html_content = html_content.replace("{{assignments_list}}", assignments_html)
     html_content = html_content.replace("{{map_link}}", map_html_link)
