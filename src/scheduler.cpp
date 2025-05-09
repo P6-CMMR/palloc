@@ -136,8 +136,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
                 if (tillArrival > 0) {
                     earlyRequests.push_back(request);
                 } else {
-                    unassignedRequests.push_back(request);
                     request.incrementTimesDropped();
+                    unassignedRequests.push_back(request);
                 }
             }
         }
@@ -150,7 +150,7 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     for (const auto &simulation : simulations) {
         sumDuration += simulation.getRouteDuration();
         costVec.push_back(simulation.getRouteDuration() *
-                          env.getParkingWeights()[simulation.getParkingNode()]);
+                          (useWeightedParking ? env.getParkingWeights()[simulation.getParkingNode()] : 1.0));
     }
 
     for (const auto &request : unassignedRequests) {

@@ -25,7 +25,7 @@ class Trace {
           _earlyRequests(earlyRequests),
           _timestep(timestep),
           _currentTimeOfDay(currentTimeOfDay),
-          _cost(cost),
+          _averageCost(cost),
           _averageDuration(averageDuration) {}
 
     size_t getNumberOfOngoingSimulations() const noexcept;
@@ -56,7 +56,7 @@ class Trace {
     Uint _timestep{};
     Uint _currentTimeOfDay{};
 
-    double _cost{};
+    double _averageCost{};
     double _averageDuration{};
 };
 
@@ -71,7 +71,7 @@ struct glz::meta<palloc::Trace> {
         glz::object("timestep", &T::_timestep, "current_time_of_day", &T::_currentTimeOfDay,
                     "number_of_requests", &T::_numberOfRequests, "number_of_ongoing_simulations",
                     &T::_numberOfOngoingSimulations, "available_parking_spots",
-                    &T::_availableParkingSpots, "cost", &T::_cost, "average_duration",
+                    &T::_availableParkingSpots, "average_cost", &T::_averageCost, "average_duration",
                     &T::_averageDuration, "dropped_requests", &T::_droppedRequests,
                     "early_requests", &T::_earlyRequests, "assignments", &T::_assignments);
 };

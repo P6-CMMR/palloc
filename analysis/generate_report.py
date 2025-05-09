@@ -685,7 +685,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     metrics = {
         "available_parking_spots": {"title": "Available Parking Spots Over Time", "y_label": "# available parking spots"},
         "number_of_ongoing_simulations": {"title": "Number of Ongoing Simulations Over Time", "y_label": "# simulations"},
-        "cost": {"title": "Cost Over Time", "y_label": "cost"},
+        "cost": {"title": "Average Cost Over Time", "y_label": "cost"},
         "average_duration": {"title": "Average Duration Over Time", "y_label": "average duration"},
         "dropped_requests": {"title": "Dropped Requests Over Time", "y_label": "# dropped requests"}
     }

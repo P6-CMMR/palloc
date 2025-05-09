@@ -234,7 +234,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                                               : static_cast<double>(totalBatchDuration) /
                                                     static_cast<double>(simulations.size());
             double batchAverageCost =
-                simulations.empty()
+                processedRequests == 0
                     ? 0.0
                     : static_cast<double>(totalBatchCost) / static_cast<double>(processedRequests);
             traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
