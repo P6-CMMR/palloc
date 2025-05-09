@@ -105,7 +105,6 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     Requests earlyRequests;
 
     Uint sumDuration = 0;
-    double averageDuration = 0.0;
     double cost = 0.0;
 
     if (response.status() == sat::CpSolverStatus::OPTIMAL ||
@@ -148,9 +147,5 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
         }
     }
 
-    averageDuration = simulations.empty() ? 0.0
-                                          : static_cast<double>(sumDuration) /
-                                                static_cast<double>(simulations.size());
-
-    return {simulations, unassignedRequests, earlyRequests, averageDuration, cost};
+    return {simulations, unassignedRequests, earlyRequests, sumDuration, cost};
 }

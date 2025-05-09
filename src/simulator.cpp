@@ -173,7 +173,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     TraceList traces;
     size_t droppedRequests = 0;
     double runCost = 0.0;
-    double runDuration = 0.0;
+    Uint runDuration = 0;
     size_t requestsScheduled = 0;
     for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
         Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
@@ -184,8 +184,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
         insertNewRequests(generator, currentTimeOfDay, requests);
         cutImpossibleRequests(requests, env.getSmallestRoundTrips());
 
-        double batchCost = 0.0;
-        double batchAverageDuration = 0.0;
+        double totalBatchCost = 0.0;
+        Uint totalBatchDuration = 0;
         Assignments assignments;
 
         bool isBatchingStep = timestep % simSettings.batchInterval == 0 || timestep == timesteps;
@@ -203,8 +203,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                 const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
                 requests.clear();
 
-                batchCost = batchResult.cost;
-                batchAverageDuration = batchResult.averageDurations;
+                totalBatchCost = batchResult.totalCost;
+                totalBatchDuration = batchResult.totalDuration;
 
                 unassignedRequests = batchResult.unassignedRequests;
                 droppedRequests += unassignedRequests.size();
@@ -223,21 +223,29 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
 
         if (outputSettings.outputTrace) {
+            double batchAverageDuration = simulations.empty()
+                                              ? 0.0
+                                              : static_cast<double>(totalBatchDuration) /
+                                                    static_cast<double>(simulations.size());
+            double batchAverageCost =
+                simulations.empty()
+                    ? 0.0
+                    : static_cast<double>(totalBatchCost) / static_cast<double>(simulations.size());
             traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-                                totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                                totalAvailableParkingSpots, batchAverageCost, batchAverageDuration,
                                 droppedRequests, earlyRequests.size(), assignments);
         }
 
-        runCost += batchCost;
-        runDuration += batchAverageDuration;
+        runCost += totalBatchCost;
+        runDuration += totalBatchDuration;
     }
 
     assert(requests.empty());
 
     const Uint numberOfScheduledSteps =
         (timesteps + simSettings.batchInterval - 1) / simSettings.batchInterval;
-    const double runAvgDuration = runDuration / static_cast<double>(numberOfScheduledSteps);
-    const double runAvgCost = runCost / static_cast<double>(numberOfScheduledSteps);
+    const double runAvgDuration = runDuration / static_cast<double>(requestsScheduled);
+    const double runAvgCost = runCost / static_cast<double>(requestsScheduled);
 
     const Uint requestsGenerated = generator.getRequestsGenerated();
 
