@@ -275,7 +275,11 @@ def get_cost_list_one_metric(cost, metric, other_metric_values):
             anchor_idx = idx
             anchor = cost
             if metric_keys is None:
-                metric_keys = list(cost.keys())[1:]
+                values = list(cost.keys())[1:]              #
+                if values[0].isnumeric():                   # Maybe this should be a function at this point
+                    metric_keys = sorted(values, key=float) #
+                else: 
+                    metric_keys = values
             cost = cost[metric_keys[metric_keys_idx]]
 
             metric_keys_idx += 1
@@ -596,7 +600,9 @@ def create_contour_graph_html(cost, output_dir_path):
                     contour_cost[metric1][metric2]["cost"][remaining_str] = result_list
                 all_result_lists.append(result_list)
 
-            contour_cost[metric1][metric2]["cost"][" | Average"] = np.mean(np.array(all_result_lists), axis=0)
+                average_results_list = np.mean(np.array(all_result_lists), axis=0)
+
+            contour_cost[metric1][metric2]["cost"][" | Average"] = average_results_list
         
     cost = contour_cost
 
