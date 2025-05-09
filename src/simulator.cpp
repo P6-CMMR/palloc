@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "scheduler.hpp"
+#include "utils.hpp"
 
 using namespace palloc;
 
@@ -110,12 +111,12 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  result.getRequestsGenerated() - result.getRequestsScheduled());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
-    const double globalAvgDuration = result.getGlobalAvgDuration();
+    const double globalAvgDuration = result.getDuration();
     const int minutes = static_cast<int>(globalAvgDuration);
     const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    std::println("Average objective cost: {}", result.getGlobalAvgCost());
+    std::println("Average objective cost: {}", result.getCost());
 
     if (!outputSettings.outputPath.empty()) {
         result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
@@ -170,22 +171,25 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     Simulations simulations;
 
+    DoubleVector runCostVec;
+    runCostVec.reserve(timesteps);
+
     TraceList traces;
     size_t droppedRequests = 0;
-    double runCost = 0.0;
-    double runDuration = 0.0;
+    Uint runDurationSum = 0;
     size_t requestsScheduled = 0;
+    size_t totalProcessedRequests = 0;
     for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
         Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
-
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
         decrementArrivalTime(earlyRequests);
         insertNewRequests(generator, currentTimeOfDay, requests);
         cutImpossibleRequests(requests, env.getSmallestRoundTrips());
 
-        double batchCost = 0.0;
-        double batchAverageDuration = 0.0;
+        double totalBatchCost = 0.0;
+        Uint totalBatchDuration = 0;
+        size_t processedRequests = 0;
         Assignments assignments;
 
         bool isBatchingStep = timestep % simSettings.batchInterval == 0 || timestep == timesteps;
@@ -203,8 +207,10 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                 const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
                 requests.clear();
 
-                batchCost = batchResult.cost;
-                batchAverageDuration = batchResult.averageDurations;
+                totalBatchCost = batchResult.totalCost;
+                processedRequests = batchResult.processedRequests;
+                totalProcessedRequests += processedRequests;
+                totalBatchDuration = batchResult.totalDuration;
 
                 unassignedRequests = batchResult.unassignedRequests;
                 droppedRequests += unassignedRequests.size();
@@ -223,21 +229,24 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
 
         if (outputSettings.outputTrace) {
+            double batchAverageDuration = simulations.empty()
+                                              ? 0.0
+                                              : static_cast<double>(totalBatchDuration) /
+                                                    static_cast<double>(simulations.size());
+            double batchAverageCost =
+                processedRequests == 0
+                    ? 0.0
+                    : static_cast<double>(totalBatchCost) / static_cast<double>(processedRequests);
             traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-                                totalAvailableParkingSpots, batchCost, batchAverageDuration,
+                                totalAvailableParkingSpots, batchAverageCost, batchAverageDuration,
                                 droppedRequests, earlyRequests.size(), assignments);
         }
 
-        runCost += batchCost;
-        runDuration += batchAverageDuration;
+        runCostVec.push_back(totalBatchCost);
+        runDurationSum += totalBatchDuration;
     }
 
     assert(requests.empty());
-
-    const Uint numberOfScheduledSteps =
-        (timesteps + simSettings.batchInterval - 1) / simSettings.batchInterval;
-    const double runAvgDuration = runDuration / static_cast<double>(numberOfScheduledSteps);
-    const double runAvgCost = runCost / static_cast<double>(numberOfScheduledSteps);
 
     const Uint requestsGenerated = generator.getRequestsGenerated();
 
@@ -245,8 +254,10 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     const std::lock_guard<std::mutex> guard(resultsMutex);
 
-    results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
-                         requestsGenerated, requestsScheduled, requestsUnassigned);
+    double runCostSum = utils::KahanSum(runCostVec);
+    results.emplace_back(traces, simSettings, droppedRequests, runDurationSum, runCostSum,
+                         requestsGenerated, requestsScheduled, requestsUnassigned,
+                         totalProcessedRequests);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
