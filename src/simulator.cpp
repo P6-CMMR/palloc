@@ -110,9 +110,9 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  result.getRequestsGenerated() - result.getRequestsScheduled());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
-    const double globalAvgDuration = result.getGlobalAvgDuration();
-    const int minutes = static_cast<int>(globalAvgDuration);
-    const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
+    const double globalTotalDuration = result.getGlobalTotalDuration();
+    const int minutes = static_cast<int>(globalTotalDuration);
+    const int seconds = static_cast<int>((globalTotalDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
     std::println("Average objective cost: {}", result.getGlobalAvgCost());
@@ -244,7 +244,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     const Uint numberOfScheduledSteps =
         (timesteps + simSettings.batchInterval - 1) / simSettings.batchInterval;
-    const double runAvgDuration = runDuration / static_cast<double>(requestsScheduled);
     const double runAvgCost = runCost / static_cast<double>(requestsScheduled);
 
     const Uint requestsGenerated = generator.getRequestsGenerated();
@@ -253,7 +252,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     const std::lock_guard<std::mutex> guard(resultsMutex);
 
-    results.emplace_back(traces, simSettings, droppedRequests, runAvgDuration, runAvgCost,
+    results.emplace_back(traces, simSettings, droppedRequests, runDuration, runAvgCost,
                          requestsGenerated, requestsScheduled, requestsUnassigned);
 }
 

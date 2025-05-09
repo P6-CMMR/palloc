@@ -23,7 +23,7 @@ Result Result::aggregateResults(const Results &results) {
         requestsGenerated += result.getRequestsGenerated();
         requestsScheduled += result.getRequestsScheduled();
         requestsUnassigned += requestsGenerated - requestsScheduled;
-        avgDurationVec.push_back(result.getGlobalAvgDuration());
+        avgDurationVec.push_back(result.getGlobalTotalDuration());
         avgCostVec.push_back(result.getGlobalAvgCost());
     }
 
@@ -31,7 +31,7 @@ Result Result::aggregateResults(const Results &results) {
     auto globalAvgCost = utils::KahanSum(avgCostVec);
 
     const size_t numResults = results.size();
-    globalAvgDuration /= static_cast<double>(numResults);
+    globalAvgDuration /= static_cast<double>(requestsScheduled);
     globalAvgCost /= static_cast<double>(numResults);
 
     return Result(traceLists, simSettings, droppedRequests, globalAvgDuration, globalAvgCost,
@@ -74,7 +74,7 @@ SimulatorSettings Result::getSimSettings() const noexcept { return _simSettings;
 
 size_t Result::getDroppedRequests() const noexcept { return _droppedRequests; }
 
-double Result::getGlobalAvgDuration() const noexcept { return _globalAvgDuration; }
+double Result::getGlobalTotalDuration() const noexcept { return _globalTotalDuration; }
 
 double Result::getGlobalAvgCost() const noexcept { return _globalAvgCost; }
 

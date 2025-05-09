@@ -105,11 +105,10 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     Requests earlyRequests;
 
     Uint sumDuration = 0;
-    double cost = 0.0;
-
+    double sumCost = 0.0;
     if (response.status() == sat::CpSolverStatus::OPTIMAL ||
         response.status() == sat::CpSolverStatus::FEASIBLE) {
-        cost = response.objective_value();
+        sumCost = response.objective_value();
         for (size_t i = 0; i < requestCount; ++i) {
             auto &request = requests[i];
             size_t parkingNode = 0;
@@ -147,5 +146,5 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
         }
     }
 
-    return {simulations, unassignedRequests, earlyRequests, sumDuration, cost};
+    return {simulations, unassignedRequests, earlyRequests, sumDuration, sumCost};
 }
