@@ -21,7 +21,7 @@ class Result {
         : _traceLists(std::move(traceLists)),
           _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
-          _globalTotalDuration(globalAvgDuration),
+          _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost),
           _requestsGenerated(requestsGenerated),
           _requestsScheduled(requestsScheduled),
@@ -33,7 +33,7 @@ class Result {
         : _traceLists{std::move(traceList)},
           _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
-          _globalTotalDuration(globalAvgDuration),
+          _globalAvgDuration(globalAvgDuration),
           _globalAvgCost(globalAvgCost),
           _requestsGenerated(requestsGenerated),
           _requestsScheduled(requestsScheduled),
@@ -63,7 +63,7 @@ class Result {
     TraceLists _traceLists;
     SimulatorSettings _simSettings{};
     size_t _droppedRequests{};
-    double _globalTotalDuration{};
+    double _globalAvgDuration{};
     double _globalAvgCost{};
     Uint _requestsGenerated{};
     size_t _requestsScheduled{};
@@ -79,7 +79,7 @@ struct glz::meta<palloc::Result> {
     using T = palloc::Result;
     static constexpr auto value = glz::object(
         "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
-        &T::_globalTotalDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
+        &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
         &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "requests_unassigned",
         &T::_requestsUnassigned, "settings", &T::_simSettings, "traces", &T::_traceLists);
 };

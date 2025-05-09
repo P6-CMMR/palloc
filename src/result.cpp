@@ -86,7 +86,7 @@ SimulatorSettings Result::getSimSettings() const noexcept { return _simSettings;
 
 size_t Result::getDroppedRequests() const noexcept { return _droppedRequests; }
 
-double Result::getDuration() const noexcept { return _globalTotalDuration; }
+double Result::getDuration() const noexcept { return _globalAvgDuration; }
 
 double Result::getCost() const noexcept { return _globalAvgCost; }
 

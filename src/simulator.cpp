@@ -111,9 +111,9 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
                  result.getRequestsGenerated() - result.getRequestsScheduled());
     std::println("Total requests dropped: {}", result.getDroppedRequests());
 
-    const double globalTotalDuration = result.getDuration();
-    const int minutes = static_cast<int>(globalTotalDuration);
-    const int seconds = static_cast<int>((globalTotalDuration - minutes) * 60);
+    const double globalAvgDuration = result.getDuration();
+    const int minutes = static_cast<int>(globalAvgDuration);
+    const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
     std::println("Average objective cost: {}", result.getCost());
@@ -171,13 +171,16 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     Simulations simulations;
 
+    DoubleVector runCostVec;
+    runCostVec.reserve(timesteps);
+
     TraceList traces;
     size_t droppedRequests = 0;
     Uint runDurationSum = 0;
     size_t requestsScheduled = 0;
     size_t totalProcessedRequests = 0;
     for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
-
+        Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
         updateSimulations(simulations, env);
         removeDeadRequests(unassignedRequests);
         decrementArrivalTime(earlyRequests);

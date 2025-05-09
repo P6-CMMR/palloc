@@ -31,7 +31,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
         REQUIRE(batchResult.simulations.size() == 1);
         REQUIRE(batchResult.unassignedRequests.empty());
         REQUIRE(batchResult.earlyRequests.empty());
-        REQUIRE(batchResult.totalCost == 2);
+        REQUIRE(batchResult.totalCost == 2.0);
     }
 
     SECTION("Request being waiting") {
