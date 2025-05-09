@@ -105,16 +105,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     Requests unassignedRequests;
     Requests earlyRequests;
 
-<<<<<<< Updated upstream
-    Uint sumDuration = 0;
-    double sumCost = 0.0;
     if (response.status() == sat::CpSolverStatus::OPTIMAL ||
         response.status() == sat::CpSolverStatus::FEASIBLE) {
-        sumCost = response.objective_value();
-=======
-    if (response.status() == sat::CpSolverStatus::OPTIMAL ||
-        response.status() == sat::CpSolverStatus::FEASIBLE) {
->>>>>>> Stashed changes
         for (size_t i = 0; i < requestCount; ++i) {
             auto &request = requests[i];
             size_t parkingNode = 0;
@@ -151,9 +143,6 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
         }
     }
 
-<<<<<<< Updated upstream
-    return {simulations, unassignedRequests, earlyRequests, sumDuration, sumCost};
-=======
     Uint sumDuration = 0;
     DoubleVector costVec;
     size_t processedRequests = simulations.size() + unassignedRequests.size();
@@ -172,5 +161,4 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
 
     return {simulations, unassignedRequests, earlyRequests, sumDuration,
             sumCost,     processedRequests};
->>>>>>> Stashed changes
 }

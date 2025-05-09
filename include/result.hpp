@@ -50,13 +50,8 @@ class Result {
     TraceLists getTraceLists() const noexcept;
     SimulatorSettings getSimSettings() const noexcept;
     size_t getDroppedRequests() const noexcept;
-<<<<<<< Updated upstream
-    double getGlobalTotalDuration() const noexcept;
-    double getGlobalAvgCost() const noexcept;
-=======
     double getDuration() const noexcept;
     double getCost() const noexcept;
->>>>>>> Stashed changes
     Uint getRequestsGenerated() const noexcept;
     size_t getRequestsScheduled() const noexcept;
     size_t getRequestsUnassigned() const noexcept;
