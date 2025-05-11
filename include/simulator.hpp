@@ -63,7 +63,8 @@ class Simulator {
                          const GeneralSettings &generalSettings);
 
    private:
-    static void simulateRun(Environment env, const SimulatorSettings &simSettings, const OutputSettings &outputSettings, Results &results,
+    static void simulateRun(Environment env, const SimulatorSettings &simSettings,
+                            const OutputSettings &outputSettings, Results &results,
                             std::mutex &resultsMutex, Uint runNumber);
 
     static void updateSimulations(Simulations &simulations, Environment &env);

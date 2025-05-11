@@ -29,7 +29,7 @@ class Result {
 
     explicit Result(TraceList traceList, SimulatorSettings simSettings, size_t droppedRequests,
                     double globalAvgDuration, double globalAvgCost, Uint requestsGenerated,
-                    size_t requestsScheduled, size_t requestsUnassigned)
+                    size_t requestsScheduled, size_t requestsUnassigned, size_t processedRequests)
         : _traceLists{std::move(traceList)},
           _simSettings(std::move(simSettings)),
           _droppedRequests(droppedRequests),
@@ -37,7 +37,8 @@ class Result {
           _globalAvgCost(globalAvgCost),
           _requestsGenerated(requestsGenerated),
           _requestsScheduled(requestsScheduled),
-          _requestsUnassigned(requestsUnassigned) {}
+          _requestsUnassigned(requestsUnassigned),
+          _processedRequests(processedRequests) {}
 
     explicit Result(const std::filesystem::path &inputPath) { loadResult(inputPath); };
 
@@ -49,11 +50,14 @@ class Result {
     TraceLists getTraceLists() const noexcept;
     SimulatorSettings getSimSettings() const noexcept;
     size_t getDroppedRequests() const noexcept;
-    double getGlobalAvgDuration() const noexcept;
-    double getGlobalAvgCost() const noexcept;
+    double getDuration() const noexcept;
+    double getCost() const noexcept;
     Uint getRequestsGenerated() const noexcept;
     size_t getRequestsScheduled() const noexcept;
     size_t getRequestsUnassigned() const noexcept;
+    size_t getProcessedRequests() const noexcept;
+    
+    void setTimeElapsed(Uint timeElapsed) noexcept;
 
    private:
     friend struct glz::meta<Result>;
@@ -66,6 +70,8 @@ class Result {
     Uint _requestsGenerated{};
     size_t _requestsScheduled{};
     size_t _requestsUnassigned{};
+    size_t _processedRequests{};
+    Uint _timeElapsed{};
 };
 
 using Results = std::vector<Result>;
@@ -78,7 +84,8 @@ struct glz::meta<palloc::Result> {
         "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
         &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
         &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "requests_unassigned",
-        &T::_requestsUnassigned, "settings", &T::_simSettings, "traces", &T::_traceLists);
+        &T::_requestsUnassigned, "time_elapsed", &T::_timeElapsed, "settings", &T::_simSettings,
+        "traces", &T::_traceLists);
 };
 
 #endif

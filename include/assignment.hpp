@@ -37,8 +37,8 @@ template <>
 struct glz::meta<palloc::Assignment> {
     using T = palloc::Assignment;
     static constexpr auto value = glz::object(
-        "dropoff_coordinate", &T::_dropoffCoordinate, "parking_coordinate", &T::_parkingCoordinate,
-        "request_duration", &T::_requestDuration, "route_duration", &T::_routeDuration);
+        "dropoff_coord", &T::_dropoffCoordinate, "parking_coord", &T::_parkingCoordinate,
+        "req_duration", &T::_requestDuration, "route_duration", &T::_routeDuration);
 };
 
 #endif

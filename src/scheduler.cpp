@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "ortools/sat/cp_model.h"
+#include "utils.hpp"
 
 using namespace palloc;
 using namespace operations_research;
@@ -104,13 +105,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     Requests unassignedRequests;
     Requests earlyRequests;
 
-    Uint sumDuration = 0;
-    double averageDuration = 0.0;
-    double cost = 0.0;
-
     if (response.status() == sat::CpSolverStatus::OPTIMAL ||
         response.status() == sat::CpSolverStatus::FEASIBLE) {
-        cost = response.objective_value();
         for (size_t i = 0; i < requestCount; ++i) {
             auto &request = requests[i];
             size_t parkingNode = 0;
@@ -130,7 +126,6 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
                 }
             }
 
-            sumDuration += routeDuration;
             if (tillArrival > commitInterval) {
                 earlyRequests.push_back(request);
             } else if (assigned) {
@@ -141,16 +136,30 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
                 if (tillArrival > 0) {
                     earlyRequests.push_back(request);
                 } else {
-                    unassignedRequests.push_back(request);
                     request.incrementTimesDropped();
+                    unassignedRequests.push_back(request);
                 }
             }
         }
     }
 
-    averageDuration = simulations.empty() ? 0.0
-                                          : static_cast<double>(sumDuration) /
-                                                static_cast<double>(simulations.size());
+    Uint sumDuration = 0;
+    DoubleVector costVec;
+    size_t processedRequests = simulations.size() + unassignedRequests.size();
+    costVec.reserve(processedRequests);
+    for (const auto &simulation : simulations) {
+        sumDuration += simulation.getRouteDuration();
+        costVec.push_back(
+            simulation.getRouteDuration() *
+            (useWeightedParking ? env.getParkingWeights()[simulation.getParkingNode()] : 1.0));
+    }
 
-    return {simulations, unassignedRequests, earlyRequests, averageDuration, cost};
+    for (const auto &request : unassignedRequests) {
+        costVec.push_back(UNASSIGNED_PENALTY * request.getTimesDropped());
+    }
+
+    double sumCost = utils::KahanSum(costVec);
+
+    return {simulations, unassignedRequests, earlyRequests, sumDuration,
+            sumCost,     processedRequests};
 }

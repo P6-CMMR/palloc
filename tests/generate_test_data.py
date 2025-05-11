@@ -6,8 +6,8 @@ dictionary = {
     "dropoff_to_parking": [[1, 2, 3], [4, 5, 6], [7, 8, 9]], 
     "parking_to_dropoff": [[1, 2, 3], [4, 5, 6], [7, 8, 9]], 
     "parking_capacities": [3, 5, 9], 
-    "dropoff_coords": [{"latitude": 11, "longitude": 12}, {"latitude": 14, "longitude": 15}, {"latitude": 16, "longitude": 17}], 
-    "parking_coords": [{"latitude": 56, "longitude": 57}, {"latitude": 58, "longitude": 59}, {"latitude": 60, "longitude": 61}], 
+    "dropoff_coords": [{"lat": 11, "lon": 12}, {"lat": 14, "lon": 15}, {"lat": 16, "lon": 17}], 
+    "parking_coords": [{"lat": 56, "lon": 57}, {"lat": 58, "lon": 59}, {"lat": 60, "lon": 61}], 
     "smallest_round_trips": [2, 6, 10]
 }
  
