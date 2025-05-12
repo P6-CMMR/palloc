@@ -5,10 +5,10 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Simulator]") {
-    const std::filesystem::path testDataPath =
-        std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json";
-    const std::filesystem::path tempResultPath =
-        std::filesystem::path(PROJECT_ROOT) / "tests/temp_result.json";
+    const Path testDataPath =
+        Path(PROJECT_ROOT) / "tests/test_data.json";
+    const Path tempResultPath =
+        Path(PROJECT_ROOT) / "tests/temp_result.json";
 
     OutputSettings outputSettings{
         .outputPath = tempResultPath, .numberOfRunsToAggregate = 1, .prettify = false, .outputTrace = true};

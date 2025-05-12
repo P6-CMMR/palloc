@@ -19,7 +19,7 @@ class Environment {
     using DurationMatrix = std::vector<UintVector>;
     using Coordinates = std::vector<Coordinate>;
 
-    explicit Environment(const std::filesystem::path &environmentPath);
+    explicit Environment(const Path &environmentPath);
 
     const Environment::DurationMatrix &getDropoffToParking() const noexcept;
     const Environment::DurationMatrix &getParkingToDropoff() const noexcept;
@@ -36,7 +36,7 @@ class Environment {
     size_t getNumberOfParkings() const noexcept;
 
    private:
-    void loadEnvironment(const std::filesystem::path &environmentPath);
+    void loadEnvironment(const Path &environmentPath);
 
     friend struct glz::meta<Environment>;
 

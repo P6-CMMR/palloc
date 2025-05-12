@@ -7,7 +7,7 @@
 using namespace palloc;
 
 TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
-    Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
+    Environment env(Path(PROJECT_ROOT) / "tests/test_data.json");
     SimulatorSettings simSettings{
         .timesteps = 0,
         .startTime = 0,
@@ -59,7 +59,7 @@ TEST_CASE("Base case - [Scheduler]", "[Scheduler]") {
 }
 
 TEST_CASE("Multiple requests - [Scheduler]") {
-    Environment env(std::filesystem::path(PROJECT_ROOT) / "tests/test_data.json");
+    Environment env(Path(PROJECT_ROOT) / "tests/test_data.json");
     SimulatorSettings simSettings{
         .timesteps = 0,
         .startTime = 0,

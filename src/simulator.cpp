@@ -165,8 +165,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const Uint timesteps = simSettings.timesteps;
 
     Requests requests;
-    requests.reserve(static_cast<Uint>(timesteps) *
-                     static_cast<Uint>(std::ceil(simSettings.requestRate)));
+    requests.reserve(static_cast<size_t>(timesteps) *
+                     static_cast<size_t>(std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     Requests earlyRequests;

@@ -51,7 +51,6 @@ AggregatedResult::AggregatedResult(const Results &results) {
 
     auto globalAvgDuration = utils::KahanSum(durationVec);
     auto globalAvgCost = utils::KahanSum(costVec);
-
     if (requestsScheduled == 0) {
         globalAvgDuration = 0.0;
     } else {
@@ -75,9 +74,7 @@ AggregatedResult::AggregatedResult(const Results &results) {
     _processedRequests = processedRequests;
 }
 
-AggregatedResult::AggregatedResult(const std::filesystem::path &inputPath) {
-    loadResult(inputPath);
-}
+AggregatedResult::AggregatedResult(const Path &inputPath) { loadResult(inputPath); }
 
 TraceLists AggregatedResult::getTraceLists() const noexcept { return _traceLists; }
 
@@ -93,7 +90,7 @@ size_t AggregatedResult::getTotalRequestsScheduled() const noexcept { return _re
 
 void AggregatedResult::setTimeElapsed(Uint timeElapsed) noexcept { _timeElapsed = timeElapsed; }
 
-void AggregatedResult::saveToFile(const std::filesystem::path &outputPath, bool prettify) const {
+void AggregatedResult::saveToFile(const Path &outputPath, bool prettify) const {
     // write_file_json evaluated at compile time so we need both cases
     glz::error_ctx error;
     if (prettify) {
@@ -110,7 +107,7 @@ void AggregatedResult::saveToFile(const std::filesystem::path &outputPath, bool 
     }
 }
 
-void AggregatedResult::loadResult(const std::filesystem::path &inputPath) {
+void AggregatedResult::loadResult(const Path &inputPath) {
     if (!std::filesystem::exists(inputPath)) {
         throw std::runtime_error("Result file does not exist: " + inputPath.string());
     }

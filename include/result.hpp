@@ -57,7 +57,7 @@ using Results = std::vector<Result>;
 class AggregatedResult {
    public:
     explicit AggregatedResult(const Results &results);
-    explicit AggregatedResult(const std::filesystem::path &inputPath);
+    explicit AggregatedResult(const Path &inputPath);
 
     TraceLists getTraceLists() const noexcept;
     double getAvgDuration() const noexcept;
@@ -68,8 +68,8 @@ class AggregatedResult {
 
     void setTimeElapsed(Uint timeElapsed) noexcept;
 
-    void saveToFile(const std::filesystem::path &outputPath, bool prettify) const;
-    void loadResult(const std::filesystem::path &inputPath);
+    void saveToFile(const Path &outputPath, bool prettify) const;
+    void loadResult(const Path &inputPath);
 
    private:
     friend struct glz::meta<AggregatedResult>;
@@ -86,16 +86,6 @@ class AggregatedResult {
     Uint _timeElapsed{};
 };
 }  // namespace palloc
-
-template <>
-struct glz::meta<palloc::Result> {
-    using T = palloc::Result;
-    static constexpr auto value = glz::object(
-        "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
-        &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
-        &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "requests_unassigned",
-        &T::_requestsUnassigned, "settings", &T::_simSettings, "traces", &T::_traceList);
-};
 
 template <>
 struct glz::meta<palloc::AggregatedResult> {
