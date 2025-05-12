@@ -46,7 +46,7 @@ class PcgEngine : public RandomEngine {
    public:
     explicit PcgEngine(Uint seed);
 
-    Uint operator()() override;
+    Uint operator()() final override;
 
    private:
     static Uint rotr32(Uint x, Uint r) noexcept;
@@ -66,7 +66,7 @@ class PcgEngineFast : public RandomEngine {
    public:
     explicit PcgEngineFast(Uint seed);
 
-    Uint operator()() override;
+    Uint operator()() final override;
 
    private:
     static constexpr Uint64 _multiplier = 6364136223846793005U;

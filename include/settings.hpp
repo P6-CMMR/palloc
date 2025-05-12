@@ -22,7 +22,7 @@ struct SimulatorSettings {
 };
 
 struct OutputSettings {
-    std::filesystem::path outputPath;
+    Path outputPath;
     Uint numberOfRunsToAggregate;
     bool prettify;
     bool outputTrace;

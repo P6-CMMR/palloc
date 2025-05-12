@@ -8,6 +8,7 @@
 #include <print>
 #include <thread>
 
+#include "aggregated_result.hpp"
 #include "scheduler.hpp"
 #include "utils.hpp"
 
@@ -104,21 +105,23 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::println("Finished after {}ms", timeElapsed);
 
-    Result result = Result::aggregateResults(results);
+    AggregatedResult result(results);
     result.setTimeElapsed(timeElapsed);
 
-    std::println("Total requests generated: {}", result.getRequestsGenerated());
-    std::println("Total requests scheduled: {}", result.getRequestsScheduled());
+    std::println("Total requests generated: {}", result.getTotalRequestsGenerated());
+    std::println("Total requests scheduled: {}", result.getTotalRequestsScheduled());
     std::println("Total requests unassigned: {}",
-                 result.getRequestsGenerated() - result.getRequestsScheduled());
-    std::println("Total requests dropped: {}", result.getDroppedRequests());
+                 result.getTotalRequestsGenerated() - result.getTotalRequestsScheduled());
+    std::println("Total requests dropped: {}", result.getTotalDroppedRequests());
 
-    const double globalAvgDuration = result.getDuration();
-    const int minutes = static_cast<int>(globalAvgDuration);
-    const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
+    const double avgDuration = result.getAvgDuration();
+    const auto minutes = static_cast<Uint>(avgDuration);
+    const auto seconds = static_cast<Uint>((avgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    std::println("Average objective cost: {}", result.getCost());
+    std::println("Average objective cost: {}", result.getAvgCost());
+
+    std::println("Average variable count: {}", result.getAvgVariableCount());
 
     if (!outputSettings.outputPath.empty()) {
         result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
@@ -181,6 +184,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     Uint runDurationSum = 0;
     size_t requestsScheduled = 0;
     size_t totalProcessedRequests = 0;
+    size_t runTotalVariableCount = 0;
     for (Uint timestep = 1; timestep <= timesteps; ++timestep) {
         Uint currentTimeOfDay = ((simSettings.startTime + timestep - 1) % 1440);
         updateSimulations(simulations, env);
@@ -192,6 +196,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
         double totalBatchCost = 0.0;
         Uint totalBatchDuration = 0;
         size_t processedRequests = 0;
+        size_t batchScheduled = 0;
+        size_t totalVariableCount = 0;
         Assignments assignments;
 
         bool isBatchingStep = timestep % simSettings.batchInterval == 0 || timestep == timesteps;
@@ -223,7 +229,10 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
                 assignments = createAssignments(newSimulations, env);
 
                 simulations.insert(simulations.end(), newSimulations.begin(), newSimulations.end());
-                requestsScheduled += newSimulations.size();
+                batchScheduled += newSimulations.size();
+                requestsScheduled += batchScheduled;
+
+                totalVariableCount = batchResult.variableCount;
             }
         }
 
@@ -231,21 +240,28 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             std::reduce(availableParkingSpots.begin(), availableParkingSpots.end());
 
         if (outputSettings.outputTrace) {
-            double batchAverageDuration = simulations.empty()
-                                              ? 0.0
-                                              : static_cast<double>(totalBatchDuration) /
-                                                    static_cast<double>(simulations.size());
-            double batchAverageCost =
-                processedRequests == 0
+            double batchAverageDuration =
+                batchScheduled == 0
                     ? 0.0
-                    : static_cast<double>(totalBatchCost) / static_cast<double>(processedRequests);
-            traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
-                                totalAvailableParkingSpots, batchAverageCost, batchAverageDuration,
-                                droppedRequests, earlyRequests.size(), assignments);
+                    : static_cast<double>(totalBatchDuration) / static_cast<double>(batchScheduled);
+            double batchAverageCost = processedRequests == 0
+                                          ? 0.0
+                                          : totalBatchCost / static_cast<double>(processedRequests);
+
+            Uint batchStepsCompleted = timestep / simSettings.batchInterval;
+            if (timestep == timesteps && timestep % simSettings.batchInterval != 0) {
+                ++batchStepsCompleted;
+            }
+
+            traces.emplace_back(assignments, requests.size(), simulations.size(),
+                                totalAvailableParkingSpots, droppedRequests, earlyRequests.size(),
+                                timestep, currentTimeOfDay, batchAverageCost, batchAverageDuration,
+                                totalVariableCount);
         }
 
         runCostVec.push_back(totalBatchCost);
         runDurationSum += totalBatchDuration;
+        runTotalVariableCount += totalVariableCount;
     }
 
     assert(requests.empty());
@@ -258,8 +274,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
     double runCostSum = utils::KahanSum(runCostVec);
     results.emplace_back(traces, simSettings, droppedRequests, runDurationSum, runCostSum,
-                         requestsGenerated, requestsScheduled, requestsUnassigned,
-                         totalProcessedRequests);
+                         runTotalVariableCount, requestsGenerated, requestsScheduled,
+                         requestsUnassigned, totalProcessedRequests);
 }
 
 void Simulator::updateSimulations(Simulations &simulations, Environment &env) {

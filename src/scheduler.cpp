@@ -159,7 +159,8 @@ SchedulerResult Scheduler::scheduleBatch(Environment &env, Requests &requests,
     }
 
     double sumCost = utils::KahanSum(costVec);
+    size_t variableCount = requestCount * (numberOfParkings + 1);
 
     return {simulations, unassignedRequests, earlyRequests, sumDuration,
-            sumCost,     processedRequests};
+            sumCost,     processedRequests,  variableCount};
 }

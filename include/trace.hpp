@@ -13,10 +13,10 @@ namespace palloc {
 class Trace {
    public:
     explicit Trace() {}
-    explicit Trace(Uint timestep, Uint currentTimeOfDay, size_t numberOfRequests,
-                   size_t numberOfOngoingSimulations, Uint availableParkingSpots, double cost,
-                   double averageDuration, size_t droppedRequests, size_t earlyRequests,
-                   Assignments assignments)
+    explicit Trace(Assignments assignments, size_t numberOfRequests,
+                   size_t numberOfOngoingSimulations, Uint availableParkingSpots,
+                   size_t droppedRequests, size_t earlyRequests, Uint timestep,
+                   Uint currentTimeOfDay, double cost, double averageDuration, Uint variableCount)
         : _assignments(std::move(assignments)),
           _numberOfRequests(numberOfRequests),
           _numberOfOngoingSimulations(numberOfOngoingSimulations),
@@ -26,7 +26,8 @@ class Trace {
           _timestep(timestep),
           _currentTimeOfDay(currentTimeOfDay),
           _averageCost(cost),
-          _averageDuration(averageDuration) {}
+          _averageDuration(averageDuration),
+          _variableCount(variableCount) {}
 
     size_t getNumberOfOngoingSimulations() const noexcept;
     size_t getDroppedRequests() const noexcept;
@@ -37,7 +38,7 @@ class Trace {
 
     Uint getTimeStep() const noexcept;
 
-    double getCost() const noexcept;
+    double getAverageCost() const noexcept;
     double getAverageDuration() const noexcept;
 
     Assignments getAssignments() const noexcept;
@@ -58,6 +59,8 @@ class Trace {
 
     double _averageCost{};
     double _averageDuration{};
+
+    Uint _variableCount{};
 };
 
 using TraceList = std::list<Trace>;
@@ -71,9 +74,9 @@ struct glz::meta<palloc::Trace> {
         "timestep", &T::_timestep, "current_time_of_day", &T::_currentTimeOfDay,
         "number_of_requests", &T::_numberOfRequests, "number_of_ongoing_simulations",
         &T::_numberOfOngoingSimulations, "available_parking_spots", &T::_availableParkingSpots,
-        "average_cost", &T::_averageCost, "average_duration", &T::_averageDuration,
-        "dropped_requests", &T::_droppedRequests, "early_requests", &T::_earlyRequests,
-        "assignments", &T::_assignments);
+        "average_cost", &T::_averageCost, "average_duration", &T::_averageDuration, "var_count",
+        &T::_variableCount, "dropped_requests", &T::_droppedRequests, "early_requests",
+        &T::_earlyRequests, "variable_count", &T::_variableCount, "assignments", &T::_assignments);
 };
 
 #endif

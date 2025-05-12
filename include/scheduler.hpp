@@ -13,6 +13,7 @@ struct SchedulerResult {
     Uint totalDuration;
     double totalCost;
     size_t processedRequests;
+    size_t variableCount;
 };
 
 class Scheduler {

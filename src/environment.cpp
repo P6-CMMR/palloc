@@ -2,9 +2,7 @@
 
 using namespace palloc;
 
-Environment::Environment(const std::filesystem::path &environmentPath) {
-    loadEnvironment(environmentPath);
-}
+Environment::Environment(const Path &environmentPath) { loadEnvironment(environmentPath); }
 
 const Environment::DurationMatrix &Environment::getDropoffToParking() const noexcept {
     return _dropoffToParking;
@@ -34,7 +32,7 @@ const UintVector &Environment::getSmallestRoundTrips() const noexcept {
 
 const DoubleVector &Environment::getParkingWeights() const noexcept { return _parkingWeights; }
 
-void Environment::loadEnvironment(const std::filesystem::path &environmentPath) {
+void Environment::loadEnvironment(const Path &environmentPath) {
     if (!std::filesystem::exists(environmentPath)) {
         throw std::runtime_error("Environment file does not exist: " + environmentPath.string());
     }
