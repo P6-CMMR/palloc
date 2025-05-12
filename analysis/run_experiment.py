@@ -365,15 +365,15 @@ def main():
     commit_range = parse_range(args.commit_interval)
     
     # If commit larger then its the same as if it was equal to arrival
-    if commit_range[0] > arrival_range[1]:
+    if commit_range[0] > arrival_range[1] and arrival_range[1] > 0:
         commit_range = (arrival_range[1], 0)  
     elif commit_range[1] > arrival_range[1]:
         is_same = commit_range[0] == arrival_range[1]
         if is_same:
             commit_range = (arrival_range[1], 0)
-        else:
+        elif arrival_range[1] > 0:
             commit_range = (commit_range[0], arrival_range[1])
-        
+
     exp_dir = get_next_experiment_dir()
     
     total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_parking_time_range, rate_range, commit_range)
