@@ -104,21 +104,21 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
 
     std::println("Finished after {}ms", timeElapsed);
 
-    Result result = Result::aggregateResults(results);
+    AggregatedResult result(results);
     result.setTimeElapsed(timeElapsed);
 
-    std::println("Total requests generated: {}", result.getRequestsGenerated());
-    std::println("Total requests scheduled: {}", result.getRequestsScheduled());
+    std::println("Total requests generated: {}", result.getTotalRequestsGenerated());
+    std::println("Total requests scheduled: {}", result.getTotalRequestsScheduled());
     std::println("Total requests unassigned: {}",
-                 result.getRequestsGenerated() - result.getRequestsScheduled());
-    std::println("Total requests dropped: {}", result.getDroppedRequests());
+                 result.getTotalRequestsGenerated() - result.getTotalRequestsScheduled());
+    std::println("Total requests dropped: {}", result.getTotalDroppedRequests());
 
-    const double globalAvgDuration = result.getDuration();
-    const int minutes = static_cast<int>(globalAvgDuration);
-    const int seconds = static_cast<int>((globalAvgDuration - minutes) * 60);
+    const double globalAvgDuration = result.getAvgDuration();
+    const auto minutes = static_cast<Uint>(globalAvgDuration);
+    const auto seconds = static_cast<Uint>((globalAvgDuration - minutes) * 60);
     std::println("Average roundtrip time: {}m {}s", minutes, seconds);
 
-    std::println("Average objective cost: {}", result.getCost());
+    std::println("Average objective cost: {}", result.getAvgCost());
 
     if (!outputSettings.outputPath.empty()) {
         result.saveToFile(outputSettings.outputPath, outputSettings.prettify);
@@ -165,8 +165,8 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
     const Uint timesteps = simSettings.timesteps;
 
     Requests requests;
-    requests.reserve(static_cast<size_t>(timesteps) *
-                     static_cast<size_t>(std::ceil(simSettings.requestRate)));
+    requests.reserve(static_cast<Uint>(timesteps) *
+                     static_cast<Uint>(std::ceil(simSettings.requestRate)));
 
     Requests unassignedRequests;
     Requests earlyRequests;

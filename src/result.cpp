@@ -4,7 +4,25 @@
 
 using namespace palloc;
 
-Result Result::aggregateResults(const Results &results) {
+TraceList Result::getTraceList() const noexcept { return _traceList; }
+
+SimulatorSettings Result::getSimSettings() const noexcept { return _simSettings; }
+
+size_t Result::getDroppedRequests() const noexcept { return _droppedRequests; }
+
+double Result::getDuration() const noexcept { return _globalAvgDuration; }
+
+double Result::getCost() const noexcept { return _globalAvgCost; }
+
+Uint Result::getRequestsGenerated() const noexcept { return _requestsGenerated; }
+
+size_t Result::getRequestsScheduled() const noexcept { return _requestsScheduled; }
+
+size_t Result::getRequestsUnassigned() const noexcept { return _requestsUnassigned; }
+
+size_t Result::getProcessedRequests() const noexcept { return _processedRequests; }
+
+AggregatedResult::AggregatedResult(const Results &results) {
     TraceLists traceLists;
     traceLists.reserve(results.size());
 
@@ -21,7 +39,7 @@ Result Result::aggregateResults(const Results &results) {
     DoubleVector costVec;
     costVec.reserve(results.size());
     for (const Result &result : results) {
-        traceLists.push_back(result.getTraceLists()[0]);
+        traceLists.push_back(result.getTraceList());
         durationVec.push_back(result.getDuration());
         costVec.push_back(result.getCost());
         droppedRequests += result.getDroppedRequests();
@@ -46,11 +64,36 @@ Result Result::aggregateResults(const Results &results) {
         globalAvgCost /= static_cast<double>(processedRequests);
     }
 
-    return Result(traceLists, simSettings, droppedRequests, globalAvgDuration, globalAvgCost,
-                  requestsGenerated, requestsScheduled, requestsUnassigned);
+    _traceLists = traceLists;
+    _simSettings = simSettings;
+    _droppedRequests = droppedRequests;
+    _globalAvgDuration = globalAvgDuration;
+    _globalAvgCost = globalAvgCost;
+    _requestsGenerated = requestsGenerated;
+    _requestsScheduled = requestsScheduled;
+    _requestsUnassigned = requestsUnassigned;
+    _processedRequests = processedRequests;
 }
 
-void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) const {
+AggregatedResult::AggregatedResult(const std::filesystem::path &inputPath) {
+    loadResult(inputPath);
+}
+
+TraceLists AggregatedResult::getTraceLists() const noexcept { return _traceLists; }
+
+double AggregatedResult::getAvgDuration() const noexcept { return _globalAvgDuration; }
+
+double AggregatedResult::getAvgCost() const noexcept { return _globalAvgCost; }
+
+size_t AggregatedResult::getTotalDroppedRequests() const noexcept { return _droppedRequests; }
+
+size_t AggregatedResult::getTotalRequestsGenerated() const noexcept { return _requestsGenerated; }
+
+size_t AggregatedResult::getTotalRequestsScheduled() const noexcept { return _requestsScheduled; }
+
+void AggregatedResult::setTimeElapsed(Uint timeElapsed) noexcept { _timeElapsed = timeElapsed; }
+
+void AggregatedResult::saveToFile(const std::filesystem::path &outputPath, bool prettify) const {
     // write_file_json evaluated at compile time so we need both cases
     glz::error_ctx error;
     if (prettify) {
@@ -67,7 +110,7 @@ void Result::saveToFile(const std::filesystem::path &outputPath, bool prettify) 
     }
 }
 
-void Result::loadResult(const std::filesystem::path &inputPath) {
+void AggregatedResult::loadResult(const std::filesystem::path &inputPath) {
     if (!std::filesystem::exists(inputPath)) {
         throw std::runtime_error("Result file does not exist: " + inputPath.string());
     }
@@ -79,23 +122,3 @@ void Result::loadResult(const std::filesystem::path &inputPath) {
                                  "\nwith error: " + errorStr);
     }
 }
-
-TraceLists Result::getTraceLists() const noexcept { return _traceLists; }
-
-SimulatorSettings Result::getSimSettings() const noexcept { return _simSettings; }
-
-size_t Result::getDroppedRequests() const noexcept { return _droppedRequests; }
-
-double Result::getDuration() const noexcept { return _globalAvgDuration; }
-
-double Result::getCost() const noexcept { return _globalAvgCost; }
-
-Uint Result::getRequestsGenerated() const noexcept { return _requestsGenerated; }
-
-size_t Result::getRequestsScheduled() const noexcept { return _requestsScheduled; }
-
-size_t Result::getRequestsUnassigned() const noexcept { return _requestsUnassigned; }
-
-size_t Result::getProcessedRequests() const noexcept { return _processedRequests; }
-
-void Result::setTimeElapsed(Uint timeElapsed) noexcept { _timeElapsed = timeElapsed; }

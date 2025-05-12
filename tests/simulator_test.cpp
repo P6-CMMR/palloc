@@ -41,7 +41,7 @@ TEST_CASE("Base case - [Simulator]") {
 
     Simulator::simulate(env, simSettings, outputSettings, generalSettings);
 
-    Result result(tempResultPath);
+    AggregatedResult result(tempResultPath);
 
     const auto traces = result.getTraceLists()[0];
     REQUIRE(traces.size() == timesteps);
