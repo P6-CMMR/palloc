@@ -233,7 +233,7 @@ def extract_cost_object(json_files, unused_metrics):
         temp_cost = cost
         data = load_results(json_file)
         settings = data.get("settings")
-        simulation_cost = data.get("global_avg_cost")
+        simulation_cost = data.get("avg_cost")
 
         for setting in settings:
             if setting not in unused_metrics:
@@ -693,6 +693,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
         "number_of_ongoing_simulations": {"title": "Number of Ongoing Simulations Over Time", "y_label": "# simulations"},
         "average_cost": {"title": "Average Cost Over Time", "y_label": "cost"},
         "average_duration": {"title": "Average Duration Over Time", "y_label": "average duration"},
+        "var_count": {"title": "Variable Count Over Time", "y_label": "# variables"},
         "dropped_requests": {"title": "Dropped Requests Over Time", "y_label": "# dropped requests"}
     }
     
@@ -726,20 +727,6 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                     }
                 
                 timestep_data[timestep]["values"].append(row[metric_name])
-            
-            if metric_name == "average_duration":
-                prev_valid_value = None
-                new_avg_duration = []
-                for val in df[metric_name]:
-                    if val > 0:
-                        prev_valid_value = val
-                        new_avg_duration.append(val)
-                    elif prev_valid_value is not None:
-                        new_avg_duration.append(prev_valid_value)
-                    else:
-                        new_avg_duration.append(val)
-                        
-                df[metric_name] = new_avg_duration
                 
             fig.add_scatter(
                 x=df["time_labels"],
@@ -802,6 +789,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     write_html_with_button(figures["number_of_ongoing_simulations"], "simulations.html", button_template, output_dir_path)
     write_html_with_button(figures["average_cost"], "cost.html", button_template, output_dir_path)
     write_html_with_button(figures["average_duration"], "duration.html", button_template, output_dir_path)
+    write_html_with_button(figures["var_count"], "var_count.html", button_template, output_dir_path)
     write_html_with_button(figures["dropped_requests"], "dropped_requests.html", button_template, output_dir_path)
     
     # Settings
@@ -831,8 +819,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
 
     # Stats
     total_dropped = data.get("total_dropped_requests", "N/A")
-    global_avg_duration = format_duration_min_sec(data.get("global_avg_duration", 0))
-    global_avg_cost = round(data.get("global_avg_cost", 0), 2)
+    avg_duration = format_duration_min_sec(data.get("avg_duration", 0))
+    avg_cost = round(data.get("avg_cost", 0), 2)
+    avg_var_count = round(data.get("avg_var_count", 0), 2)
     
     requests_generated = data.get("requests_generated", "N/A")
     requests_scheduled = data.get("requests_scheduled", "N/A")
@@ -946,8 +935,9 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     html_content = html_content.replace("{{random_generator}}", str(random_generator))
     html_content = html_content.replace("{{seed}}", str(seed))
     html_content = html_content.replace("{{total_dropped}}", str(total_dropped))
-    html_content = html_content.replace("{{global_avg_duration}}", global_avg_duration)
-    html_content = html_content.replace("{{global_avg_cost}}", str(global_avg_cost))
+    html_content = html_content.replace("{{avg_duration}}", avg_duration)
+    html_content = html_content.replace("{{avg_cost}}", str(avg_cost))
+    html_content = html_content.replace("{{avg_var_count}}", str(avg_var_count))
     html_content = html_content.replace("{{requests_generated}}", str(requests_generated))
     html_content = html_content.replace("{{requests_scheduled}}", str(requests_scheduled))
     html_content = html_content.replace("{{requests_unassigned}}", str(requests_unassigned))
@@ -1033,7 +1023,7 @@ def create_browser_index(experiments_root):
                     <h3>Best Configuration</h3>
                     <p>Total Dropped Requests: <strong>{dropped_in_best}</strong></p>
                     <p>Config: <strong>{best_config}</strong></p>
-                    <p>Global Average Cost: <strong>{best_cost:.2f}</strong></p>
+                    <p>Average Cost: <strong>{best_cost:.2f}</strong></p>
                 </div>
                 """
             
@@ -1101,7 +1091,7 @@ def find_best_config(json_files):
         try:
             with open(json_file, 'r') as f:
                 data = json.load(f)
-                cost = float(data["global_avg_cost"])
+                cost = float(data["avg_cost"])
                 if cost < best_cost:
                     best_cost = cost
                     best_config = config_name

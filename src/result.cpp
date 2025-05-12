@@ -10,9 +10,11 @@ SimulatorSettings Result::getSimSettings() const noexcept { return _simSettings;
 
 size_t Result::getDroppedRequests() const noexcept { return _droppedRequests; }
 
-double Result::getDuration() const noexcept { return _globalAvgDuration; }
+double Result::getTotalDuration() const noexcept { return _totalRunDuration; }
 
-double Result::getCost() const noexcept { return _globalAvgCost; }
+double Result::getTotalCost() const noexcept { return _totalRunCost; }
+
+size_t Result::getTotalRunVariables() const noexcept { return _totalRunVariables; }
 
 Uint Result::getRequestsGenerated() const noexcept { return _requestsGenerated; }
 

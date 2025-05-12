@@ -12,6 +12,7 @@ class AggregatedResult {
     TraceLists getTraceLists() const noexcept;
     double getAvgDuration() const noexcept;
     double getAvgCost() const noexcept;
+    double getAvgVariableCount() const noexcept;
     size_t getTotalDroppedRequests() const noexcept;
     size_t getTotalRequestsGenerated() const noexcept;
     size_t getTotalRequestsScheduled() const noexcept;
@@ -27,8 +28,9 @@ class AggregatedResult {
     TraceLists _traceLists;
     SimulatorSettings _simSettings{};
     size_t _droppedRequests{};
-    double _globalAvgDuration{};
-    double _globalAvgCost{};
+    double _avgDuration{};
+    double _avgCost{};
+    double _avgVariableCount{};
     Uint _requestsGenerated{};
     size_t _requestsScheduled{};
     size_t _requestsUnassigned{};
@@ -41,8 +43,8 @@ template <>
 struct glz::meta<palloc::AggregatedResult> {
     using T = palloc::AggregatedResult;
     static constexpr auto value = glz::object(
-        "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
-        &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
+        "total_dropped_requests", &T::_droppedRequests, "avg_duration", &T::_avgDuration,
+        "avg_cost", &T::_avgCost, "avg_var_count", &T::_avgVariableCount, "requests_generated",
         &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "requests_unassigned",
         &T::_requestsUnassigned, "time_elapsed", &T::_timeElapsed, "settings", &T::_simSettings,
         "traces", &T::_traceLists);

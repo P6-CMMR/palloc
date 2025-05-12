@@ -14,7 +14,7 @@ Uint Trace::getAvailableParkingSpots() const noexcept { return _availableParking
 
 Uint Trace::getTimeStep() const noexcept { return _timestep; }
 
-double Trace::getCost() const noexcept { return _averageCost; }
+double Trace::getAverageCost() const noexcept { return _averageCost; }
 
 double Trace::getAverageDuration() const noexcept { return _averageDuration; }
 

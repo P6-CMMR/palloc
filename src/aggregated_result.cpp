@@ -9,6 +9,7 @@ AggregatedResult::AggregatedResult(const Results &results) {
     traceLists.reserve(results.size());
 
     SimulatorSettings simSettings = results[0].getSimSettings();
+    size_t totalRunVariables = 0;
     size_t droppedRequests = 0;
     Uint requestsGenerated = 0;
     size_t requestsScheduled = 0;
@@ -22,8 +23,9 @@ AggregatedResult::AggregatedResult(const Results &results) {
     costVec.reserve(results.size());
     for (const Result &result : results) {
         traceLists.push_back(result.getTraceList());
-        durationVec.push_back(result.getDuration());
-        costVec.push_back(result.getCost());
+        durationVec.push_back(result.getTotalDuration());
+        costVec.push_back(result.getTotalCost());
+        totalRunVariables += result.getTotalRunVariables();
         droppedRequests += result.getDroppedRequests();
         requestsGenerated += result.getRequestsGenerated();
         requestsScheduled += result.getRequestsScheduled();
@@ -31,25 +33,37 @@ AggregatedResult::AggregatedResult(const Results &results) {
         processedRequests += result.getProcessedRequests();
     }
 
-    auto globalAvgDuration = utils::KahanSum(durationVec);
-    auto globalAvgCost = utils::KahanSum(costVec);
+    auto avgDuration = utils::KahanSum(durationVec);
+    auto avgCost = utils::KahanSum(costVec);
     if (requestsScheduled == 0) {
-        globalAvgDuration = 0.0;
+        avgDuration = 0.0;
     } else {
-        globalAvgDuration /= static_cast<double>(requestsScheduled);
+        avgDuration /= static_cast<double>(requestsScheduled);
     }
 
     if (processedRequests == 0) {
-        globalAvgCost = 0.0;
+        avgCost = 0.0;
     } else {
-        globalAvgCost /= static_cast<double>(processedRequests);
+        avgCost /= static_cast<double>(processedRequests);
     }
+
+    const Uint timesteps = simSettings.timesteps;
+    const Uint batchInterval = simSettings.batchInterval;
+
+    Uint totalSteps = timesteps / batchInterval;
+    if (timesteps % batchInterval != 0) {
+        ++totalSteps;
+    }
+
+    auto avgVariableCount =
+        static_cast<double>(totalRunVariables) / static_cast<double>(totalSteps);
 
     _traceLists = traceLists;
     _simSettings = simSettings;
     _droppedRequests = droppedRequests;
-    _globalAvgDuration = globalAvgDuration;
-    _globalAvgCost = globalAvgCost;
+    _avgDuration = avgDuration;
+    _avgCost = avgCost;
+    _avgVariableCount = avgVariableCount;
     _requestsGenerated = requestsGenerated;
     _requestsScheduled = requestsScheduled;
     _requestsUnassigned = requestsUnassigned;
@@ -60,9 +74,11 @@ AggregatedResult::AggregatedResult(const Path &inputPath) { loadResult(inputPath
 
 TraceLists AggregatedResult::getTraceLists() const noexcept { return _traceLists; }
 
-double AggregatedResult::getAvgDuration() const noexcept { return _globalAvgDuration; }
+double AggregatedResult::getAvgDuration() const noexcept { return _avgDuration; }
 
-double AggregatedResult::getAvgCost() const noexcept { return _globalAvgCost; }
+double AggregatedResult::getAvgCost() const noexcept { return _avgCost; }
+
+double AggregatedResult::getAvgVariableCount() const noexcept { return _avgVariableCount; }
 
 size_t AggregatedResult::getTotalDroppedRequests() const noexcept { return _droppedRequests; }
 
