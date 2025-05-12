@@ -364,6 +364,13 @@ def main():
     rate_range = parse_range(args.request_rate, is_float=True)
     commit_range = parse_range(args.commit_interval)
     
+  
+    if (commit_range[0] > commit_range[1]):
+        commit_range = (commit_range[0], commit_range[0]) 
+
+    if (arrival_range[0] > arrival_range[1]):
+        arrival_range = (arrival_range[0], arrival_range[0])
+
     # If commit larger then its the same as if it was equal to arrival
     if commit_range[0] > arrival_range[1]:
         commit_range = (arrival_range[1], 0)  
@@ -373,7 +380,8 @@ def main():
             commit_range = (arrival_range[1], 0)
         else:
             commit_range = (commit_range[0], arrival_range[1])
-        
+
+
     exp_dir = get_next_experiment_dir()
     
     total_configs, steps = create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_parking_time_range, rate_range, commit_range)
