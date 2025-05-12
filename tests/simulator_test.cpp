@@ -1,4 +1,5 @@
 #include "simulator.hpp"
+#include "aggregated_result.hpp"
 
 #include "catch2/catch_test_macros.hpp"
 

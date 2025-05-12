@@ -8,6 +8,7 @@
 #include <print>
 #include <thread>
 
+#include "aggregated_result.hpp"
 #include "scheduler.hpp"
 #include "utils.hpp"
 
@@ -238,7 +239,7 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
             double batchAverageCost =
                 processedRequests == 0
                     ? 0.0
-                    : static_cast<double>(totalBatchCost) / static_cast<double>(processedRequests);
+                    : totalBatchCost / static_cast<double>(processedRequests);
             traces.emplace_back(timestep, currentTimeOfDay, requests.size(), simulations.size(),
                                 totalAvailableParkingSpots, batchAverageCost, batchAverageDuration,
                                 droppedRequests, earlyRequests.size(), assignments);

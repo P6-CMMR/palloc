@@ -1,7 +1,6 @@
 #ifndef RESULT_HPP
 #define RESULT_HPP
 
-#include <utility>
 #include <vector>
 
 #include "settings.hpp"
@@ -53,49 +52,6 @@ class Result {
 };
 
 using Results = std::vector<Result>;
-
-class AggregatedResult {
-   public:
-    explicit AggregatedResult(const Results &results);
-    explicit AggregatedResult(const Path &inputPath);
-
-    TraceLists getTraceLists() const noexcept;
-    double getAvgDuration() const noexcept;
-    double getAvgCost() const noexcept;
-    size_t getTotalDroppedRequests() const noexcept;
-    size_t getTotalRequestsGenerated() const noexcept;
-    size_t getTotalRequestsScheduled() const noexcept;
-
-    void setTimeElapsed(Uint timeElapsed) noexcept;
-
-    void saveToFile(const Path &outputPath, bool prettify) const;
-    void loadResult(const Path &inputPath);
-
-   private:
-    friend struct glz::meta<AggregatedResult>;
-
-    TraceLists _traceLists;
-    SimulatorSettings _simSettings{};
-    size_t _droppedRequests{};
-    double _globalAvgDuration{};
-    double _globalAvgCost{};
-    Uint _requestsGenerated{};
-    size_t _requestsScheduled{};
-    size_t _requestsUnassigned{};
-    size_t _processedRequests{};
-    Uint _timeElapsed{};
-};
 }  // namespace palloc
-
-template <>
-struct glz::meta<palloc::AggregatedResult> {
-    using T = palloc::AggregatedResult;
-    static constexpr auto value = glz::object(
-        "total_dropped_requests", &T::_droppedRequests, "global_avg_duration",
-        &T::_globalAvgDuration, "global_avg_cost", &T::_globalAvgCost, "requests_generated",
-        &T::_requestsGenerated, "requests_scheduled", &T::_requestsScheduled, "requests_unassigned",
-        &T::_requestsUnassigned, "time_elapsed", &T::_timeElapsed, "settings", &T::_simSettings,
-        "traces", &T::_traceLists);
-};
 
 #endif
