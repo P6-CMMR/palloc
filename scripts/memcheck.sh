@@ -32,12 +32,31 @@ cat > ortools.supp << EOF
    obj:*libprotobuf.so*
 }
 {
+   OR-Tools-Protobuf-Extension-Memory
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Zna*
+   ...
+   fun:*ExtensionSet*
+   ...
+   obj:*libprotobuf.so*
+}
+{
    OR-Tools-Absl-Static-Memory
    Memcheck:Leak
    match-leak-kinds: possible
    fun:_Znwm
    ...
    obj:*libabsl_*.so*
+}
+{
+   OR-Tools-Absl-Pool-Memory
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Zna*
+   ...
+   fun:*InitPoolURBG*
+   obj:*libabsl_random_internal_pool_urbg.so*
 }
 {
    OR-Tools-Static-Memory
