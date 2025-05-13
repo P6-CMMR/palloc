@@ -258,7 +258,7 @@ def extract_cost_object(json_files, unused_metrics):
 
     return cost
 
-def get_cost_list_one_metric(cost, metric, other_metric_values):
+def get_cost_list_one_metric(cost, metric, other_metric_values, metric1_keys):
     out_list = []
 
     anchor = cost
@@ -274,20 +274,21 @@ def get_cost_list_one_metric(cost, metric, other_metric_values):
         if cost["metric"] == metric:
             anchor_idx = idx
             anchor = cost
-            if metric_keys is None:
-                values = list(cost.keys())[1:]              #
-                if values[0].isnumeric():                   # Maybe this should be a function at this point
-                    metric_keys = sorted(values, key=float) #
-                else: 
-                    metric_keys = values
-            cost = cost[metric_keys[metric_keys_idx]]
 
+            try:
+                cost = cost[metric1_keys[metric_keys_idx]]
+            except:
+                cost = np.nan
+              
             metric_keys_idx += 1
-            if metric_keys_idx == len(metric_keys):
+            if metric_keys_idx == len(metric1_keys):
                 last_val = True
-            
+
         else:
-            cost = cost[other_metric_values[idx]]
+            try:
+                cost = cost[other_metric_values[idx]]
+            except KeyError as e:
+                cost = np.nan
             idx += 1
 
         if type(cost) in (int, float, complex):
@@ -403,17 +404,17 @@ def create_bar_graph_html(cost,  output_dir_path):
 
     temp_cost = cost
     metric_keys = list(cost.keys())
-    first_metric_key = metric_keys[1]
 
     latex_txt_output_path = output_dir_path / "latex_bar.txt"
 
-    while type(temp_cost[first_metric_key]) not in (int, float, complex):
-        values = metric_keys[1:]
+    get_metrics(temp_cost, metrics)
+
+    for key in metrics:
+        values = list(metrics[key])
         if values[0].isnumeric():
-            metrics[temp_cost["metric"]] = sorted(values, key=float)
-        temp_cost = temp_cost[first_metric_key]
-        metric_keys = list(temp_cost.keys())
-        first_metric_key = metric_keys[1]
+            metrics[key] = sorted(values, key=float)
+        else:
+            metrics[key] = values
 
     metrics[temp_cost["metric"]] = metric_keys[1:]
 
@@ -425,6 +426,9 @@ def create_bar_graph_html(cost,  output_dir_path):
         bar_cost[metric1] = {"label": "x: " + metric1, "cost": {}}
 
     for metric1 in metric_key_list:
+        if len(metrics[metric1]) < 2:
+            continue
+        print(metric1 + " bar is starting...")
         metric1_idx = metric_key_list.index(metric1)
 
         remaining_metrics = metric_key_list.copy()
@@ -446,13 +450,15 @@ def create_bar_graph_html(cost,  output_dir_path):
                 if len(metrics[remaining_metrics[i]]) > 1:
                     remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
             
-            result = get_cost_list_one_metric(cost, metric1, other_metrics_list)
+            result = get_cost_list_one_metric(cost, metric1, other_metrics_list,  metrics[metric1])
 
             if (ENABLE_EXTRA_GRAPH_CONFIGS):
                 bar_cost[metric1]["cost"][remaining_str] = result
             all_result_lists.append(result)
 
-        bar_cost[metric1]["cost"][" | Average"] = np.mean(np.array(all_result_lists), axis=0)
+
+        bar_cost[metric1]["cost"][" | Average"] = np.nanmean(np.array(all_result_lists), axis=0)
+        print(metric1 + " bar is now done!")
         
     fig = go.Figure()
 
@@ -525,6 +531,22 @@ def create_bar_graph_html(cost,  output_dir_path):
 
     write_html_with_button(fig, "bar_graph.html", button_template, output_dir_path)
 
+def get_metrics(cost, metrics):
+    if type(cost) in (int, float, complex):
+        return
+
+    metric = cost["metric"]
+    metric_keys = list(cost.keys())
+    values = metric_keys[1:]
+
+    if metric not in metrics:
+        metrics[metric] = set(values)
+    else:
+        metrics[metric].update(values) 
+
+    for key in values:
+        get_metrics(cost[key], metrics)
+
 def create_contour_graph_html(cost, output_dir_path):
     """Create contour graph from cost and metric object and save as html"""
     os.makedirs(output_dir_path, exist_ok=True)
@@ -532,20 +554,17 @@ def create_contour_graph_html(cost, output_dir_path):
     metrics = {}
 
     temp_cost = cost
-    metric_keys = list(cost.keys())
-    first_metric_key = metric_keys[1]
 
     latex_txt_output_path = output_dir_path / "latex_contour.txt"
 
-    while type(temp_cost[first_metric_key]) not in (int, float, complex):
-        values = metric_keys[1:]
-        if values[0].isnumeric():
-            metrics[temp_cost["metric"]] = sorted(values, key=float)
-        temp_cost = temp_cost[first_metric_key]
-        metric_keys = list(temp_cost.keys())
-        first_metric_key = metric_keys[1]
+    get_metrics(temp_cost, metrics)
 
-    metrics[temp_cost["metric"]] = metric_keys[1:]
+    for key in metrics:
+        values = list(metrics[key])
+        if values[0].isnumeric():
+            metrics[key] = sorted(values, key=float)
+        else: 
+            metrics[key] = values
 
     contour_cost = {}
 
@@ -562,8 +581,9 @@ def create_contour_graph_html(cost, output_dir_path):
 
     for metric1 in metric_key_list:
         for metric2 in metric_key_list:
-            if metric1 == metric2:
+            if metric1 == metric2 or len(metrics[metric1]) < 2 or len(metrics[metric2]) < 2:
                 continue
+            print(metric1 + " " + metric2+ " contour is starting...")
 
             metric1_idx = metric_key_list.index(metric1)
             metric2_idx = metric_key_list.index(metric2)
@@ -589,20 +609,20 @@ def create_contour_graph_html(cost, output_dir_path):
                 for i in range(0, len(remaining_metrics)):
                     if len(metrics[remaining_metrics[i]]) > 1:
                         remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
-            
 
                 for key in metrics[metric2]:
                     temp_idx = metric2_idx if metric2_idx < metric1_idx else metric2_idx - 1
                     other_metrics_list = el[:temp_idx] + [key] + el[temp_idx:]
-                    result_list.append(get_cost_list_one_metric(cost, metric1, other_metrics_list))
+                    result_list.append(get_cost_list_one_metric(cost, metric1, other_metrics_list, metrics[metric1]))
 
                 if (ENABLE_EXTRA_GRAPH_CONFIGS):
                     contour_cost[metric1][metric2]["cost"][remaining_str] = result_list
                 all_result_lists.append(result_list)
 
-                average_results_list = np.mean(np.array(all_result_lists), axis=0)
+                average_results_list = np.nanmean(np.array(all_result_lists), axis=0)
 
             contour_cost[metric1][metric2]["cost"][" | Average"] = average_results_list
+            print(metric1 + " " + metric2 + " contour is now done!")
         
     cost = contour_cost
 
@@ -727,7 +747,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
                     }
                 
                 timestep_data[timestep]["values"].append(row[metric_name])
-                
+
             fig.add_scatter(
                 x=df["time_labels"],
                 y=df[metric_name],
@@ -822,7 +842,7 @@ def create_experiment_html(env, data, output_dir_path, experiment_name="", resul
     avg_duration = format_duration_min_sec(data.get("avg_duration", 0))
     avg_cost = round(data.get("avg_cost", 0), 2)
     avg_var_count = round(data.get("avg_var_count", 0), 2)
-    
+
     requests_generated = data.get("requests_generated", "N/A")
     requests_scheduled = data.get("requests_scheduled", "N/A")
     requests_unassigned = data.get("requests_unassigned", "N/A")
