@@ -40,6 +40,62 @@ def format_duration_min_sec(duration_in_minutes):
     seconds = int((duration_in_minutes - minutes) * 60)
     return f"{minutes}m {seconds}s"
 
+def write_html_with_buttons(figures, filename, button_template, output_dir_path):
+    """
+    Write HTML with multiple figures, where only one is visible at a time.
+    Includes buttons to toggle visibility of figures by their names.
+    
+    Args:
+        figures (dict): A dictionary where keys are figure names and values are Plotly figure objects.
+        filename (str): The name of the output HTML file.
+        button_template (str): HTML template for additional buttons or elements.
+        output_dir_path (str): The directory path to save the HTML file.
+    """
+    # Generate HTML for each figure and hide all except the first one
+    figure_html = ""
+    for idx, (name, fig) in enumerate(figures.items()):
+        fig_html = fig.to_html(include_plotlyjs=False, full_html=False)
+        display_style = "block" if idx == 0 else "none"
+        figure_html += f'<div id="{name}" style="display: {display_style};">{fig_html}</div>'
+
+    # Create buttons to toggle visibility of figures
+    button_html = '<div class="figure-buttons">'
+    for name in figures.keys():
+        button_html += f'<button onclick="showFigure(\'{name}\')">{name}</button>'
+    button_html += "</div>"
+
+    # Add JavaScript for toggling figures
+    script = """
+    <script>
+        function showFigure(name) {
+            const figures = document.querySelectorAll('div[id]');
+            figures.forEach(fig => {
+                fig.style.display = fig.id === name ? 'block' : 'none';
+            });
+        }
+    </script>
+    """
+
+    # Combine everything into the final HTML
+    final_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    </head>
+    <body>
+        {button_template}
+        {button_html}
+        {figure_html}
+        {script}
+    </body>
+    </html>
+    """
+
+    # Write the HTML to the specified file
+    with open(os.path.join(output_dir_path, filename), "w") as f:
+        f.write(final_html)
+
 def write_html_with_button(fig, filename, button_template, output_dir_path):
     """Write html with backlink"""
     fig_html = fig.to_html(include_plotlyjs="cdn")
@@ -224,16 +280,21 @@ def add_non_duplicate(arr, el):
         arr.append(el)
     return arr
 
-def extract_cost_object(json_files, unused_metrics):
+def extract_results_object(json_files, unused_metrics):
     """Create and object with the results of all the configurations as an object nested for every metric"""
 
     metrics = {}
-    cost = {}
+    results = {}
+    result_cats = {}
     for json_file in json_files:
-        temp_cost = cost
+        temp_result = results
         data = load_results(json_file)
+        
         settings = data.get("settings")
-        simulation_cost = data.get("avg_cost")
+        # Exclude specific entries
+        excluded_keys = {"settings", "traces"}
+        result_cats = {key: data.get(key) for key in data if key not in excluded_keys}
+        
 
         for setting in settings:
             if setting not in unused_metrics:
@@ -242,43 +303,46 @@ def extract_cost_object(json_files, unused_metrics):
         metric_keys = list(metrics.keys())
         key_amount = len(metric_keys)
         for i in range(0, key_amount):
-            if "metric" not in temp_cost:
-                temp_cost["metric"] = metric_keys[i]
+            if "metric" not in temp_result:
+                temp_result["metric"] = metric_keys[i]
 
             metric_val = str(metrics[metric_keys[i]]) 
 
             if i == (key_amount - 1):
-                temp_cost[metric_val] = simulation_cost
+                result = {"metric": "result"}
+                for key in result_cats:
+                    result[key] =  result_cats[key]
+                temp_result[metric_val] = result
+
                 continue
 
-            if metric_val not in temp_cost:
-                temp_cost[metric_val] = {}
+            if metric_val not in temp_result:
+                temp_result[metric_val] = {}
             
-            temp_cost = temp_cost[metric_val]
+            temp_result = temp_result[metric_val]
 
-    return cost
+    return results, list(result_cats.keys())
 
-def get_cost_list_one_metric(cost, metric, other_metric_values, metric1_keys):
+def get_results_list_one_metric(results, metric, other_metric_values, metric1_keys):
     out_list = []
 
-    anchor = cost
+    anchor = results
     anchor_idx = 0
     idx = 0
 
-    metric_keys = None
     metric_keys_idx = 0
 
     last_val = False
 
     while True:
-        if cost["metric"] == metric:
+        if results["metric"] == metric:
             anchor_idx = idx
-            anchor = cost
+            anchor = results
 
             try:
-                cost = cost[metric1_keys[metric_keys_idx]]
+                results = results[metric1_keys[metric_keys_idx]]
             except:
-                cost = np.nan
+                results = np.nan
               
             metric_keys_idx += 1
             if metric_keys_idx == len(metric1_keys):
@@ -286,14 +350,14 @@ def get_cost_list_one_metric(cost, metric, other_metric_values, metric1_keys):
 
         else:
             try:
-                cost = cost[other_metric_values[idx]]
+                results = results[other_metric_values[idx]]
             except KeyError as e:
-                cost = np.nan
+                results = np.nan
             idx += 1
 
-        if type(cost) in (int, float, complex):
-            out_list.append(cost)
-            cost = anchor
+        if results["metric"] == "result" :
+            out_list.append(results)
+            results = anchor
             idx = anchor_idx
             if last_val:
                 break
@@ -396,18 +460,18 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
     with open(file_path, "a") as f:
         f.write(string)
 
-def create_bar_graph_html(cost,  output_dir_path):
-    """Create line graph from cost and metric object and save as html"""
+def create_bar_graph_html(results, result_cats,  output_dir_path):
+    """Create line graph from results and metric object and save as html"""
     os.makedirs(output_dir_path, exist_ok=True)
 
     metrics = {}
 
-    temp_cost = cost
-    metric_keys = list(cost.keys())
+    temp_results = results
+    metric_keys = list(results.keys())
 
     latex_txt_output_path = output_dir_path / "latex_bar.txt"
 
-    get_metrics(temp_cost, metrics)
+    get_metrics(temp_results, metrics)
 
     for key in metrics:
         values = list(metrics[key])
@@ -416,14 +480,14 @@ def create_bar_graph_html(cost,  output_dir_path):
         else:
             metrics[key] = values
 
-    metrics[temp_cost["metric"]] = metric_keys[1:]
+    metrics[temp_results["metric"]] = metric_keys[1:]
 
-    bar_cost = {}
+    bar_results = {}
 
     metric_key_list = list(metrics.keys())
 
     for metric1 in metric_key_list:
-        bar_cost[metric1] = {"label": "x: " + metric1, "cost": {}}
+        bar_results[metric1] = {"label": "x: " + metric1, "results": {}}
 
     for metric1 in metric_key_list:
         if len(metrics[metric1]) < 2:
@@ -450,14 +514,16 @@ def create_bar_graph_html(cost,  output_dir_path):
                 if len(metrics[remaining_metrics[i]]) > 1:
                     remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
             
-            result = get_cost_list_one_metric(cost, metric1, other_metrics_list,  metrics[metric1])
+            # Figure out how to handle multple results
+            result = get_results_list_one_metric(results, metric1, other_metrics_list,  metrics[metric1])
 
             if (ENABLE_EXTRA_GRAPH_CONFIGS):
-                bar_cost[metric1]["cost"][remaining_str] = result
+                bar_results[metric1]["results"][remaining_str] = result
             all_result_lists.append(result)
 
-
-        bar_cost[metric1]["cost"][" | Average"] = np.nanmean(np.array(all_result_lists), axis=0)
+        for cat in result_cats:
+            #temp_all_results_lists = 
+            bar_results[metric1]["results"][cat][" | Average"] = np.nanmean(np.array(all_result_lists), axis=0)
         print(metric1 + " bar is now done!")
         
     fig = go.Figure()
@@ -471,16 +537,16 @@ def create_bar_graph_html(cost,  output_dir_path):
     ]
 
     default_x, default_y = None, None   
-    cost = bar_cost
+    results = bar_results
 
-    for metric1 in cost:
-        config = cost[metric1]
-        for inner_key in config["cost"]:
+    for metric1 in results:
+        config = results[metric1]
+        for inner_key in config["results"]:
             x = metrics[metric1]
             if len(x) < 2:
                 continue
 
-            y = config["cost"][inner_key]
+            y = config["results"][inner_key]
 
             if default_x is None and default_y is None:
                 with open(latex_txt_output_path, "w") as f:
@@ -489,7 +555,7 @@ def create_bar_graph_html(cost,  output_dir_path):
 
             title =  "x: " + metric1 + inner_key
 
-            add_latex_bar_chart_to(latex_txt_output_path, x, y, title, metric, "cost")
+            add_latex_bar_chart_to(latex_txt_output_path, x, y, title, metric, "results")
 
             updatemenus[0]["buttons"].append(
                 {
@@ -531,33 +597,34 @@ def create_bar_graph_html(cost,  output_dir_path):
 
     write_html_with_button(fig, "bar_graph.html", button_template, output_dir_path)
 
-def get_metrics(cost, metrics):
-    if type(cost) in (int, float, complex):
+def get_metrics(results, metrics):
+    if type(results) in (int, float, complex):
         return
 
-    metric = cost["metric"]
-    metric_keys = list(cost.keys())
+    metric = results["metric"]
+    metric_keys = list(results.keys())
     values = metric_keys[1:]
-
-    if metric not in metrics:
-        metrics[metric] = set(values)
-    else:
-        metrics[metric].update(values) 
+    
+    if metric != "result":
+        if metric not in metrics:
+            metrics[metric] = set(values)
+        else:
+            metrics[metric].update(values) 
 
     for key in values:
-        get_metrics(cost[key], metrics)
+        get_metrics(results[key], metrics)
 
-def create_contour_graph_html(cost, output_dir_path):
-    """Create contour graph from cost and metric object and save as html"""
+def create_contour_graph_html(results, result_cats, output_dir_path):
+    """Create contour graph from results and metric object and save as html"""
     os.makedirs(output_dir_path, exist_ok=True)
 
     metrics = {}
 
-    temp_cost = cost
+    temp_results = results
 
     latex_txt_output_path = output_dir_path / "latex_contour.txt"
 
-    get_metrics(temp_cost, metrics)
+    get_metrics(temp_results, metrics)
 
     for key in metrics:
         values = list(metrics[key])
@@ -566,18 +633,18 @@ def create_contour_graph_html(cost, output_dir_path):
         else: 
             metrics[key] = values
 
-    contour_cost = {}
+    contour_results = {}
 
     metric_key_list = list(metrics.keys())
 
     for metric1 in metric_key_list:
-        inner_cost = {}
+        inner_results = {}
         for metric2 in metric_key_list:
             if metric1 == metric2:
                 continue
-            inner_cost[metric2] = {"label": "x: " + metric1 + " | y: "  + metric2, "cost": {}}
+            inner_results[metric2] = {"label": "x: " + metric1 + " | y: "  + metric2, "results": {}}
 
-        contour_cost[metric1] = inner_cost
+        contour_results[metric1] = inner_results
 
     for metric1 in metric_key_list:
         for metric2 in metric_key_list:
@@ -600,6 +667,7 @@ def create_contour_graph_html(cost, output_dir_path):
             remaining_cross_prod = itertools.product(*remaining_keys)
 
             all_result_lists = []
+            average_results_list = {}
 
             for el in remaining_cross_prod:
                 el = list(el)
@@ -613,62 +681,71 @@ def create_contour_graph_html(cost, output_dir_path):
                 for key in metrics[metric2]:
                     temp_idx = metric2_idx if metric2_idx < metric1_idx else metric2_idx - 1
                     other_metrics_list = el[:temp_idx] + [key] + el[temp_idx:]
-                    result_list.append(get_cost_list_one_metric(cost, metric1, other_metrics_list, metrics[metric1]))
+                    result_list.append(get_results_list_one_metric(results, metric1, other_metrics_list, metrics[metric1]))
 
                 if (ENABLE_EXTRA_GRAPH_CONFIGS):
-                    contour_cost[metric1][metric2]["cost"][remaining_str] = result_list
+                    temp_result_lists = [entry[cat] for entry in result_list]
+                    contour_results[metric1][metric2]["results"][remaining_str] = temp_result_lists
+
                 all_result_lists.append(result_list)
 
-                average_results_list = np.nanmean(np.array(all_result_lists), axis=0)
+                for cat in result_cats:
+                    temp_all_results_lists = [[[res[cat] for res in result_lists] for result_lists in row] for row in all_result_lists]
+                    average_results_list[cat] = np.nanmean(np.array(temp_all_results_lists), axis=0)
 
-            contour_cost[metric1][metric2]["cost"][" | Average"] = average_results_list
+            contour_results[metric1][metric2]["results"][" | Average"] = average_results_list
             print(metric1 + " " + metric2 + " contour is now done!")
         
-    cost = contour_cost
+    results = contour_results
 
     fig = go.Figure()
 
-    dropdown =  {
-                    "buttons": [],
-                    "direction": "down",
-                    "showactive": True,
-                }
+    dropdowns =  {}
     
 
     default_x, default_y, default_z = None, None, None
 
-    for metric1 in cost:
-        config_temp = cost[metric1]
+    for idx, cat in enumerate(result_cats):
+        dropdowns[cat] = dict(
+            buttons=[],
+            direction="down",
+            showactive=True,
+            y=(idx * 0.12) + 0.05,
+        )
+
+    ## make butto for each categori of results
+    for metric1 in results:
+        config_temp = results[metric1]
         for metric2 in config_temp:
             config = config_temp[metric2]
+            for cat in result_cats:
+                for inner_key in config["results"]:
+                    x = metrics[metric1]
+                    y = metrics[metric2]
+                    if len(x) < 2 or len(y) < 2:
+                        continue
 
-            for inner_key in config["cost"]:
-                x = metrics[metric1]
-                y = metrics[metric2]
-                if len(x) < 2 or len(y) < 2:
-                    continue
-
-                z = config["cost"][inner_key]
+                    z = config["results"][inner_key][cat]
 
 
-                if default_x is None and default_y is None and default_z is None:
-                    with open(latex_txt_output_path, "w") as f:
-                        f.write("")
-                    default_x, default_y, default_z = x, y, z
+                    if default_x is None and default_y is None and default_z is None:
+                        with open(latex_txt_output_path, "w") as f:
+                            f.write("")
+                        default_x, default_y, default_z = x, y, z
 
-                title = config["label"] + inner_key
-                add_latex_contour_graph_to(latex_txt_output_path, x, y, z, title, metric1, metric2)
+                    title = config["label"] + inner_key
+                    add_latex_contour_graph_to(latex_txt_output_path, x, y, z, title, metric1, metric2)
 
-                dropdown["buttons"].append(
-                    {
-                        "label": title,
-                        "method": "update",
-                        "args": [
-                            {"x": [x], "y": [y], "z": [z]},
-                            {"xaxis": {"title": metric1}, "yaxis": {"title": metric2}},
-                        ],
-                    }
-                )
+                    dropdowns[cat]["buttons"].append(
+                        {
+                            "label": title,
+                            "method": "update",
+                            "args": [
+                                {"x": [x], "y": [y], "z": [z]},
+                                {"xaxis": {"title": metric1}, "yaxis": {"title": metric2}},
+                            ],
+                        }
+                    )
 
     if default_x is not None and default_y is not None and default_z is not None:
         fig.add_trace(
@@ -682,9 +759,21 @@ def create_contour_graph_html(cost, output_dir_path):
     else: 
         return
 
-    fig.update_layout(
-        updatemenus=[dropdown]
-    )
+    fig.update_layout(updatemenus=list(dropdowns.values()))
+
+    texts = {}
+    for idx, cat in enumerate(result_cats):
+        texts[cat] = dict(
+            y=(idx * 0.12) + 0.07,
+            yref="paper",
+            x=-0.30,
+            xref="paper",
+            text=f"Select {cat} Options",
+            align="left", 
+            showarrow=False
+        )
+
+    fig.update_layout(annotations=list(texts.values()))
 
     try:
         button_template_path = Path(__file__).parent / "index_graph_button_template.html"
@@ -1141,9 +1230,9 @@ def process_experiments(env, experiments_dir, experiment_list=None):
         
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
-        cost = extract_cost_object(json_files, UNUSED_SETTINGS)
-        create_contour_graph_html(cost, report_root / exp_name)
-        create_bar_graph_html(cost, report_root / exp_name)
+        results, result_cats = extract_results_object(json_files, UNUSED_SETTINGS)
+        #create_bar_graph_html(results, result_cats, report_root / exp_name)
+        create_contour_graph_html(results, result_cats, report_root / exp_name)
 
         for json_file in json_files:
             config_name = os.path.basename(json_file).replace(".json", "")
