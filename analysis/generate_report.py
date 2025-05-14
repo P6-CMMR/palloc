@@ -56,13 +56,15 @@ def write_html_with_buttons(figures, filename, button_template, output_dir_path)
     for idx, (name, fig) in enumerate(figures.items()):
         fig_html = fig.to_html(include_plotlyjs=False, full_html=False)
         display_style = "block" if idx == 0 else "none"
-        figure_html += f'<div id="{name}" style="display: {display_style};">{fig_html}</div>'
+        figure_html += f'<div id="{name}" style="display: {display_style}; height: 100%; min-height: 500px;">{fig_html}</div>'
 
     # Create buttons to toggle visibility of figures
-    button_html = '<div class="figure-buttons">'
+    button_html = ""
     for name in figures.keys():
-        button_html += f'<button onclick="showFigure(\'{name}\')">{name}</button>'
-    button_html += "</div>"
+        button_html += f'<button onclick="showFigure(\'{name}\')" style="background-color: #2c3e50; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 5px;">{name}</button>'
+
+    # Inject buttons into the button template
+    button_template = button_template.replace("</div>", f"{button_html}</div>")
 
     # Add JavaScript for toggling figures
     script = """
@@ -70,7 +72,13 @@ def write_html_with_buttons(figures, filename, button_template, output_dir_path)
         function showFigure(name) {
             const figures = document.querySelectorAll('div[id]');
             figures.forEach(fig => {
-                fig.style.display = fig.id === name ? 'block' : 'none';
+                if (fig.id === name) {
+                    fig.style.display = 'block';
+                    fig.style.height = '100%';
+                    fig.style.minHeight = '500px';
+                } else {
+                    fig.style.display = 'none';
+                }
             });
         }
     </script>
@@ -85,7 +93,6 @@ def write_html_with_buttons(figures, filename, button_template, output_dir_path)
     </head>
     <body>
         {button_template}
-        {button_html}
         {figure_html}
         {script}
     </body>
@@ -697,28 +704,23 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
             print(metric1 + " " + metric2 + " contour is now done!")
         
     results = contour_results
+  
+    figures = {}
 
-    fig = go.Figure()
-
-    dropdowns =  {}
-    
-
-    default_x, default_y, default_z = None, None, None
-
-    for idx, cat in enumerate(result_cats):
-        dropdowns[cat] = dict(
+    for cat in result_cats:
+        fig = go.Figure()
+        default_x, default_y, default_z = None, None, None
+        dropdown = dict(
             buttons=[],
             direction="down",
             showactive=True,
-            y=(idx * 0.12) + 0.05,
         )
 
-    ## make butto for each categori of results
-    for metric1 in results:
-        config_temp = results[metric1]
-        for metric2 in config_temp:
-            config = config_temp[metric2]
-            for cat in result_cats:
+        ## make butto for each categori of results
+        for metric1 in results:
+            config_temp = results[metric1]
+            for metric2 in config_temp:
+                config = config_temp[metric2]
                 for inner_key in config["results"]:
                     x = metrics[metric1]
                     y = metrics[metric2]
@@ -726,7 +728,6 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
                         continue
 
                     z = config["results"][inner_key][cat]
-
 
                     if default_x is None and default_y is None and default_z is None:
                         with open(latex_txt_output_path, "w") as f:
@@ -736,7 +737,7 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
                     title = config["label"] + inner_key
                     add_latex_contour_graph_to(latex_txt_output_path, x, y, z, title, metric1, metric2)
 
-                    dropdowns[cat]["buttons"].append(
+                    dropdown["buttons"].append(
                         {
                             "label": title,
                             "method": "update",
@@ -747,24 +748,21 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
                         }
                     )
 
-    if default_x is not None and default_y is not None and default_z is not None:
-        fig.add_trace(
-            go.Contour(
-                z=default_z,
-                x=default_x,
-                y=default_y,
-                colorscale="Viridis",
+        if default_x is not None and default_y is not None and default_z is not None:
+            fig.add_trace(
+                go.Contour(
+                    z=default_z,
+                    x=default_x,
+                    y=default_y,
+                    colorscale="Viridis",
+                )
             )
-        )
-    else: 
-        return
+        else: 
+            return
 
-    fig.update_layout(updatemenus=list(dropdowns.values()))
+        fig.update_layout(updatemenus=[dropdown])
 
-    texts = {}
-    for idx, cat in enumerate(result_cats):
-        texts[cat] = dict(
-            y=(idx * 0.12) + 0.07,
+        text = dict(
             yref="paper",
             x=-0.30,
             xref="paper",
@@ -773,7 +771,8 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
             showarrow=False
         )
 
-    fig.update_layout(annotations=list(texts.values()))
+        #fig.update_layout(annotations=[text])
+        figures[cat] = fig 
 
     try:
         button_template_path = Path(__file__).parent / "index_graph_button_template.html"
@@ -786,7 +785,7 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
         print(f"Error loading button template: {e}", file=sys.stderr)
         sys.exit(1)
    
-    write_html_with_button(fig, "contour_graph.html", button_template, output_dir_path)
+    write_html_with_buttons(figures, "contour_graph.html", button_template, output_dir_path)
 
 def create_experiment_html(env, data, output_dir_path, experiment_name="", result_file="", single_file=False):
     """Create html from simulation data and save to experiment directory."""
