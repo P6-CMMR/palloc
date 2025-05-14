@@ -536,7 +536,7 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
             for cat in result_cats:
                 temp_all_results_lists = [[res[cat] for res in result_lists] for result_lists in all_result_lists]
                 average_results_list[cat] = np.nanmean(np.array(temp_all_results_lists), axis=0)
-            bar_results[metric1]["results"][" | Average"] = average_results_list
+        bar_results[metric1]["results"][" | Average"] = average_results_list
         print(metric1 + " bar is now done!")
     
     results = bar_results
@@ -545,7 +545,7 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
 
     for cat in result_cats:
         fig = go.Figure()
-        default_x, default_y= None, None
+        default_x, default_y = None, None
         dropdown = dict(
             buttons=[],
             direction="down",
