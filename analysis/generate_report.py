@@ -543,7 +543,7 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
 
     figures = {}
 
-    for cat in result_cats:
+    for idx, cat in enumerate(result_cats):
         fig = go.Figure()
         default_x, default_y = None, None
         dropdown = dict(
@@ -553,9 +553,9 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
         )
         fig.update_layout(
             autosize=True,
-            width=1200,  # Set a larger width
-            height=800,  # Set a larger height
-            margin=dict(l=50, r=50, t=100, b=50),  # Adjust margins for better spacing
+            width=1200,  #
+            height=800,
+            margin=dict(l=50, r=50, t=100, b=50),  
         )
 
         for metric1 in results:
@@ -567,12 +567,13 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
 
                 y = config["results"][inner_key][cat]
 
-                if default_x is None and default_y is None:
-                    with open(latex_txt_output_path, "w") as f:
-                        f.write("")
+                if default_x is None and default_y is None: # check if first cat or new cat
+                    if idx == 0:
+                        with open(latex_txt_output_path, "w") as f:
+                            f.write("")
                     default_x, default_y = x, y
 
-                title =  "x: " + metric1 + inner_key
+                title = cat + ": x: " + metric1 + inner_key
 
                 add_latex_bar_chart_to(latex_txt_output_path, x, y, title, metric, "results")
 
@@ -731,7 +732,7 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
   
     figures = {}
 
-    for cat in result_cats:
+    for idx, cat in enumerate(result_cats):
         fig = go.Figure()
         default_x, default_y, default_z = None, None, None
         dropdown = dict(
@@ -760,11 +761,12 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
                     z = config["results"][inner_key][cat]
 
                     if default_x is None and default_y is None and default_z is None:
-                        with open(latex_txt_output_path, "w") as f:
-                            f.write("")
+                        if idx == 0:
+                            with open(latex_txt_output_path, "w") as f:
+                                f.write("")
                         default_x, default_y, default_z = x, y, z
 
-                    title = config["label"] + inner_key
+                    title = cat + ": " + config["label"] + inner_key
                     add_latex_contour_graph_to(latex_txt_output_path, x, y, z, title, metric1, metric2)
 
                     dropdown["buttons"].append(
