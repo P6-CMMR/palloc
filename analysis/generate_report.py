@@ -51,31 +51,35 @@ def write_html_with_buttons(figures, filename, button_template, output_dir_path)
         button_template (str): HTML template for additional buttons or elements.
         output_dir_path (str): The directory path to save the HTML file.
     """
-    # Generate HTML for each figure and hide all except the first one
     figure_html = ""
     for idx, (name, fig) in enumerate(figures.items()):
         fig_html = fig.to_html(include_plotlyjs=False, full_html=False)
-        display_style = "block" if idx == 0 else "none"
-        figure_html += f'<div id="{name}" style="display: {display_style}; height: 100%; min-height: 500px;">{fig_html}</div>'
+        figure_html += f'<div id="{name}" height: 100%;">{fig_html}</div>'
 
-    # Create buttons to toggle visibility of figures
     button_html = ""
     for name in figures.keys():
         button_html += f'<button onclick="showFigure(\'{name}\')" style="background-color: #2c3e50; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 5px;">{name}</button>'
 
-    # Inject buttons into the button template
     button_template = button_template.replace("</div>", f"{button_html}</div>")
 
-    # Add JavaScript for toggling figures
     script = """
     <script>
-        function showFigure(name) {
-            const figures = document.querySelectorAll('div[id]');
-            figures.forEach(fig => {
-                if (fig.id === name) {
+        document.addEventListener("DOMContentLoaded", function() {
+            const figures = document.querySelectorAll('.plotly-graph-div.js-plotly-plot');
+            figures.forEach((fig, idx) => {
+                if (idx === 0) {
                     fig.style.display = 'block';
-                    fig.style.height = '100%';
-                    fig.style.minHeight = '500px';
+                } else {
+                    fig.style.display = 'none';
+                }
+            });
+        });
+
+        function showFigure(name) {
+            const figures = document.querySelectorAll('.plotly-graph-div.js-plotly-plot');
+            figures.forEach(fig => {
+                if (fig.parentElement.parentElement.id === name) {
+                    fig.style.display = 'block';
                 } else {
                     fig.style.display = 'none';
                 }
@@ -512,6 +516,7 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
         remaining_cross_prod = itertools.product(*remaining_keys)
 
         all_result_lists = []
+        average_results_list = {}
 
         for el in remaining_cross_prod:
             other_metrics_list = list(el)
@@ -528,68 +533,87 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
                 bar_results[metric1]["results"][remaining_str] = result
             all_result_lists.append(result)
 
-        for cat in result_cats:
-            #temp_all_results_lists = 
-            bar_results[metric1]["results"][cat][" | Average"] = np.nanmean(np.array(all_result_lists), axis=0)
+            for cat in result_cats:
+                temp_all_results_lists = [[res[cat] for res in result_lists] for result_lists in all_result_lists]
+                average_results_list[cat] = np.nanmean(np.array(temp_all_results_lists), axis=0)
+            bar_results[metric1]["results"][" | Average"] = average_results_list
         print(metric1 + " bar is now done!")
-        
-    fig = go.Figure()
-
-    updatemenus = [
-        {
-            "buttons": [],
-            "direction": "down",
-            "showactive": True,
-        }
-    ]
-
-    default_x, default_y = None, None   
+    
     results = bar_results
 
-    for metric1 in results:
-        config = results[metric1]
-        for inner_key in config["results"]:
-            x = metrics[metric1]
-            if len(x) < 2:
-                continue
+    figures = {}
 
-            y = config["results"][inner_key]
-
-            if default_x is None and default_y is None:
-                with open(latex_txt_output_path, "w") as f:
-                    f.write("")
-                default_x, default_y = x, y
-
-            title =  "x: " + metric1 + inner_key
-
-            add_latex_bar_chart_to(latex_txt_output_path, x, y, title, metric, "results")
-
-            updatemenus[0]["buttons"].append(
-                {
-                    "label": title,
-                    "method": "update",
-                    "args": [
-                        {"x": [x], 
-                         "y": [y]},
-                        {"xaxis": {"title": metric1}},
-                    ],
-                }
-            )
-
-
-    if default_x is not None and default_y is not None:
-        bar_fig = px.bar(
-            x=default_x,
-            y=default_y
+    for cat in result_cats:
+        fig = go.Figure()
+        default_x, default_y= None, None
+        dropdown = dict(
+            buttons=[],
+            direction="down",
+            showactive=True,
         )
-        for trace in bar_fig.data:
-            fig.add_trace(trace)
-    else: 
-        return
+        fig.update_layout(
+            autosize=True,
+            width=1200,  # Set a larger width
+            height=800,  # Set a larger height
+            margin=dict(l=50, r=50, t=100, b=50),  # Adjust margins for better spacing
+        )
 
-    fig.update_layout(
-        updatemenus=updatemenus
-    )
+        for metric1 in results:
+            config = results[metric1]
+            for inner_key in config["results"]:
+                x = metrics[metric1]
+                if len(x) < 2:
+                    continue
+
+                y = config["results"][inner_key][cat]
+
+                if default_x is None and default_y is None:
+                    with open(latex_txt_output_path, "w") as f:
+                        f.write("")
+                    default_x, default_y = x, y
+
+                title =  "x: " + metric1 + inner_key
+
+                add_latex_bar_chart_to(latex_txt_output_path, x, y, title, metric, "results")
+
+                dropdown["buttons"].append(
+                    {
+                        "label": title,
+                        "method": "update",
+                        "args": [
+                            {"x": [x], 
+                            "y": [y]},
+                            {"xaxis": {"title": metric1}},
+                        ],
+                    }
+                )
+
+
+        if default_x is not None and default_y is not None:
+            bar_fig = px.bar(
+                x=default_x,
+                y=default_y
+            )
+            for trace in bar_fig.data:
+                fig.add_trace(trace)
+        else: 
+            return
+
+        fig.update_layout(updatemenus=[dropdown])
+
+        text = dict(
+            yref="paper",
+            x=0.5,
+            xref="paper",
+            y=1.1,
+            text=f"{cat}",
+            align="center",
+            showarrow=False,
+            font=dict(size=16, color="black")
+        )
+
+        fig.update_layout(annotations=[text])
+        figures[cat] = fig 
 
     try:
         button_template_path = Path(__file__).parent / "index_graph_button_template.html"
@@ -602,7 +626,7 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
         print(f"Error loading button template: {e}", file=sys.stderr)
         sys.exit(1)
 
-    write_html_with_button(fig, "bar_graph.html", button_template, output_dir_path)
+    write_html_with_buttons(figures, "bar_graph.html", button_template, output_dir_path)
 
 def get_metrics(results, metrics):
     if type(results) in (int, float, complex):
@@ -715,6 +739,12 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
             direction="down",
             showactive=True,
         )
+        fig.update_layout(
+            autosize=True,
+            width=1200,  # Set a larger width
+            height=800,  # Set a larger height
+            margin=dict(l=50, r=50, t=100, b=50),  # Adjust margins for better spacing
+        )
 
         ## make butto for each categori of results
         for metric1 in results:
@@ -764,14 +794,16 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
 
         text = dict(
             yref="paper",
-            x=-0.30,
+            x=0.5,
             xref="paper",
-            text=f"Select {cat} Options",
-            align="left", 
-            showarrow=False
+            y=1.1,
+            text=f"{cat}",
+            align="center",
+            showarrow=False,
+            font=dict(size=16, color="black")
         )
 
-        #fig.update_layout(annotations=[text])
+        fig.update_layout(annotations=[text])
         figures[cat] = fig 
 
     try:
@@ -1230,7 +1262,7 @@ def process_experiments(env, experiments_dir, experiment_list=None):
         json_files = sorted(glob.glob(os.path.join(exp_dir, "*.json")))
         
         results, result_cats = extract_results_object(json_files, UNUSED_SETTINGS)
-        #create_bar_graph_html(results, result_cats, report_root / exp_name)
+        create_bar_graph_html(results, result_cats, report_root / exp_name)
         create_contour_graph_html(results, result_cats, report_root / exp_name)
 
         for json_file in json_files:
