@@ -495,10 +495,12 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
 
     for key in metrics:
         values = list(metrics[key])
-        if values[0].isnumeric():
+        try:
+            float(values[0])
             metrics[key] = sorted(values, key=float)
-        else:
+        except:
             metrics[key] = values
+ 
 
     metrics[temp_results["metric"]] = metric_keys[1:]
 
@@ -662,10 +664,12 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
 
     for key in metrics:
         values = list(metrics[key])
-        if values[0].isnumeric():
+        try:
+            float(values[0])
             metrics[key] = sorted(values, key=float)
-        else: 
+        except:
             metrics[key] = values
+ 
 
     contour_results = {}
 
