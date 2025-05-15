@@ -450,7 +450,7 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
             colormap access=piecewise constant,
             colorbar horizontal,
             colorbar style={{%
-                ytick=data,
+                xtick=data,
             }}]
 
         \\addplot3[
