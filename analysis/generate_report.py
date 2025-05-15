@@ -440,12 +440,12 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
             title={{{title}}},
             xlabel={{{x_title}}},
             ylabel={{{y_title}}},
-            point meta max={max(map(max, z))}
+            point meta max={max(map(max, z))},
             point meta min={min(map(max, z))},
             width=\\columnwidth*0.9,
             view={{0}}{{90}},
             colormap={{CM}}{{
-            samples of colormap=(20 of viridis)]}},
+            samples of colormap=(20 of viridis)}},
             colormap access=piecewise constant,
             colorbar right,
             colorbar style={{%
