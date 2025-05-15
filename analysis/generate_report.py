@@ -437,6 +437,7 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
     \\centering
     \\begin{{tikzpicture}}
         \\begin{{axis}}[
+            small,
             title={{{title}}},
             xlabel={{{x_title}}},
             ylabel={{{y_title}}},
@@ -447,7 +448,7 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
             colormap={{CM}}{{
             samples of colormap=(20 of viridis)}},
             colormap access=piecewise constant,
-            colorbar right,
+            colorbar horizontal,
             colorbar style={{%
                 ytick=data,
             }}]
@@ -455,6 +456,7 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
         \\addplot3[
             surf,
             shader=interp,
+            scatter,mark=*,
             mesh/rows={x_len},
             mesh/cols={y_len}
         ] table {{
