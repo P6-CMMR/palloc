@@ -390,33 +390,38 @@ def add_latex_bar_chart_to(file_path, x, y, title, x_title, y_title):
     string = f"""
 ----------------------------------------------------------
 {title}       
+\\begin{{figure}}[H]
+    \\centering
+    \\begin{{tikzpicture}}
+        \\begin{{axis}}[
+            title={{{title}}},
+            xlabel={{{x_title}}},
+            ylabel={{{y_title}}},
+            xtick=data,
+            ybar,
+            ymin=0,
+            bar width=0.6cm,
+            nodes near coords,
+            every node near coord/.append style={{font=\\small}},
+            enlarge x limits=0.15,
+            width=\\linewidth,
+            height=0.6\\linewidth
+        ]
 
-\\begin{{tikzpicture}}
-\\begin{{axis}}[
-    title={{{title}}},
-    xlabel={{{x_title}}},
-    ylabel={{{y_title}}},
-    xtick=data,
-    ybar,
-    ymin=0,
-    bar width=0.6cm,
-    nodes near coords,
-    every node near coord/.append style={{font=\\small}},
-    enlarge x limits=0.15,
-    width=\\linewidth,
-    height=0.6\\linewidth
-]
-
-\\addplot coordinates {{
-"""
+        \\addplot coordinates {{
+        """
     for label, value in zip(x, y):
         string += f"    ({label}, {value})\n"
 
     string += """
-};
+        };
 
-\\end{axis}
-\\end{tikzpicture}
+        \\end{axis}
+    \\end{tikzpicture}
+    \\caption{Insert Caption}
+    \\label{fig:Insert_Figure_Label}
+\\end{figure}
+
 """
 
     with open(file_path, "a") as f:
@@ -428,33 +433,33 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
     string = f"""
 ----------------------------------------------------------
 {title}       
+\\begin{{figure}}[H]
+    \\centering
+    \\begin{{tikzpicture}}
+        \\begin{{axis}}[
+            title={{{title}}},
+            xlabel={{{x_title}}},
+            ylabel={{{y_title}}},
+            point meta max={max(map(max, z))}
+            point meta min={min(map(max, z))},
+            width=\\columnwidth*0.9,
+            view={{0}}{{90}},
+            colormap={{CM}}{{
+            samples of colormap=(20 of viridis)]},
+            colormap access=piecewise constant,
+            colorbar right,
+            colorbar style={{%
+            ytick=data,
+            }]
 
-\\begin{{tikzpicture}}
-\\begin{{axis}}[
-    title={{{title}}},
-    xlabel={{{x_title}}},
-    ylabel={{{y_title}}},
-    width=\\columnwidth*0.9,
-    view={{0}}{{90}},
-    colormap/viridis,
-    colorbar,
-    colorbar style={{
-        at={{(1.1,0.5)}}, 
-        anchor=center, 
-        width=0.2cm,
-        yticklabel style={{font=\\small}}, 
-    }},
-    point meta min={min(map(max, z))},
-    point meta max={max(map(max, z))}
-]
-
-\\addplot3[
-    contour filled={{number=15}},
-    mesh/rows={x_len},
-    mesh/cols={y_len}
-] table {{
-    x        y        z
-"""
+        \\addplot3[
+            surf,
+            shader=interp,
+            mesh/rows={x_len},
+            mesh/cols={y_len}
+        ] table {{
+            x        y        z
+        """
     lines = []
     for i in range(x_len):
         for j in range(y_len):
@@ -462,10 +467,14 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
     string += "\n".join(lines) + "\n"
     
     string += """
-};
+        };
 
-\\end{axis}
-\\end{tikzpicture}
+        \\end{axis}
+    \\end{tikzpicture}
+    \\caption{Insert Caption}
+    \\label{fig:Insert_Figure_Label}
+\\end{figure}
+
 """
 
     with open(file_path, "a") as f:
@@ -526,7 +535,6 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
                 if len(metrics[remaining_metrics[i]]) > 1:
                     remaining_str += " | " + remaining_metrics[i] + ": " + el[i]
             
-            # Figure out how to handle multple results
             result = get_results_list_one_metric(results, metric1, other_metrics_list,  metrics[metric1])
 
             if (ENABLE_EXTRA_GRAPH_CONFIGS):
@@ -550,12 +558,6 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
             buttons=[],
             direction="down",
             showactive=True,
-        )
-        fig.update_layout(
-            autosize=True,
-            width=1200,  #
-            height=800,
-            margin=dict(l=50, r=50, t=100, b=50),  
         )
 
         for metric1 in results:
@@ -740,14 +742,13 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
             direction="down",
             showactive=True,
         )
-        fig.update_layout(
-            autosize=True,
-            width=1200,  # Set a larger width
-            height=800,  # Set a larger height
-            margin=dict(l=50, r=50, t=100, b=50),  # Adjust margins for better spacing
-        )
+        #fig.update_layout(
+        #    autosize=True,
+        #    width=1200,  # Set a larger width
+        #    height=800,  # Set a larger height
+        #    margin=dict(l=50, r=50, t=100, b=50),  # Adjust margins for better spacing
+        #)
 
-        ## make butto for each categori of results
         for metric1 in results:
             config_temp = results[metric1]
             for metric2 in config_temp:
