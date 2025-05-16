@@ -14,7 +14,7 @@ import itertools
 import numpy as np
 
 UNUSED_SETTINGS = ["seed", "random_generator"]
-ENABLE_EXTRA_GRAPH_CONFIGS = False
+ENABLE_EXTRA_GRAPH_CONFIGS = True
 
 def load_results(result_file):
     """Load simulation results from a JSON file."""
@@ -413,14 +413,15 @@ def add_latex_bar_chart_to(file_path, x, y, title, x_title, y_title):
     for label, value in zip(x, y):
         string += f"    ({label}, {value})\n"
 
-    string += """
-        };
+    
+    string += f"""
+        }};
 
-        \\end{axis}
-    \\end{tikzpicture}
-    \\caption{Insert Caption}
-    \\label{fig:Insert_Figure_Label}
-\\end{figure}
+        \\end{{axis}}
+    \\end{{tikzpicture}}
+    \\caption{{{title.replace("_", "\\_")}}}   
+    \\label{{fig:Insert_Figure_Label}}
+\\end{{figure}}
 
 """
 
@@ -438,7 +439,6 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
     \\begin{{tikzpicture}}
         \\begin{{axis}}[
             small,
-            title={{{title}}},
             xlabel={{{x_title}}},
             ylabel={{{y_title}}},
             point meta max={max(map(max, z))},
@@ -468,14 +468,14 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
             lines.append(f"\t{x[i]:<8} {y[j]:<8} {z[j][i]}")
     string += "\n".join(lines) + "\n"
     
-    string += """
-        };
+    string += f"""
+        }};
 
-        \\end{axis}
-    \\end{tikzpicture}
-    \\caption{Insert Caption}
-    \\label{fig:Insert_Figure_Label}
-\\end{figure}
+        \\end{{axis}}
+    \\end{{tikzpicture}}
+    \\caption{{{title.replace("_", "\\_")}}}   
+    \\label{{fig:Insert_Figure_Label}}
+\\end{{figure}}
 
 """
 
@@ -542,7 +542,11 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
             result = get_results_list_one_metric(results, metric1, other_metrics_list,  metrics[metric1])
 
             if (ENABLE_EXTRA_GRAPH_CONFIGS):
-                bar_results[metric1]["results"][remaining_str] = result
+                results_list = {}
+                for cat in result_cats:
+                    results_list[cat] = [res[cat] for res in result] 
+                bar_results[metric1]["results"][remaining_str] = results_list
+
             all_result_lists.append(result)
 
             for cat in result_cats:
@@ -706,12 +710,12 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
 
             remaining_cross_prod = itertools.product(*remaining_keys)
 
-            all_result_lists = []
+            result_2dlists_list = []
             average_results_list = {}
 
             for el in remaining_cross_prod:
                 el = list(el)
-                result_list = []
+                result_2dlist = []
 
                 remaining_str = ""
                 for i in range(0, len(remaining_metrics)):
@@ -721,16 +725,18 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
                 for key in metrics[metric2]:
                     temp_idx = metric2_idx if metric2_idx < metric1_idx else metric2_idx - 1
                     other_metrics_list = el[:temp_idx] + [key] + el[temp_idx:]
-                    result_list.append(get_results_list_one_metric(results, metric1, other_metrics_list, metrics[metric1]))
+                    result_2dlist.append(get_results_list_one_metric(results, metric1, other_metrics_list, metrics[metric1]))
 
                 if (ENABLE_EXTRA_GRAPH_CONFIGS):
-                    temp_result_lists = [entry[cat] for entry in result_list]
-                    contour_results[metric1][metric2]["results"][remaining_str] = temp_result_lists
+                    results_list = {}
+                    for cat in result_cats:
+                        results_list[cat] = [[res[cat] for res in row] for row in result_2dlist]
+                    contour_results[metric1][metric2]["results"][remaining_str] = results_list
 
-                all_result_lists.append(result_list)
+                result_2dlists_list.append(result_2dlist)
 
                 for cat in result_cats:
-                    temp_all_results_lists = [[[res[cat] for res in result_lists] for result_lists in row] for row in all_result_lists]
+                    temp_all_results_lists = [[[res[cat] for res in row] for row in result_2dlist] for result_2dlist in result_2dlists_list]
                     average_results_list[cat] = np.nanmean(np.array(temp_all_results_lists), axis=0)
 
             contour_results[metric1][metric2]["results"][" | Average"] = average_results_list
