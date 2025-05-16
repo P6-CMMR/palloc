@@ -193,9 +193,9 @@ def create_summary_file(exp_dir, args, duration_range, arrival_range, minimum_pa
             while current_commit <= commit_end:
                 commit_count += 1
                 current_commit += commit_step
-            f.write(f"Commit interval range: {rate_start}-{rate_end} (step: {rate_step})\n")
+            f.write(f"Commit interval range: {commit_start}-{commit_end} (step: {commit_step})\n")
         else:
-            f.write(f"Commit interval: {rate_start}\n")
+            f.write(f"Commit interval: {commit_start}\n")
         
         total_configs = duration_count * arrival_count * minimum_parking_time_count * rate_count * commit_count
             
