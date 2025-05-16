@@ -754,12 +754,6 @@ def create_contour_graph_html(results, result_cats, output_dir_path):
             direction="down",
             showactive=True,
         )
-        #fig.update_layout(
-        #    autosize=True,
-        #    width=1200,  # Set a larger width
-        #    height=800,  # Set a larger height
-        #    margin=dict(l=50, r=50, t=100, b=50),  # Adjust margins for better spacing
-        #)
 
         for metric1 in results:
             config_temp = results[metric1]
