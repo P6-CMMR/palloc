@@ -547,10 +547,6 @@ def create_bar_graph_html(results, result_cats,  output_dir_path):
                     results_list[cat] = [res[cat] for res in result] 
                 bar_results[metric1]["results"][remaining_str] = results_list
 
-            #if (ENABLE_EXTRA_GRAPH_CONFIGS):
-            #    for cat in result_cats:
-            #        temp_all_results_lists = [res[cat] for res in result]
-            #        bar_results[metric1]["results"][remaining_str] = temp_result_list
             all_result_lists.append(result)
 
             for cat in result_cats:
