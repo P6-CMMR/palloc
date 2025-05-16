@@ -413,14 +413,15 @@ def add_latex_bar_chart_to(file_path, x, y, title, x_title, y_title):
     for label, value in zip(x, y):
         string += f"    ({label}, {value})\n"
 
-    string += """
-        };
+    
+    string += f"""
+        }};
 
-        \\end{axis}
-    \\end{tikzpicture}
-    \\caption{Insert Caption}
-    \\label{fig:Insert_Figure_Label}
-\\end{figure}
+        \\end{{axis}}
+    \\end{{tikzpicture}}
+    \\caption{{{title.replace("_", "\\_")}}}   
+    \\label{{fig:Insert_Figure_Label}}
+\\end{{figure}}
 
 """
 
@@ -438,7 +439,6 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
     \\begin{{tikzpicture}}
         \\begin{{axis}}[
             small,
-            title={{{title}}},
             xlabel={{{x_title}}},
             ylabel={{{y_title}}},
             point meta max={max(map(max, z))},
@@ -468,14 +468,14 @@ def add_latex_contour_graph_to(file_path, x, y, z, title, x_title, y_title):
             lines.append(f"\t{x[i]:<8} {y[j]:<8} {z[j][i]}")
     string += "\n".join(lines) + "\n"
     
-    string += """
-        };
+    string += f"""
+        }};
 
-        \\end{axis}
-    \\end{tikzpicture}
-    \\caption{Insert Caption}
-    \\label{fig:Insert_Figure_Label}
-\\end{figure}
+        \\end{{axis}}
+    \\end{{tikzpicture}}
+    \\caption{{{title.replace("_", "\\_")}}}   
+    \\label{{fig:Insert_Figure_Label}}
+\\end{{figure}}
 
 """
 
