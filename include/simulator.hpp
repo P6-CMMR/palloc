@@ -72,8 +72,6 @@ class Simulator {
                                   Requests &requests);
     static void removeDeadRequests(Requests &unassignedRequests);
     static void decrementArrivalTime(Requests &earlyRequests);
-    static void seperateTooEarlyRequests(Requests &requests, Uint maxDuration,
-                                         Requests &earlyRequests);
     static void cutImpossibleRequests(Requests &requests, const UintVector &smallestRoundTrips);
 };
 }  // namespace palloc
