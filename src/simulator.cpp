@@ -128,17 +128,6 @@ void Simulator::simulate(Environment &env, const SimulatorSettings &simSettings,
     }
 }
 
-static Uint calculateMaxDuration(const Requests &requests) {
-    Uint maxDuration = 0;
-    for (const Request &request : requests) {
-        if (!request.isEarly() && request.getRequestDuration() > maxDuration) {
-            maxDuration = request.getRequestDuration();
-        }
-    }
-
-    return maxDuration;
-}
-
 static Assignments createAssignments(const Simulations &newSimulations, const Environment &env) {
     Assignments assignments;
     assignments.reserve(newSimulations.size());
@@ -207,9 +196,6 @@ void Simulator::simulateRun(Environment env, const SimulatorSettings &simSetting
 
             unassignedRequests.clear();
             earlyRequests.clear();
-
-            Uint maxDuration = calculateMaxDuration(requests);
-            seperateTooEarlyRequests(requests, maxDuration, earlyRequests);
 
             if (!requests.empty()) {
                 const auto batchResult = Scheduler::scheduleBatch(env, requests, simSettings);
@@ -319,22 +305,6 @@ void Simulator::updateSimulations(Simulations &simulations, Environment &env) {
     };
 
     std::erase_if(simulations, simulate);
-}
-
-void Simulator::seperateTooEarlyRequests(Requests &requests, Uint maxDuration,
-                                         Requests &earlyRequests) {
-    const auto end = requests.rend();
-    for (auto it = requests.rbegin(); it != end; ++it) {
-        if (it->getArrival() > 0) {
-            earlyRequests.push_back(*it);
-        }
-
-        if (maxDuration >= it->getArrival()) {
-            continue;
-        }
-
-        requests.erase(std::next(it).base());
-    }
 }
 
 void Simulator::insertNewRequests(RequestGenerator &generator, Uint currentTimeOfDay,
