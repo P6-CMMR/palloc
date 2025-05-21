@@ -9,6 +9,7 @@ import folium
 import os
 import glob
 from folium.plugins import HeatMap
+from folium import Element
 from pathlib import Path
 import itertools
 import numpy as np
@@ -265,12 +266,10 @@ def create_map_visualization(env, data, output_dir_path):
         button_template = f.read()
     
     button_template = button_template.replace("left: 10px", "left: 60px")
-    
-    map_html = m.get_root().render()
-    map_html = map_html.replace("<body>", f"<body>{button_template}")
-    
-    with open(map_path, "w") as f:
-        f.write(map_html)
+    button_element = Element(button_template)
+
+    m.get_root().html.add_child(button_element)
+    m.save(map_path)
 
     return f'<p><a href="density_map.html" class="nav-button">View Interactive Map</a></p>'
 
