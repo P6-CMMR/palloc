@@ -10,7 +10,7 @@
 namespace palloc {
 class DateParser {
    public:
-    static Uint parseTimeToMinutes(const std::string_view &startTimeStr);
+    static Uint parseTimeToMinutes(std::string_view startTimeStr);
 };
 }  // namespace palloc
 
